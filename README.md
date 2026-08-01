@@ -76,8 +76,22 @@ python -m http.server 8080
 
 ```
 TheWorld/
-└── index.html   # 单文件游戏本体（HTML + CSS + JS）
+├── index.html        # 页面骨架 + 引入 CSS / JS
+├── css/
+│   └── style.css     # 全部样式（莫兰迪配色、面板、物品格、合成列表等）
+└── js/
+    ├── data.js       # 常量与数据：地图尺寸、物品/图标/建筑/配方定义、网格参数
+    ├── map.js        # 噪声与确定性地图生成（含湖泊消除、水域比例控制）
+    ├── world.js      # 地图绘制、建筑实体绘制、小人、建造放置校验与安装、悬停预览
+    ├── state.js      # localStorage 持久化：种子、存档读写、重置
+    ├── inventory.js  # 物品栏网格、堆叠合并、长按整组拖动、物品栏拖放
+    ├── crafting.js   # 合成器网格、配方匹配、合成结果列表、合成列表面板、拖放
+    └── main.js       # DOM 绑定、倍速/暂停控制、游戏循环 tick、状态栏与启动流程
 ```
+
+> 说明：脚本按 `data → map → world → state → inventory → crafting → main` 顺序加载，
+> 各模块通过全局 `window.Game` 命名空间共享状态与函数（不使用 ES modules，保证双击 `index.html`
+> 以 `file://` 协议直接打开即可运行）。
 
 ## 后续规划
 
