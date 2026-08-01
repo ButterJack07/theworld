@@ -71,4 +71,103 @@
     return best.map;
   }
   Game.generateMap = generateMap;
+
+  // 确定性随机数（同一 seed 生成的团完全一致）
+  function mulberry32(a) {
+    return function () {
+      a |= 0;
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function pickStart(rand, land, reserved) {
+    const n = land.length;
+    const startIdx = Math.floor(rand() * n);
+    for (let i = 0; i < n; i++) {
+      const [x, y] = land[(startIdx + i) % n];
+      if (!reserved[y][x]) return { x, y };
+    }
+    return null;
+  }
+
+  // 从一个随机陆地块开始，BFS 随机游走长出一团
+  function growClump(rand, size, terrain, reserved, land) {
+    const start = pickStart(rand, land, reserved);
+    if (start === null) return [];
+    const cells = [[start.x, start.y]];
+    reserved[start.y][start.x] = true;
+    let head = 0;
+    while (cells.length < size && head < cells.length) {
+      const [cx, cy] = cells[head++];
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].sort(() => rand() - 0.5);
+      for (const [dx, dy] of dirs) {
+        if (cells.length >= size) break;
+        const nx = cx + dx, ny = cy + dy;
+        if (nx < 0 || nx >= Game.MAP_W || ny < 0 || ny >= Game.MAP_H) continue;
+        if (reserved[ny][nx]) continue;
+        if (terrain[ny][nx] === null) continue;
+        reserved[ny][nx] = true;
+        cells.push([nx, ny]);
+      }
+    }
+    return cells;
+  }
+
+  // 生成世界：map + 地块地貌（未揭示的特殊团 = 平原）+ 团列表 + 团索引
+  function generateWorld(seed) {
+    const map = generateMap(seed);
+    const rand = mulberry32((seed ^ 0x9E3779B9) >>> 0);
+    const terrain = map.map(row => row.map(v => v === Game.TILE.OCEAN ? null : Game.TERRAIN.PLAIN));
+    const land = [];
+    for (let y = 0; y < Game.MAP_H; y++)
+      for (let x = 0; x < Game.MAP_W; x++)
+        if (terrain[y][x] !== null) land.push([x, y]);
+    const reserved = Array.from({ length: Game.MAP_H }, () => Array(Game.MAP_W).fill(false));
+    const clumps = [];
+
+    // 矿洞：每张地图固定刷一个，大小 6~12
+    const mineSize = 6 + Math.floor(rand() * 7);
+    const mineCells = growClump(rand, mineSize, terrain, reserved, land);
+    clumps.push({ id: 0, type: Game.TERRAIN.MINE, cells: mineCells, revealed: false, progress: 0 });
+
+    // 本次刷新哪些特殊地貌（除矿洞、平原外并非每张图都会出现）
+    const present = Game.TERRAIN_SPECIALS.filter(s => rand() < s.appear);
+    const totalWeight = present.reduce((s, t) => s + t.weight, 0);
+
+    const target = Math.round(land.length * 0.5); // 特殊地貌总面积约占 50%
+    let covered = mineCells.length;
+    let clumpId = 1;
+    let guard = 0;
+    while (covered < target && present.length && guard < 120) {
+      guard++;
+      let r = rand() * totalWeight;
+      let type = present[present.length - 1].type;
+      for (const s of present) {
+        if (r < s.weight) { type = s.type; break; }
+        r -= s.weight;
+      }
+      const size = 3 + Math.floor(rand() * 18); // 一团 3~20 格
+      const cells = growClump(rand, size, terrain, reserved, land);
+      if (!cells.length) break;
+      clumps.push({ id: clumpId++, type, cells, revealed: false, progress: 0 });
+      covered += cells.length;
+    }
+
+    const clumpIndex = Array.from({ length: Game.MAP_H }, () => Array(Game.MAP_W).fill(-1));
+    clumps.forEach((c, i) => c.cells.forEach(([x, y]) => { clumpIndex[y][x] = i; }));
+
+    return { map, terrain, clumps, clumpIndex };
+  }
+  Game.generateWorld = generateWorld;
+
+  // 揭示一团特殊地貌：将团内地块涂成对应地貌
+  function revealClump(c) {
+    if (c.revealed || !Game.world) return;
+    c.revealed = true;
+    c.cells.forEach(([x, y]) => { Game.world.terrain[y][x] = c.type; });
+  }
+  Game.revealClump = revealClump;
 })();

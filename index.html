@@ -11,7 +11,7 @@
 <div id="app">
   <header>
     <h1>The World</h1>
-    <div class="subtitle" id="date">1 年 1 天</div>
+    <div class="subtitle" id="date">1 年 1 月</div>
   </header>
 
   <div class="top-right">
@@ -27,28 +27,29 @@
       </div>
     </div>
     <div class="side">
-      <div class="frame info-card">
-        <div class="status" id="status"></div>
-      </div>
-      <div class="side-bottom">
+      <div class="side-left">
+        <div class="frame info-card">
+          <div class="status" id="status"></div>
+        </div>
         <div class="frame">
           <h2 class="panel-title">物品栏</h2>
           <div class="inventory" id="inventory"></div>
         </div>
-        <div class="frame">
-          <h2 class="panel-title">合成器</h2>
-          <div class="crafting" id="crafting"></div>
-          <div class="craft-result" id="craftResult"></div>
-        </div>
+      </div>
+      <div class="frame">
+        <h2 class="panel-title">合成器</h2>
+        <div class="crafting" id="crafting"></div>
+        <div class="craft-result" id="craftResult"></div>
       </div>
     </div>
   </div>
-  <div class="recipe-panel">
+  <div class="recipe-panel hidden" id="recipePanel">
     <h2 class="panel-title">合成列表</h2>
     <div id="recipeList"></div>
   </div>
   <div class="controls">
     <button id="restart">重新开始</button>
+    <button id="recipeToggle" class="play-btn recipe-btn" title="展开 / 收起合成列表"><span id="recipeIcon">📜</span><b>合成</b></button>
     <button id="playBtn" class="play-btn"><span id="playIcon">❚❚</span><b id="speedLabel">1x</b></button>
   </div>
 </div>
