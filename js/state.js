@@ -41,7 +41,7 @@
       seed: Game.seed,
       villagers: Game.state.villagers,
       villagersCells: Game.state.villagersCells,
-      buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y })),
+      buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot })),
       civ: Game.state.civ,
       day: Game.state.day,
       base: Game.base,
@@ -87,11 +87,12 @@
         Game.world.clumps.forEach(c => { if (c.revealed) Game.revealClump(c); });
       }
       // 恢复地图上的自动合并：2×2 茅草屋→砖瓦屋、2×2 砖瓦屋→四合院、
-      // 2×2 伐木小屋→伐木工场、2×2 采矿小屋→采矿工场
+      // 2×2 伐木小屋→伐木工场、2×2 采矿小屋→采矿工场、横/竖 3 连钓船小屋→钓船码头
       if (Game.mergeHuts) Game.mergeHuts();
       if (Game.mergeBrickhouses) Game.mergeBrickhouses();
       if (Game.mergeLumbermills) Game.mergeLumbermills();
       if (Game.mergeMineFactories) Game.mergeMineFactories();
+      if (Game.mergeDockyards) Game.mergeDockyards();
       while (Game.state.villagersCells.length < Game.state.villagers) {
         const spot = Game.findVillagerSpot(Game.state.villagersCells);
         if (!spot) break;

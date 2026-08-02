@@ -167,6 +167,7 @@
     { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2 },
     { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2 },
     { id: 'dock',   name: '钓船小屋', color: '#cfe3e6', w: 1, h: 1 },
+    { id: 'dockyard', name: '钓船码头', color: '#c9b889', w: 3, h: 1 },
   ];
 
   // 卡通简约物品图标（统一 viewBox 40x40）
@@ -317,8 +318,20 @@
           '<rect x="5" y="13" width="30" height="22" rx="5"/></g>' +
           '<rect x="6" y="27" width="28" height="7" rx="3" fill="#a4becb" stroke="#6f98a3" stroke-width="1"/>' +
           '<ellipse cx="16" cy="30" rx="4" ry="2.4" fill="#e0a078"/>' +
-          '<path d="M12 30 L9 28 L9 32 Z" fill="#e0a078"/>' +
-          '<circle cx="18" cy="29" r="0.8" fill="#6f98a3"/>',
+           '<path d="M12 30 L9 28 L9 32 Z" fill="#e0a078"/>' +
+           '<circle cx="18" cy="29" r="0.8" fill="#6f98a3"/>',
+    dockyard: '<rect x="3" y="5" width="34" height="30" rx="4" fill="#cfe3e6"/>' +
+              '<rect x="3" y="17" width="34" height="6" fill="#d9c2a0" stroke="#9a7a50" stroke-width="1"/>' +
+              '<rect x="6" y="23" width="3" height="10" fill="#7a5a35"/>' +
+              '<rect x="15" y="23" width="3" height="10" fill="#7a5a35"/>' +
+              '<rect x="24" y="23" width="3" height="10" fill="#7a5a35"/>' +
+              '<rect x="33" y="23" width="3" height="10" fill="#7a5a35"/>' +
+              '<rect x="3" y="11" width="10" height="9" fill="#c9b889" stroke="#8a7a4f" stroke-width="1"/>' +
+              '<path d="M2 11 L8 5 L14 11 Z" fill="#8a7a4f" stroke="#6a5a3a" stroke-width="1"/>' +
+              '<rect x="6" y="15" width="3" height="5" fill="#6a5a3a"/>' +
+              '<path d="M28 15 q-3 5 0 5 q3 0 0 -5" fill="#9a5a3a" stroke="#6a4028" stroke-width="1"/>' +
+              '<rect x="29" y="11" width="1.5" height="5" fill="#5a4a32"/>' +
+              '<path d="M30 12 L36 15 L30 16 Z" fill="#e8e2d2"/>',
     clay: '<ellipse cx="20" cy="24" rx="12" ry="9" fill="#c9a98a"/>' +
           '<ellipse cx="20" cy="24" rx="12" ry="9" fill="none" stroke="#9a6f4f" stroke-width="1.2"/>' +
           '<path d="M9 21q11 -5 22 0" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.5"/>' +
@@ -407,6 +420,13 @@
       id: 'dock', name: '钓船小屋',
       body: '#cfe3e6', roof: '#a9ccd4', accent: '#6f98a3',
       produces: [{ item: 'food', amount: 2 }], interval: 1
+    },
+    dockyard: {
+      id: 'dockyard', name: '钓船码头',
+      body: '#c9b889', roof: '#8a7a4f', accent: '#6a5a3a',
+      produces: [{ item: 'food', amount: 10 }],
+      desc: '10 食物（无直接配方：地图上 3 个钓船小屋排成横 / 竖直线自动合并，船坞在岸、木制浮台伸向水域）',
+      interval: 1
     }
   };
 

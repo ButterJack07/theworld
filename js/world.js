@@ -13,13 +13,17 @@
   Game.dragBuildingId = null;  // 拖放中的建筑物品 id（用于地图落点预览）
 
   // ---------- 建筑尺寸与占格辅助 ----------
-  function buildingSize(id) {
-    const item = Game.ITEMS.find(i => i.id === id);
+  function buildingSize(b) {
+    if (b && typeof b === 'object') {
+      if (b.id === 'dockyard') return (b.rot === 'N' || b.rot === 'S') ? { w: 1, h: 3 } : { w: 3, h: 1 };
+      b = b.id;
+    }
+    const item = Game.ITEMS.find(i => i.id === b);
     return { w: item ? (item.w || 1) : 1, h: item ? (item.h || 1) : 1 };
   }
   Game.buildingSize = buildingSize;
   function buildingCells(b) {
-    const { w, h } = buildingSize(b.id);
+    const { w, h } = buildingSize(b);
     const cells = [];
     for (let dy = 0; dy < h; dy++)
       for (let dx = 0; dx < w; dx++)
@@ -583,16 +587,118 @@
     ctx.beginPath(); ctx.moveTo(px + 27, py + 40.5); ctx.lineTo(px + 27, py + 45.5); ctx.stroke();
   }
 
+  // 钓船码头专属建模（3×1 / 1×3，格宽 30）：岸端是船坞小屋主体，水端是木制漂浮平台
+  // （栈板 + 桩柱 + 水面 + 靠泊的小渔船）；按 rot 绕中心旋转得到东西南北四种朝向
+  function drawDockyardEntity(b, px, py, pw, ph) {
+    const cx = px + pw / 2, cy = py + ph / 2;
+    const rot = b.rot || 'E';
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    const ang = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 }[rot] || 0;
+    ctx.rotate(ang);
+    ctx.lineWidth = 1;
+
+    // 阴影
+    ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
+    rr(-44, -13, 88, 26, 10);
+    ctx.fill();
+
+    // ---- 岸边船坞小屋（西端，占左侧 1/3） ----
+    // 墙体
+    ctx.fillStyle = '#c9b889';
+    rr(-44, -5, 29, 19, 3);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
+    ctx.stroke();
+    // 斜棚顶（岸侧高、水侧低）
+    ctx.fillStyle = '#8a7a4f';
+    ctx.beginPath();
+    ctx.moveTo(-45, -14);
+    ctx.lineTo(-14, -9);
+    ctx.lineTo(-14, -5);
+    ctx.lineTo(-45, -5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(100, 80, 45, 0.5)';
+    ctx.stroke();
+    // 门与窗
+    ctx.fillStyle = '#6a5a3a';
+    rr(-38, 3, 7, 10, 2);
+    ctx.fill();
+    ctx.fillStyle = '#fffdf5';
+    rr(-26, -2, 6, 6, 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
+    ctx.strokeRect(-38, 3, 7, 10);
+    ctx.strokeRect(-26, -2, 6, 6);
+
+    // ---- 木制漂浮平台（东端，占右侧 2/3） ----
+    // 栈板
+    ctx.fillStyle = '#d9c2a0';
+    rr(-14, -8, 59, 16, 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 95, 55, 0.45)';
+    ctx.stroke();
+    // 板缝
+    ctx.strokeStyle = 'rgba(110, 85, 50, 0.5)';
+    ctx.beginPath(); ctx.moveTo(-12, -2.5); ctx.lineTo(43, -2.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-12, 3); ctx.lineTo(43, 3); ctx.stroke();
+    // 桩柱
+    ctx.fillStyle = '#7a5a35';
+    for (const p of [-10, 2, 14, 26]) ctx.fillRect(p - 1.3, 7, 2.6, 8);
+    // 平台下水面
+    ctx.fillStyle = 'rgba(150, 210, 230, 0.85)';
+    ctx.fillRect(-14, 8, 59, 7);
+    // 水波
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    for (let wx = -10; wx < 42; wx += 8) {
+      ctx.beginPath(); ctx.moveTo(wx, 10); ctx.quadraticCurveTo(wx + 4, 12.5, wx + 8, 10); ctx.stroke();
+    }
+
+    // ---- 靠泊的小渔船（平台东端） ----
+    ctx.fillStyle = '#9a5a3a';
+    ctx.beginPath();
+    ctx.moveTo(30, 0);
+    ctx.quadraticCurveTo(30, 7, 37, 7);
+    ctx.quadraticCurveTo(44, 7, 44, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(90, 55, 35, 0.6)';
+    ctx.stroke();
+    // 船内
+    ctx.fillStyle = '#c08060';
+    ctx.beginPath();
+    ctx.moveTo(32, 1);
+    ctx.quadraticCurveTo(32, 6, 37, 6);
+    ctx.quadraticCurveTo(42, 6, 42, 1);
+    ctx.closePath();
+    ctx.fill();
+    // 桅杆与小三角帆
+    ctx.fillStyle = '#5a4a32';
+    ctx.fillRect(38, -6, 1.5, 7);
+    ctx.fillStyle = '#e8e2d2';
+    ctx.beginPath();
+    ctx.moveTo(38.5, -5);
+    ctx.lineTo(44, 0);
+    ctx.lineTo(38.5, 1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
   // 统一圆角矩形卡通风建筑：阴影 + 主体 + 屋顶带 + 下沿高光 + 门 + 专属徽记（支持 1×1 / 2×2）
   function drawBuildingEntity(b) {
     const def = Game.BUILDINGS[b.id];
-    const { w, h } = buildingSize(b.id);
+    const { w, h } = buildingSize(b);
     const px = b.x * Game.CELL, py = b.y * Game.CELL;
     const pw = w * Game.CELL, ph = h * Game.CELL;
     if (b.id === 'brickhouse') { drawBrickhouseEntity(b, px, py, pw, ph); return; }
     if (b.id === 'courtyard') { drawCourtyardEntity(b, px, py, pw, ph); return; }
     if (b.id === 'lumbermill') { drawLumbermillEntity(b, px, py, pw, ph); return; }
     if (b.id === 'minefactory') { drawMineFactoryEntity(b, px, py, pw, ph); return; }
+    if (b.id === 'dockyard') { drawDockyardEntity(b, px, py, pw, ph); return; }
     const cx = px + pw / 2;
     const bx = px + 4, by = py + 5, bw = pw - 8, bh = ph - 10, br = 10;
     const roofH = Math.round(bh * 0.42);
@@ -1048,6 +1154,47 @@
   function mergeMineFactories() { return mergeGrid('mine', 'minefactory'); }
   Game.mergeMineFactories = mergeMineFactories;
 
+  // 地图上 3 个钓船小屋（1×1）排成横 / 竖直线 → 合并为 1 个钓船码头（3×1 / 1×3）。
+  // 朝向由水在哪一端决定：木制浮台伸向水域，船坞小屋在岸端（rot: E/W 横、S/N 竖）
+  function mergeDockyards() {
+    let last = null;
+    const isWater = (x, y) => x >= 0 && x < Game.MAP_W && y >= 0 && y < Game.MAP_H && Game.world.map[y][x] === Game.TILE.OCEAN;
+    const hasLine = (cx, cy, cells) => cells.every(([gx, gy]) =>
+      Game.state.buildings.some(bd => bd.id === 'dock' && bd.x === gx && bd.y === gy));
+    const take = (cells) => cells.forEach(([gx, gy]) => {
+      const i = Game.state.buildings.findIndex(bd => bd.id === 'dock' && bd.x === gx && bd.y === gy);
+      Game.state.buildings.splice(i, 1);
+    });
+    // 横向：cells (x,y),(x+1,y),(x+2,y)
+    for (let y = 0; y < Game.MAP_H; y++) {
+      for (let x = 0; x < Game.MAP_W - 2; x++) {
+        const cells = [[x, y], [x + 1, y], [x + 2, y]];
+        if (!hasLine(x, y, cells)) continue;
+        let rot = 'E';
+        if (isWater(x - 1, y)) rot = 'W';
+        else if (isWater(x + 3, y)) rot = 'E';
+        take(cells);
+        last = { id: 'dockyard', x, y, rot };
+        Game.state.buildings.push(last);
+      }
+    }
+    // 纵向：cells (x,y),(x,y+1),(x,y+2)
+    for (let x = 0; x < Game.MAP_W; x++) {
+      for (let y = 0; y < Game.MAP_H - 2; y++) {
+        const cells = [[x, y], [x, y + 1], [x, y + 2]];
+        if (!hasLine(x, y, cells)) continue;
+        let rot = 'S';
+        if (isWater(x, y - 1)) rot = 'N';
+        else if (isWater(x, y + 3)) rot = 'S';
+        take(cells);
+        last = { id: 'dockyard', x, y, rot };
+        Game.state.buildings.push(last);
+      }
+    }
+    return last;
+  }
+  Game.mergeDockyards = mergeDockyards;
+
   // 地图上 4 个砖瓦屋（每个 2×2）拼成 2×2 一块（合计覆盖 4×4）→ 自动合并为 1 个四合院
   // （砖瓦屋左上角按间隔 2 摆放，即 (x,y),(x+2,y),(x,y+2),(x+2,y+2)，互不重叠才可由玩家摆出）
   function mergeBrickhouses() {
@@ -1095,7 +1242,7 @@
     Game.updateStatus();
     Game.saveState();
     drawWorld();
-    // 放下的低级建筑若拼成 2×2，自动合并升级为对应的工场/砖瓦屋/四合院
+    // 放下的低级建筑若拼成 2×2（钓船小屋为横 / 竖 3 连），自动合并升级为工场/砖瓦屋/四合院/钓船码头
     let merged = mergeHuts();
     const mergedCourtyard = mergeBrickhouses();
     if (mergedCourtyard) merged = mergedCourtyard;
@@ -1103,6 +1250,8 @@
     const mergedMineFactory = mergeMineFactories();
     if (mergedLumbermill) merged = mergedLumbermill;
     if (mergedMineFactory) merged = mergedMineFactory;
+    const mergedDockyard = mergeDockyards();
+    if (mergedDockyard) merged = mergedDockyard;
     if (merged) {
       Game.selectedBuilding = merged;
       Game.saveState();
