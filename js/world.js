@@ -335,8 +335,9 @@
     ctx.beginPath(); ctx.arc(px + 62, py + 108, 1.4, 0, Math.PI * 2); ctx.fill();
   }
 
-  // 伐木工场专属建模（2×2）：居中紧凑——双坡屋顶下主厂房居中，前立面挂
-  // 圆锯盘标志、右下大门、屋顶烟囱，左下原木堆、右下运木小车
+  // 伐木工场专属建模（2×2，格宽 30）：内容框约 px+3..px+57、py+4..py+58，居中对称——
+  // 双坡屋顶下主厂房居中，前立面挂圆锯盘标志、两侧小窗、居中大门、屋顶烟囱，
+  // 底角对称的原木堆与圆木横截面
   function drawLumbermillEntity(b, px, py, pw, ph) {
     const cx = px + pw / 2;
     const roof = '#8a7a4f';
@@ -345,114 +346,123 @@
     const edge = 'rgba(120, 95, 55, 0.5)';
 
     ctx.lineWidth = 1;
-    // 阴影（紧凑，四周留边）
+    // 阴影
     ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
-    rr(px + 6, py + 7, pw - 12, ph - 13, 12);
+    rr(px + 3, py + 4, 54, 53, 9);
     ctx.fill();
 
     // ---- 居中主厂房 ----
-    const shedL = px + 18, shedT = py + 22, shedW = 44, shedH = 40;
-    const shedR = shedL + shedW, shedB = shedT + shedH;
-    // 双坡屋顶（宽出墙体）
+    // 双坡屋顶（对称，宽出墙体）
     ctx.fillStyle = roof;
     ctx.beginPath();
-    ctx.moveTo(shedL - 6, shedT);
-    ctx.lineTo(shedR + 6, shedT);
-    ctx.lineTo(shedR - 4, shedT - 14);
-    ctx.lineTo(shedL + 4, shedT - 14);
+    ctx.moveTo(px + 6, py + 22);
+    ctx.lineTo(px + 54, py + 22);
+    ctx.lineTo(px + 45, py + 9);
+    ctx.lineTo(px + 15, py + 9);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 屋脊高光
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(shedL + 5, shedT - 12); ctx.lineTo(shedR - 5, shedT - 12); ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px + 16, py + 11); ctx.lineTo(px + 44, py + 11); ctx.stroke();
     ctx.lineWidth = 1;
-    // 瓦片横线
+    // 瓦线
     ctx.strokeStyle = 'rgba(110, 85, 45, 0.5)';
-    ctx.beginPath(); ctx.moveTo(shedL - 3, shedT - 4); ctx.lineTo(shedR + 3, shedT - 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 8, py + 18); ctx.lineTo(px + 52, py + 18); ctx.stroke();
 
     // 厂房墙
     ctx.fillStyle = body;
-    rr(shedL, shedT, shedW, shedH, 4);
+    rr(px + 12, py + 22, 36, 26, 4);
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 墙板横线
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.beginPath(); ctx.moveTo(shedL + 2, shedT + 13); ctx.lineTo(shedR - 2, shedT + 13); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(shedL + 2, shedT + 26); ctx.lineTo(shedR - 2, shedT + 26); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 14, py + 31); ctx.lineTo(px + 46, py + 31); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 14, py + 39); ctx.lineTo(px + 46, py + 39); ctx.stroke();
 
-    // 大门（右下）
+    // 圆锯盘（墙上居中，工场标志）
+    ctx.save();
+    ctx.translate(cx, py + 29);
+    ctx.fillStyle = '#e2e2da';
+    ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7a7a72';
+    ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#9a9a92';
+    ctx.lineWidth = 1.1;
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 2.4, Math.sin(a) * 2.4);
+      ctx.lineTo(Math.cos(a) * 7, Math.sin(a) * 7);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#6a6a62';
+    ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // 窗户（锯盘两侧对称）
+    ctx.fillStyle = '#fffdf5';
+    rr(px + 14, py + 25, 5, 5, 2); ctx.fill();
+    rr(px + 41, py + 25, 5, 5, 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 90, 60, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 14, py + 25, 5, 5);
+    ctx.strokeRect(px + 41, py + 25, 5, 5);
+
+    // 大门（居中）
     ctx.fillStyle = accent;
-    rr(cx + 5, shedB - 12, 11, 12, 3);
+    rr(cx - 6, py + 38, 12, 10, 3);
     ctx.fill();
     ctx.strokeStyle = 'rgba(80, 60, 30, 0.6)';
     ctx.stroke();
 
-    // 圆锯盘（前立面左中，工场标志）
-    ctx.save();
-    ctx.translate(cx - 9, shedT + 14);
-    ctx.fillStyle = '#e2e2da';
-    ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#7a7a72';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = '#9a9a92';
-    ctx.lineWidth = 1.2;
-    for (let i = 0; i < 8; i++) {
-      const a = i * Math.PI / 4;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * 2.6, Math.sin(a) * 2.6);
-      ctx.lineTo(Math.cos(a) * 8, Math.sin(a) * 8);
-      ctx.stroke();
-    }
-    ctx.fillStyle = '#6a6a62';
-    ctx.beginPath(); ctx.arc(0, 0, 2.2, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-
-    // 烟囱（屋顶右侧，穿过屋面）
+    // 烟囱（屋顶右坡）
     ctx.fillStyle = '#8a5a3a';
-    rr(shedR - 12, shedT - 12, 6, 10, 2);
+    rr(px + 41, py + 11, 5, 8, 1.5);
     ctx.fill();
     ctx.fillStyle = '#9a6a4a';
-    rr(shedR - 14, shedT - 14, 10, 3, 1.5);
+    rr(px + 39, py + 9, 9, 3, 1.5);
     ctx.fill();
 
-    // ---- 左下原木堆 ----
+    // ---- 原木堆（底角对称） ----
     ctx.fillStyle = '#a08a58';
-    rr(px + 8, py + 46, 11, 7, 2); ctx.fill();
+    rr(px + 3, py + 40, 10, 6, 2); ctx.fill();
+    rr(px + 47, py + 40, 10, 6, 2); ctx.fill();
     ctx.fillStyle = '#8a6a45';
-    rr(px + 8, py + 55, 11, 7, 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 90, 50, 0.6)';
+    rr(px + 3, py + 48, 10, 6, 2); ctx.fill();
+    rr(px + 47, py + 48, 10, 6, 2); ctx.fill();
+    // 原木顶面高光
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(px + 9, py + 48); ctx.lineTo(px + 18, py + 48); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 9, py + 57); ctx.lineTo(px + 18, py + 57); ctx.stroke();
-    // 圆木横截面（左下角）
+    ctx.beginPath(); ctx.moveTo(px + 4, py + 42); ctx.lineTo(px + 12, py + 42); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 4, py + 50); ctx.lineTo(px + 12, py + 50); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 48, py + 42); ctx.lineTo(px + 56, py + 42); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 48, py + 50); ctx.lineTo(px + 56, py + 50); ctx.stroke();
+
+    // ---- 圆木横截面（底角对称） ----
     ctx.fillStyle = '#c9b889';
-    ctx.beginPath(); ctx.arc(px + 10, py + 67, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 6, py + 55, 3.5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     ctx.fillStyle = '#e8dcbe';
-    ctx.beginPath(); ctx.arc(px + 10, py + 67, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 6, py + 55, 1.6, 0, Math.PI * 2); ctx.fill();
     ctx.stroke();
-
-    // ---- 右下运木小车 ----
-    ctx.fillStyle = '#6a5a3a';
-    rr(px + 56, py + 64, 13, 4, 1.5); ctx.fill();
-    ctx.fillStyle = '#4a4a44';
-    ctx.beginPath(); ctx.arc(px + 59, py + 69, 2.2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 67, py + 69, 2.2, 0, Math.PI * 2); ctx.fill();
-    // 车上原木
-    ctx.fillStyle = '#a08a58';
-    rr(px + 57, py + 58, 10, 6, 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 90, 50, 0.6)';
-    ctx.beginPath(); ctx.moveTo(px + 58, py + 60); ctx.lineTo(px + 66, py + 60); ctx.stroke();
+    ctx.fillStyle = '#c9b889';
+    ctx.beginPath(); ctx.arc(px + 54, py + 55, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    ctx.fillStyle = '#e8dcbe';
+    ctx.beginPath(); ctx.arc(px + 54, py + 55, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
   }
 
-  // 采矿工场专属建模（2×2）：居中紧凑——左侧采矿车间（坡顶 + 矿洞口），
-  // 右侧井架塔楼与天轮，前景矿车沿轨道驶出，右前矿石堆与齿轮
+  // 采矿工场专属建模（2×2，格宽 30）：内容框约 px+2..px+57、py+4..py+57，居中——
+  // 左侧采矿车间（坡顶 + 矿洞口），右侧井架塔楼与天轮，前景矿车沿轨道驶出，
+  // 右前矿石堆与车间墙面齿轮
   function drawMineFactoryEntity(b, px, py, pw, ph) {
     const roof = '#6f6c64';
     const body = '#9a968c';
@@ -460,118 +470,117 @@
     const edge = 'rgba(80, 80, 75, 0.5)';
 
     ctx.lineWidth = 1;
-    // 阴影（紧凑，四周留边）
+    // 阴影
     ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
-    rr(px + 6, py + 7, pw - 12, ph - 13, 12);
+    rr(px + 3, py + 4, 54, 53, 9);
     ctx.fill();
 
     // ---- 左侧采矿车间 ----
     // 车间墙
     ctx.fillStyle = body;
-    rr(px + 12, py + 40, 32, 26, 4);
+    rr(px + 6, py + 30, 24, 20, 3);
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 车间坡顶
     ctx.fillStyle = roof;
-    rr(px + 12, py + 34, 32, 9, 4);
+    rr(px + 6, py + 25, 24, 7, 3);
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 矿洞口
     ctx.fillStyle = '#3f3f3a';
-    rr(px + 20, py + 48, 16, 18, 6);
+    rr(px + 11, py + 36, 14, 14, 5);
     ctx.fill();
     ctx.strokeStyle = 'rgba(60, 60, 55, 0.7)';
     ctx.stroke();
     // 洞顶木撑与洞内微光
     ctx.strokeStyle = '#7a5a35';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(px + 22, py + 50); ctx.lineTo(px + 34, py + 50); ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px + 12, py + 38); ctx.lineTo(px + 24, py + 38); ctx.stroke();
     ctx.lineWidth = 1;
     ctx.fillStyle = '#e0b876';
-    ctx.beginPath(); ctx.arc(px + 28, py + 56, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 18, py + 42, 1.3, 0, Math.PI * 2); ctx.fill();
 
     // ---- 右侧井架塔楼 ----
     ctx.fillStyle = body;
     ctx.beginPath();
-    ctx.moveTo(px + 52, py + 36);
-    ctx.lineTo(px + 70, py + 36);
-    ctx.lineTo(px + 65, py + 12);
-    ctx.lineTo(px + 57, py + 12);
+    ctx.moveTo(px + 40, py + 28);
+    ctx.lineTo(px + 56, py + 28);
+    ctx.lineTo(px + 52, py + 8);
+    ctx.lineTo(px + 44, py + 8);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 塔柱横撑
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.beginPath(); ctx.moveTo(px + 54, py + 20); ctx.lineTo(px + 68, py + 20); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 53, py + 27); ctx.lineTo(px + 69, py + 27); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 42, py + 14); ctx.lineTo(px + 54, py + 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 41, py + 20); ctx.lineTo(px + 55, py + 20); ctx.stroke();
     // 天轮（提升轮，塔顶）
     ctx.fillStyle = '#c8c8c0';
-    ctx.beginPath(); ctx.arc(px + 61, py + 13, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 48, py + 10, 3.5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#5a5a52';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.arc(px + 61, py + 13, 4.5, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(px + 61, py + 13, 1.6, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 56.5, py + 13); ctx.lineTo(px + 65.5, py + 13); ctx.stroke();
+    ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(px + 48, py + 10, 3.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(px + 48, py + 10, 1.4, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = 1;
 
     // 烟囱与烟气（车间顶右侧）
     ctx.fillStyle = '#5a5a52';
-    rr(px + 38, py + 28, 6, 8, 1.5); ctx.fill();
+    rr(px + 28, py + 21, 5, 7, 1.5); ctx.fill();
     ctx.fillStyle = 'rgba(160, 160, 150, 0.6)';
-    ctx.beginPath(); ctx.arc(px + 41, py + 25, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 30, py + 18, 2.5, 0, Math.PI * 2); ctx.fill();
 
     // ---- 前景轨道与矿车 ----
     ctx.strokeStyle = '#6a6a62';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(px + 2, py + 68); ctx.lineTo(px + 34, py + 68); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 2, py + 65); ctx.lineTo(px + 34, py + 65); ctx.stroke();
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(px + 2, py + 52); ctx.lineTo(px + 26, py + 52); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 2, py + 49.5); ctx.lineTo(px + 26, py + 49.5); ctx.stroke();
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'rgba(90, 80, 65, 0.6)';
-    for (let tx = px + 6; tx <= px + 30; tx += 6) {
-      ctx.beginPath(); ctx.moveTo(tx, py + 64.5); ctx.lineTo(tx, py + 68.5); ctx.stroke();
+    for (let tx = px + 5; tx <= px + 24; tx += 5) {
+      ctx.beginPath(); ctx.moveTo(tx, py + 49); ctx.lineTo(tx, py + 52.5); ctx.stroke();
     }
     // 矿车
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.moveTo(px + 10, py + 58);
-    ctx.lineTo(px + 20, py + 58);
-    ctx.lineTo(px + 18, py + 66);
-    ctx.lineTo(px + 12, py + 66);
+    ctx.moveTo(px + 8, py + 44);
+    ctx.lineTo(px + 16, py + 44);
+    ctx.lineTo(px + 15, py + 51);
+    ctx.lineTo(px + 9, py + 51);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = 'rgba(60, 60, 55, 0.7)';
     ctx.stroke();
     // 矿车里的矿石
     ctx.fillStyle = '#7a5a35';
-    ctx.beginPath(); ctx.arc(px + 13, py + 57, 1.8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 17, py + 56, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 10, py + 43, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 13, py + 42.5, 1.5, 0, Math.PI * 2); ctx.fill();
     // 车轮
     ctx.fillStyle = '#4a4a44';
-    ctx.beginPath(); ctx.arc(px + 13, py + 67, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 17, py + 67, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 10, py + 52, 1.7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 14, py + 52, 1.7, 0, Math.PI * 2); ctx.fill();
 
     // ---- 右前矿石堆与齿轮 ----
     ctx.fillStyle = '#7a5a35';
-    ctx.beginPath(); ctx.arc(px + 58, py + 50, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 63, py + 47, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 60, py + 44, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 44, py + 38, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 48, py + 36, 2.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 46, py + 33, 2.2, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(90, 65, 35, 0.6)';
-    ctx.beginPath(); ctx.arc(px + 58, py + 50, 4, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(px + 63, py + 47, 3, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(px + 44, py + 38, 3.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(px + 48, py + 36, 2.8, 0, Math.PI * 2); ctx.stroke();
     // 齿轮（车间墙面右下）
     ctx.fillStyle = '#c8c8c0';
-    ctx.beginPath(); ctx.arc(px + 40, py + 54, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 27, py + 43, 2.5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#5a5a52';
     ctx.stroke();
     ctx.fillStyle = '#6a6a62';
-    ctx.beginPath(); ctx.arc(px + 40, py + 54, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 27, py + 43, 1.1, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#8a8a82';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(px + 36, py + 54); ctx.lineTo(px + 44, py + 54); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 40, py + 50); ctx.lineTo(px + 40, py + 58); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 24.5, py + 43); ctx.lineTo(px + 29.5, py + 43); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 27, py + 40.5); ctx.lineTo(px + 27, py + 45.5); ctx.stroke();
   }
 
   // 统一圆角矩形卡通风建筑：阴影 + 主体 + 屋顶带 + 下沿高光 + 门 + 专属徽记（支持 1×1 / 2×2）
