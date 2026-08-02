@@ -588,104 +588,225 @@
   }
 
   // 钓船码头专属建模（3×1 / 1×3，格宽 30）：岸端是船坞小屋主体，水端是木制走道平台
-  // （栈板 + 桩柱 + 靠泊的小渔船）；四种朝向分别绘制，小屋与小船始终保持直立；
-  // 建筑自身不画水面，小船向原水面的反方向伸出一点（横码头向上、竖码头向左）
+  // （梁 + 栈板 + 桩柱 + 系船柱 + 靠泊的小渔船 + 系缆绳）；四种朝向分别绘制，小屋与小船
+  // 始终保持直立；建筑自身不画水面，小船向原水面的反方向伸出一点（横码头向上、竖码头向左）
   function drawDockyardEntity(b, px, py, pw, ph) {
     ctx.lineWidth = 1;
     const rot = b.rot || 'E';
 
-    // 船坞小屋（直立）
+    // 船坞小屋（直立）：挑檐坡顶 + 木板墙 + 拱门 + 十字窗 + 门旁挂鱼
     const shed = (hx, hy) => {
-      ctx.fillStyle = '#c9b889';
-      rr(hx, hy + 8, 28, 19, 3);
+      ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
+      rr(hx + 1, hy + 2, 28, 27, 5);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
-      ctx.stroke();
+      // 挑檐屋顶（屋脊居中）
       ctx.fillStyle = '#8a7a4f';
       ctx.beginPath();
-      ctx.moveTo(hx - 1, hy + 8);
-      ctx.lineTo(hx + 29, hy + 3);
-      ctx.lineTo(hx + 29, hy + 9);
-      ctx.lineTo(hx - 1, hy + 9);
+      ctx.moveTo(hx - 2, hy + 9);
+      ctx.lineTo(hx + 15, hy + 2);
+      ctx.lineTo(hx + 32, hy + 9);
+      ctx.lineTo(hx + 32, hy + 13);
+      ctx.lineTo(hx - 2, hy + 13);
       ctx.closePath();
       ctx.fill();
       ctx.strokeStyle = 'rgba(100, 80, 45, 0.5)';
       ctx.stroke();
-      ctx.fillStyle = '#6a5a3a';
-      rr(hx + 5, hy + 16, 7, 11, 2);
-      ctx.fill();
-      ctx.fillStyle = '#fffdf5';
-      rr(hx + 18, hy + 12, 6, 6, 2);
+      // 屋顶瓦纹 + 屋脊高光
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+      ctx.beginPath(); ctx.moveTo(hx + 2, hy + 5); ctx.lineTo(hx + 28, hy + 5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx + 1, hy + 8); ctx.lineTo(hx + 29, hy + 8); ctx.stroke();
+      ctx.strokeStyle = 'rgba(238, 235, 222, 0.55)';
+      ctx.beginPath(); ctx.moveTo(hx + 15, hy + 2.5); ctx.lineTo(hx + 15, hy + 9); ctx.stroke();
+      // 木板墙
+      ctx.fillStyle = '#c9b889';
+      rr(hx + 1, hy + 12, 28, 17, 2);
       ctx.fill();
       ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
-      ctx.strokeRect(hx + 5, hy + 16, 7, 11);
-      ctx.strokeRect(hx + 18, hy + 12, 6, 6);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(150, 120, 80, 0.4)';
+      for (let vx = hx + 4; vx <= hx + 25; vx += 4) {
+        ctx.beginPath(); ctx.moveTo(vx, hy + 13); ctx.lineTo(vx, hy + 28); ctx.stroke();
+      }
+      // 拱门（顶部半圆 + 门框 + 把手）
+      ctx.fillStyle = '#6a5a3a';
+      ctx.beginPath();
+      ctx.moveTo(hx + 6, hy + 28);
+      ctx.lineTo(hx + 6, hy + 20);
+      ctx.arc(hx + 9.5, hy + 20, 3.5, Math.PI, 0);
+      ctx.lineTo(hx + 13, hy + 28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(60, 45, 25, 0.7)';
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(150, 120, 80, 0.7)';
+      ctx.strokeRect(hx + 5.5, hy + 20, 8, 8);
+      ctx.fillStyle = '#d8b45a';
+      ctx.beginPath(); ctx.arc(hx + 10.5, hy + 23.5, 0.8, 0, Math.PI * 2); ctx.fill();
+      // 十字窗 + 窗台
+      ctx.fillStyle = '#fffdf5';
+      rr(hx + 18, hy + 14, 8, 8, 1);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 95, 55, 0.6)';
+      ctx.strokeRect(hx + 18, hy + 14, 8, 8);
+      ctx.beginPath(); ctx.moveTo(hx + 22, hy + 14); ctx.lineTo(hx + 22, hy + 22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx + 18, hy + 18); ctx.lineTo(hx + 26, hy + 18); ctx.stroke();
+      ctx.fillStyle = 'rgba(150, 120, 80, 0.5)';
+      ctx.fillRect(hx + 17, hy + 22, 10, 1.5);
+      // 门旁挂鱼
+      ctx.strokeStyle = '#6a5a3a';
+      ctx.beginPath(); ctx.moveTo(hx + 3, hy + 15); ctx.lineTo(hx + 3, hy + 18); ctx.stroke();
+      ctx.fillStyle = '#b0b8c0';
+      ctx.beginPath();
+      ctx.moveTo(hx + 1.5, hy + 18);
+      ctx.lineTo(hx + 5.5, hy + 18);
+      ctx.lineTo(hx + 5.5, hy + 23);
+      ctx.lineTo(hx + 1.5, hy + 21);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 130, 140, 0.6)';
+      ctx.stroke();
     };
 
-    // 小渔船（直立）
+    // 小渔船（直立）：船体 + 舷边高光 + 座板 + 斜桨 + 桅杆带条纹帆
     const boat = (bx, by, faceRight) => {
       ctx.fillStyle = '#9a5a3a';
       ctx.beginPath();
-      ctx.moveTo(bx + 1, by + 5);
-      ctx.quadraticCurveTo(bx + 1, by + 16, bx + 10, by + 16);
-      ctx.quadraticCurveTo(bx + 19, by + 16, bx + 19, by + 5);
+      ctx.moveTo(bx + 1, by + 4);
+      ctx.quadraticCurveTo(bx + 1, by + 17, bx + 10, by + 17);
+      ctx.quadraticCurveTo(bx + 19, by + 17, bx + 19, by + 4);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = 'rgba(90, 55, 35, 0.6)';
+      ctx.strokeStyle = 'rgba(80, 50, 30, 0.7)';
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(200, 160, 120, 0.7)';
+      ctx.beginPath();
+      ctx.moveTo(bx + 2, by + 6);
+      ctx.quadraticCurveTo(bx + 10, by + 8, bx + 18, by + 6);
       ctx.stroke();
       ctx.fillStyle = '#c08060';
       ctx.beginPath();
       ctx.moveTo(bx + 3, by + 6);
-      ctx.quadraticCurveTo(bx + 3, by + 15, bx + 10, by + 15);
-      ctx.quadraticCurveTo(bx + 17, by + 15, bx + 17, by + 6);
+      ctx.quadraticCurveTo(bx + 3, by + 16, bx + 10, by + 16);
+      ctx.quadraticCurveTo(bx + 17, by + 16, bx + 17, by + 6);
       ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 80, 55, 0.5)';
+      ctx.beginPath(); ctx.moveTo(bx + 5, by + 9); ctx.lineTo(bx + 15, by + 9); ctx.stroke();
+      ctx.strokeStyle = '#8a6a45';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(bx + 3, by + 11); ctx.lineTo(bx + 8, by + 15); ctx.stroke();
+      ctx.lineWidth = 1;
       ctx.fillStyle = '#5a4a32';
-      ctx.fillRect(faceRight ? bx + 8 : bx + 10, by, 1.5, 6);
+      ctx.fillRect(faceRight ? bx + 8 : bx + 10, by - 3, 1.5, 7);
       ctx.fillStyle = '#e8e2d2';
       if (faceRight) {
-        ctx.beginPath(); ctx.moveTo(bx + 9, by + 1); ctx.lineTo(bx + 18, by + 5); ctx.lineTo(bx + 9, by + 6); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(bx + 9, by - 2); ctx.lineTo(bx + 18, by + 4); ctx.lineTo(bx + 9, by + 5); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(180, 90, 70, 0.6)';
+        ctx.beginPath(); ctx.moveTo(bx + 9, by + 1); ctx.lineTo(bx + 15, by + 4); ctx.stroke();
       } else {
-        ctx.beginPath(); ctx.moveTo(bx + 11, by + 1); ctx.lineTo(bx + 2, by + 5); ctx.lineTo(bx + 11, by + 6); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(bx + 11, by - 2); ctx.lineTo(bx + 2, by + 4); ctx.lineTo(bx + 11, by + 5); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(180, 90, 70, 0.6)';
+        ctx.beginPath(); ctx.moveTo(bx + 11, by + 1); ctx.lineTo(bx + 5, by + 4); ctx.stroke();
       }
     };
 
     if (rot === 'E' || rot === 'W') {
       const face = rot === 'E';
       const hx = face ? px + 1 : px + 61;      // 小屋在岸端（E 在西 / W 在东）
-      const platX = face ? px + 30 : px + 0;   // 栈板在另一侧
+      const platX = face ? px + 30 : px + 0;   // 走道在另一侧
       const boatX = face ? px + 62 : px + 3;   // 小船靠水端
-      // 栈板（木制走道）
+      const endX = face ? platX + 60 : platX;  // 水端（系船柱）
+      // 横排码头竖向形态随水面方向：水面在上 → 船只与平台靠上；水面在下 → 靠下
+      const yT = b.y - 1, yB = b.y + 1;
+      const waterAbove = yT >= 0 && [0, 1, 2].some(dx => Game.world.map[yT][b.x + dx] === Game.TILE.OCEAN);
+      const waterBelow = yB < Game.MAP_H && [0, 1, 2].some(dx => Game.world.map[yB][b.x + dx] === Game.TILE.OCEAN);
+      const down = waterBelow && !waterAbove;  // 水面在下 → 船只与平台靠下
+      const deckY = down ? py + 24 : py + 7;   // 栈板带
+      // 走道两侧梁 + 栈板
+      ctx.fillStyle = '#9a7a50';
+      ctx.fillRect(platX, deckY - 2, 60, 2);
+      ctx.fillRect(platX, deckY + 14, 60, 2);
       ctx.fillStyle = '#d9c2a0';
-      rr(platX, py + 6, 60, 13, 2);
+      rr(platX, deckY, 60, 14, 2);
       ctx.fill();
       ctx.strokeStyle = 'rgba(120, 95, 55, 0.45)';
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(110, 85, 50, 0.5)';
-      ctx.beginPath(); ctx.moveTo(platX + 2, py + 10); ctx.lineTo(platX + 58, py + 10); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(platX + 2, py + 14); ctx.lineTo(platX + 58, py + 14); ctx.stroke();
-      // 桩柱（支撑柱）
+      // 横向铺板纹（板缝 + 板头高光）
+      ctx.strokeStyle = 'rgba(110, 85, 50, 0.45)';
+      for (let bx = platX + 4; bx < platX + 58; bx += 6) {
+        ctx.beginPath(); ctx.moveTo(bx, deckY + 1); ctx.lineTo(bx, deckY + 13); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      for (let bx = platX + 3; bx < platX + 59; bx += 6) {
+        ctx.beginPath(); ctx.moveTo(bx + 0.5, deckY + 0.5); ctx.lineTo(bx + 0.5, deckY + 2.5); ctx.stroke();
+      }
+      // 桩柱（带顶帽，伸入水中支撑）
       ctx.fillStyle = '#7a5a35';
-      for (let p = platX + 6; p < platX + 56; p += 12) ctx.fillRect(p - 1.3, py + 18, 2.6, 9);
-      // 小屋 + 小船（小船向原水面的反方向——上方——伸出一点）
+      for (let p = platX + 10; p < platX + 52; p += 12) {
+        ctx.fillRect(p - 1.5, deckY + 12, 3, 9);
+        ctx.fillStyle = '#5f4528';
+        ctx.fillRect(p - 2.2, deckY + 11, 4.4, 2.5);
+        ctx.fillStyle = '#7a5a35';
+      }
+      // 系船柱（水端）
+      ctx.fillStyle = '#6a5a3a';
+      ctx.fillRect(endX - 1.6, deckY + 1, 3.2, 13);
+      ctx.fillStyle = '#8a6a45';
+      ctx.fillRect(endX - 3, deckY + 1, 6, 3);
+      // 小屋（岸端，始终保持直立）
       shed(hx, py + 1);
-      boat(boatX, py - 6, face);
+      // 系缆绳（船头 → 系船柱）
+      const boatY = down ? py + 34 : py - 6;
+      const ropeA = face ? [px + 78, boatY + 4] : [px + 5, boatY + 4];
+      const ropeB = face ? [px + 87, deckY + 2] : [px + 2, deckY + 2];
+      const ctrlY = down ? Math.max(ropeA[1], ropeB[1]) + 4 : Math.min(ropeA[1], ropeB[1]) - 4;
+      ctx.strokeStyle = 'rgba(90, 70, 45, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ropeA[0], ropeA[1]);
+      ctx.quadraticCurveTo((ropeA[0] + ropeB[0]) / 2, ctrlY, ropeB[0], ropeB[1]);
+      ctx.stroke();
+      // 小船（靠水端，随水面方向垂向水中）
+      boat(boatX, boatY, face);
     } else {
       const face = rot === 'S';
       const hy = face ? py + 1 : py + 61;      // 小屋在岸端（S 在北 / N 在南）
-      const platY = face ? py + 30 : py + 0;   // 栈板在另一侧
+      const platY = face ? py + 30 : py + 0;   // 走道在另一侧
       const boatY = face ? py + 62 : py + 3;   // 小船靠水端
-      // 栈板（木制走道）
+      const endY = face ? platY + 60 : platY;  // 水端（系船柱）
+      // 走道两侧梁 + 栈板
+      ctx.fillStyle = '#9a7a50';
+      ctx.fillRect(px + 4, platY, 2, 60);
+      ctx.fillRect(px + 24, platY, 2, 60);
       ctx.fillStyle = '#d9c2a0';
       rr(px + 6, platY, 18, 60, 2);
       ctx.fill();
       ctx.strokeStyle = 'rgba(120, 95, 55, 0.45)';
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(110, 85, 50, 0.5)';
-      ctx.beginPath(); ctx.moveTo(px + 10, platY + 2); ctx.lineTo(px + 10, platY + 58); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(px + 16, platY + 2); ctx.lineTo(px + 16, platY + 58); ctx.stroke();
-      // 小屋 + 小船（小船向原水面的反方向——左侧——伸出一点）
+      // 横铺板纹（板缝 + 板头高光）
+      ctx.strokeStyle = 'rgba(110, 85, 50, 0.45)';
+      for (let by = platY + 4; by < platY + 58; by += 6) {
+        ctx.beginPath(); ctx.moveTo(px + 7, by); ctx.lineTo(px + 23, by); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      for (let by = platY + 3; by < platY + 59; by += 6) {
+        ctx.beginPath(); ctx.moveTo(px + 8, by + 0.5); ctx.lineTo(px + 10, by + 0.5); ctx.stroke();
+      }
+      // 系船柱（水端，横跨走道）
+      ctx.fillStyle = '#6a5a3a';
+      ctx.fillRect(px + 4, endY - 1.6, 22, 3.2);
+      ctx.fillStyle = '#8a6a45';
+      ctx.fillRect(px + 4, endY - 3, 22, 3);
+      // 小屋
       shed(px + 1, hy);
+      // 系缆绳（船头 → 系船柱）
+      const ropeA = face ? [px + 4, py + 78] : [px + 4, py + 5];
+      const ropeB = face ? [px + 12, py + 87] : [px + 12, py + 2];
+      ctx.strokeStyle = 'rgba(90, 70, 45, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(ropeA[0], ropeA[1]);
+      ctx.quadraticCurveTo(px - 3, (ropeA[1] + ropeB[1]) / 2, ropeB[0], ropeB[1]);
+      ctx.stroke();
+      // 小船
       boat(px - 6, boatY, false);
     }
   }
