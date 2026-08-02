@@ -166,7 +166,7 @@
     { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1 },
     { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2 },
     { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2 },
-    { id: 'dock',   name: '钓船码头', color: '#cfe3e6', w: 1, h: 1 },
+    { id: 'dock',   name: '钓船小屋', color: '#cfe3e6', w: 1, h: 1 },
   ];
 
   // 卡通简约物品图标（统一 viewBox 40x40）
@@ -404,7 +404,7 @@
       interval: 1
     },
     dock: {
-      id: 'dock', name: '钓船码头',
+      id: 'dock', name: '钓船小屋',
       body: '#cfe3e6', roof: '#a9ccd4', accent: '#6f98a3',
       produces: [{ item: 'food', amount: 2 }], interval: 1
     }
@@ -430,7 +430,7 @@
     { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'mine',   group: 'building', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 2 }] },
-    { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 2 }, { id: 'gold', n: 1 }] }
+    { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] }
   ];
   Game.RECIPE_GROUPS = [
     { key: 'material', title: '材料合成' },
