@@ -461,8 +461,8 @@
   }
 
   // 采矿工场专属建模（2×2，格宽 30）：内容框约 px+2..px+57、py+4..py+57，居中——
-  // 左侧采矿车间（坡顶 + 矿洞口），右侧井架塔楼与天轮，前景矿车沿轨道驶出，
-  // 右前矿石堆与车间墙面齿轮
+  // 左侧采矿车间（坡顶 + 矿洞口，主体较宽、贴近井架），右侧井架塔楼与天轮，
+  // 前景矿车沿与车间同宽的轨道驶出，右前矿石堆与车间墙面齿轮
   function drawMineFactoryEntity(b, px, py, pw, ph) {
     const roof = '#6f6c64';
     const body = '#9a968c';
@@ -475,32 +475,32 @@
     rr(px + 3, py + 4, 54, 53, 9);
     ctx.fill();
 
-    // ---- 左侧采矿车间 ----
+    // ---- 左侧采矿车间（主体加大、右移靠近井架塔楼） ----
     // 车间墙
     ctx.fillStyle = body;
-    rr(px + 6, py + 30, 24, 20, 3);
+    rr(px + 9, py + 30, 28, 20, 3);
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 车间坡顶
     ctx.fillStyle = roof;
-    rr(px + 6, py + 25, 24, 7, 3);
+    rr(px + 9, py + 25, 28, 7, 3);
     ctx.fill();
     ctx.strokeStyle = edge;
     ctx.stroke();
     // 矿洞口
     ctx.fillStyle = '#3f3f3a';
-    rr(px + 11, py + 36, 14, 14, 5);
+    rr(px + 16, py + 36, 14, 14, 5);
     ctx.fill();
     ctx.strokeStyle = 'rgba(60, 60, 55, 0.7)';
     ctx.stroke();
     // 洞顶木撑与洞内微光
     ctx.strokeStyle = '#7a5a35';
     ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(px + 12, py + 38); ctx.lineTo(px + 24, py + 38); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 17, py + 38); ctx.lineTo(px + 29, py + 38); ctx.stroke();
     ctx.lineWidth = 1;
     ctx.fillStyle = '#e0b876';
-    ctx.beginPath(); ctx.arc(px + 18, py + 42, 1.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 23, py + 42, 1.3, 0, Math.PI * 2); ctx.fill();
 
     // ---- 右侧井架塔楼 ----
     ctx.fillStyle = body;
@@ -528,39 +528,39 @@
 
     // 烟囱与烟气（车间顶右侧）
     ctx.fillStyle = '#5a5a52';
-    rr(px + 28, py + 21, 5, 7, 1.5); ctx.fill();
+    rr(px + 31, py + 21, 5, 7, 1.5); ctx.fill();
     ctx.fillStyle = 'rgba(160, 160, 150, 0.6)';
-    ctx.beginPath(); ctx.arc(px + 30, py + 18, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 33, py + 18, 2.5, 0, Math.PI * 2); ctx.fill();
 
-    // ---- 前景轨道与矿车 ----
+    // ---- 前景轨道与矿车（轨道与车间同宽，矿车居轨道中部） ----
     ctx.strokeStyle = '#6a6a62';
     ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(px + 2, py + 52); ctx.lineTo(px + 26, py + 52); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(px + 2, py + 49.5); ctx.lineTo(px + 26, py + 49.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 9, py + 52); ctx.lineTo(px + 36, py + 52); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 9, py + 49.5); ctx.lineTo(px + 36, py + 49.5); ctx.stroke();
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'rgba(90, 80, 65, 0.6)';
-    for (let tx = px + 5; tx <= px + 24; tx += 5) {
+    for (let tx = px + 12; tx <= px + 33; tx += 5) {
       ctx.beginPath(); ctx.moveTo(tx, py + 49); ctx.lineTo(tx, py + 52.5); ctx.stroke();
     }
     // 矿车
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.moveTo(px + 8, py + 44);
-    ctx.lineTo(px + 16, py + 44);
-    ctx.lineTo(px + 15, py + 51);
-    ctx.lineTo(px + 9, py + 51);
+    ctx.moveTo(px + 17, py + 44);
+    ctx.lineTo(px + 25, py + 44);
+    ctx.lineTo(px + 24, py + 51);
+    ctx.lineTo(px + 18, py + 51);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = 'rgba(60, 60, 55, 0.7)';
     ctx.stroke();
     // 矿车里的矿石
     ctx.fillStyle = '#7a5a35';
-    ctx.beginPath(); ctx.arc(px + 10, py + 43, 1.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 13, py + 42.5, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 19, py + 43, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 22, py + 42.5, 1.5, 0, Math.PI * 2); ctx.fill();
     // 车轮
     ctx.fillStyle = '#4a4a44';
-    ctx.beginPath(); ctx.arc(px + 10, py + 52, 1.7, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(px + 14, py + 52, 1.7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 19, py + 52, 1.7, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 23, py + 52, 1.7, 0, Math.PI * 2); ctx.fill();
 
     // ---- 右前矿石堆与齿轮 ----
     ctx.fillStyle = '#7a5a35';
