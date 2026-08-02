@@ -58,6 +58,15 @@
   // 矿洞 5% 稀有矿物池（未来新增矿物在此追加，均分该概率）
   Game.TERRAIN_MINE_RARE = ['amber', 'diamond'];
 
+  // 采矿小屋每月的矿物产出：铁 60% / 金 15% / 铜 15% / 稀有矿物 10%
+  Game.rollMineMineral = function () {
+    const r = Math.random();
+    if (r < 0.60) return 'iron';
+    if (r < 0.75) return 'gold';
+    if (r < 0.90) return 'copper';
+    return Game.TERRAIN_MINE_RARE[Math.floor(Math.random() * Game.TERRAIN_MINE_RARE.length)];
+  };
+
   // 各地貌产出（一个阶段 = 1 个月；每个单位 1 份，基地覆盖该地貌多格则叠加）
   Game.TERRAIN_TABLE = {
     [Game.TERRAIN.PLAIN]: {
@@ -129,6 +138,8 @@
   Game.BASE_DEFAULT = { x: Math.floor((Game.MAP_W - 2) / 2), y: Math.floor((Game.MAP_H - 2) / 2), w: 2, h: 2 };
   Game.BASE_MIN_W = 2;
   Game.BASE_MIN_H = 2;
+  // 基地地貌产出概率：每月每块覆盖格只有 10% 概率完成一次产出
+  Game.BASE_PRODUCE_CHANCE = 0.10;
 
   // ---------- 物品 ----------
   Game.ITEMS = [
@@ -149,8 +160,10 @@
     { id: 'plank',  name: '木板', color: '#b7a678', w: 1, h: 1 },
     { id: 'brick',  name: '砖块', color: '#c49a83', w: 1, h: 1 },
     { id: 'hut',    name: '茅草屋', color: '#f0e2c0', w: 1, h: 1 },
-    { id: 'lumber', name: '伐木场', color: '#e9dcba', w: 1, h: 1 },
-    { id: 'mine',   name: '采矿场', color: '#dbd4c6', w: 1, h: 1 },
+    { id: 'brickhouse', name: '砖瓦屋', color: '#d9c1a6', w: 2, h: 2 },
+    { id: 'courtyard', name: '四合院', color: '#7a7a72', w: 4, h: 4 },
+    { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1 },
+    { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1 },
     { id: 'dock',   name: '钓船码头', color: '#cfe3e6', w: 1, h: 1 },
   ];
 
@@ -212,6 +225,41 @@
          '<rect x="5" y="13" width="30" height="22" rx="5"/></g>' +
          '<rect x="17" y="24" width="7" height="11" rx="2.5" fill="#8a6a4f"/>' +
          '<rect x="26" y="16" width="6" height="6" rx="1.5" fill="#fffdf5" stroke="#8a6a4f" stroke-width="1"/>',
+    brickhouse: '<path d="M11 10 L29 10 L34 22 L6 22 Z" fill="#b05a45" stroke="#7a3f2f" stroke-width="1.2"/>' +
+                '<path d="M12 14h16 M13 18h14" stroke="#8a4a3a" stroke-width="1" opacity="0.7"/>' +
+                '<path d="M17 10q2 6 2 12 M23 10q2 6 2 12" stroke="#8a4a3a" stroke-width="1" opacity="0.5"/>' +
+                '<rect x="8" y="21" width="24" height="15" rx="3" fill="#d9c1a6" stroke="#8a5a45" stroke-width="1.2"/>' +
+                '<path d="M10 26h20 M10 31h20" stroke="#9a6f4f" stroke-width="1" opacity="0.5"/>' +
+                '<path d="M16 21v5 M24 26v5 M16 31v5" stroke="#9a6f4f" stroke-width="1" opacity="0.35"/>' +
+                '<rect x="12" y="23" width="5" height="5" rx="1.2" fill="#fffdf5" stroke="#7a3f2f" stroke-width="1"/>' +
+                '<rect x="23" y="23" width="5" height="5" rx="1.2" fill="#fffdf5" stroke="#7a3f2f" stroke-width="1"/>' +
+                '<rect x="16" y="30" width="8" height="6" rx="1.5" fill="#7a3f2f"/>' +
+                '<rect x="27" y="12" width="5" height="7" rx="1.5" fill="#8a4a3a"/>' +
+                '<rect x="26" y="10.5" width="7" height="2.5" rx="1" fill="#9a5a4a"/>',
+    courtyard: '<rect x="5" y="5" width="30" height="30" rx="3" fill="#c4c0b6"/>' +
+               '<rect x="5" y="5" width="30" height="30" rx="3" fill="none" stroke="#7a7a72" stroke-width="1.2"/>' +
+               '<rect x="7" y="7" width="26" height="8" fill="#7a7a72"/>' +
+               '<rect x="7" y="25" width="26" height="8" fill="#7a7a72"/>' +
+               '<rect x="7" y="7" width="8" height="26" fill="#7a7a72"/>' +
+               '<rect x="25" y="7" width="8" height="26" fill="#7a7a72"/>' +
+               '<rect x="7" y="9.5" width="26" height="1.2" fill="#9a9a92"/>' +
+               '<rect x="7" y="27.5" width="26" height="1.2" fill="#9a9a92"/>' +
+               '<rect x="9.5" y="7" width="1.2" height="26" fill="#9a9a92"/>' +
+               '<rect x="27.5" y="7" width="1.2" height="26" fill="#9a9a92"/>' +
+               '<rect x="15" y="15" width="10" height="10" fill="#e2dccf" stroke="#9a9a92" stroke-width="1"/>' +
+               '<rect x="15" y="20" width="10" height="1" fill="#c4c0b6"/>' +
+               '<rect x="19" y="20.5" width="1" height="3.5" fill="#6a5a3f"/>' +
+               '<circle cx="19.5" cy="18.5" r="3.2" fill="#8fae7f" stroke="#5f7a52" stroke-width="0.9"/>' +
+               '<circle cx="18.2" cy="17.5" r="1" fill="#fff" opacity="0.35"/>' +
+               '<rect x="17" y="25" width="6" height="8" rx="1.5" fill="#6a4a3f" stroke="#4a3530" stroke-width="0.8"/>' +
+               '<rect x="18.7" y="26.2" width="2.6" height="3.4" rx="0.9" fill="#fffdf5" opacity="0.85"/>' +
+               '<circle cx="19" cy="29" r="0.9" fill="#c8a85a"/>' +
+               '<rect x="8.5" y="10" width="2.4" height="1.8" fill="#fffdf5" opacity="0.75"/>' +
+               '<rect x="11.8" y="10" width="2.4" height="1.8" fill="#fffdf5" opacity="0.75"/>' +
+               '<rect x="8.5" y="28.5" width="2.4" height="1.8" fill="#fffdf5" opacity="0.75"/>' +
+               '<rect x="11.8" y="28.5" width="2.4" height="1.8" fill="#fffdf5" opacity="0.75"/>' +
+               '<rect x="29" y="10" width="2.4" height="1.8" fill="#fffdf5" opacity="0.75"/>' +
+               '<rect x="29" y="28.5" width="2.4" height="1.8" fill="#fffdf5" opacity="0.75"/>',
     lumber: '<rect x="5" y="13" width="30" height="22" rx="5" fill="#e9dcba"/>' +
             '<rect x="5" y="13" width="30" height="9" rx="5" fill="#b8c99e"/>' +
             '<g fill="none" stroke="#a9855f" stroke-width="1.3">' +
@@ -283,17 +331,32 @@
     hut: {
       id: 'hut', name: '茅草屋',
       body: '#f0e2c0', roof: '#d6b078', accent: '#8a6a4f',
-      produces: [{ item: 'grain', amount: 1 }], interval: 1, capacity: 5
+      produces: [], interval: 1, capacity: 1
+    },
+    brickhouse: {
+      id: 'brickhouse', name: '砖瓦屋',
+      body: '#d9c1a6', roof: '#b05a45', accent: '#7a3f2f',
+      produces: [], interval: 1, capacity: 5
+    },
+    courtyard: {
+      id: 'courtyard', name: '四合院',
+      body: '#b8b4aa', roof: '#7a7a72', accent: '#5f5f58',
+      produces: [], interval: 1, capacity: 25
     },
     lumber: {
-      id: 'lumber', name: '伐木场',
+      id: 'lumber', name: '伐木小屋',
       body: '#e9dcba', roof: '#b8c99e', accent: '#a9855f',
-      produces: [{ item: 'wood', amount: 2 }], interval: 1
+      produces: [{ item: 'wood', amount: 5 }], interval: 1
     },
     mine: {
-      id: 'mine', name: '采矿场',
+      id: 'mine', name: '采矿小屋',
       body: '#dbd4c6', roof: '#b4ada0', accent: '#7d7a70',
-      produces: [{ item: 'stone', amount: 1 }, { item: 'iron', amount: 1 }], interval: 1
+      produces: [
+        { item: 'stone', amount: 4 },
+        { item: Game.rollMineMineral, amount: 1 }
+      ],
+      desc: '4 石头 + 1 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）',
+      interval: 1
     },
     dock: {
       id: 'dock', name: '钓船码头',
@@ -319,9 +382,11 @@
     { out: 'cloth', group: 'material', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'brick', group: 'material', req: [{ id: 'stone', n: 2 }, { id: 'iron', n: 1 }] },
     { out: 'gold',  group: 'material', req: [{ id: 'iron', n: 2 }, { id: 'wood', n: 1 }] },
-    { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] },
-    { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 4 }, { id: 'stone', n: 1 }] },
-    { out: 'mine',   group: 'building', req: [{ id: 'brick', n: 2 }, { id: 'cloth', n: 1 }] },
+    { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
+    { out: 'brickhouse', group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'brick', n: 2 }, { id: 'stone', n: 2 }] },
+    { out: 'courtyard', group: 'building', req: [{ id: 'plank', n: 6 }, { id: 'brick', n: 6 }, { id: 'stone', n: 6 }] },
+    { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
+    { out: 'mine',   group: 'building', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 2 }] },
     { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 2 }, { id: 'gold', n: 1 }] }
   ];
   Game.RECIPE_GROUPS = [

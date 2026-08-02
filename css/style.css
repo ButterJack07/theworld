@@ -453,7 +453,7 @@ button:active { transform: translateY(1px); }
     position: fixed;
     top: 78px;
     left: 20px;
-    width: 236px;
+    width: 286px;
     max-height: calc(100vh - 110px);
     overflow-y: auto;
     z-index: 10;

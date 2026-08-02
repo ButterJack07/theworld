@@ -86,6 +86,9 @@
         });
         Game.world.clumps.forEach(c => { if (c.revealed) Game.revealClump(c); });
       }
+      // 恢复 2×2 茅草屋自动合并为砖瓦屋、2×2 砖瓦屋自动合并为四合院
+      if (Game.mergeHuts) Game.mergeHuts();
+      if (Game.mergeBrickhouses) Game.mergeBrickhouses();
       while (Game.state.villagersCells.length < Game.state.villagers) {
         const spot = Game.findVillagerSpot(Game.state.villagersCells);
         if (!spot) break;

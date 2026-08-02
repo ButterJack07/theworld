@@ -229,8 +229,7 @@
     head.append(icon, title);
     card.appendChild(head);
 
-    def.produces.forEach(p => {
-      const item = Game.ITEMS.find(i => i.id === p.item);
+    if (def.desc) {
       const line = document.createElement('div');
       line.className = 'bi-line';
       const label = document.createElement('span');
@@ -238,15 +237,29 @@
       label.textContent = `每 ${def.interval} 个月产出`;
       const val = document.createElement('span');
       val.className = 'bi-val';
-      const vIcon = document.createElement('span');
-      vIcon.className = 'bi-icon-sm';
-      vIcon.innerHTML = Game.itemIconSVG(item.id);
-      const vName = document.createElement('span');
-      vName.textContent = `${item.name}  +${p.amount}`;
-      val.append(vIcon, vName);
+      val.textContent = def.desc;
       line.append(label, val);
       card.appendChild(line);
-    });
+    } else {
+      def.produces.forEach(p => {
+        const item = Game.ITEMS.find(i => i.id === p.item);
+        const line = document.createElement('div');
+        line.className = 'bi-line';
+        const label = document.createElement('span');
+        label.className = 'bi-label';
+        label.textContent = `每 ${def.interval} 个月产出`;
+        const val = document.createElement('span');
+        val.className = 'bi-val';
+        const vIcon = document.createElement('span');
+        vIcon.className = 'bi-icon-sm';
+        vIcon.innerHTML = Game.itemIconSVG(item.id);
+        const vName = document.createElement('span');
+        vName.textContent = `${item.name}  +${p.amount}`;
+        val.append(vIcon, vName);
+        line.append(label, val);
+        card.appendChild(line);
+      });
+    }
 
     const timer = b.timer || 0;
     const cycle = def.interval * Game.DAYS_PER_MONTH;
@@ -259,10 +272,10 @@
     prog.appendChild(fill);
     card.appendChild(prog);
 
-    if (b.id === 'hut') {
+    if (def.capacity) {
       const foot = document.createElement('div');
       foot.className = 'bi-foot';
-      foot.textContent = `居住人口  ${Game.state.villagers} / ${def.capacity}`;
+      foot.textContent = `住宅容量  ${def.capacity} 人 / 座`;
       card.appendChild(foot);
     }
 
@@ -280,8 +293,10 @@
       b.timer = 0;
       let produced = false;
       def.produces.forEach(p => {
-        if (Game.addItemToInventory(p.item, p.amount)) {
-          Game.state.civ += p.amount;
+        const itemId = typeof p.item === 'function' ? p.item() : p.item;
+        const amount = typeof p.amount === 'function' ? p.amount() : p.amount;
+        if (Game.addItemToInventory(itemId, amount)) {
+          Game.state.civ += amount;
           produced = true;
         }
       });
@@ -289,8 +304,8 @@
     }
   }
 
-  // 基地产出：每个阶段（1 个月 = 30 天）每块覆盖格按当前地貌产出一份，
-  // 覆盖格所属未揭示团的 progress 一起累计（覆盖多格速度提升），达标即揭示
+  // 基地产出：每个阶段（1 个月 = 30 天）每块覆盖格只有一定概率完成一次产出
+  // （BASE_PRODUCE_CHANCE，默认 10%）；覆盖格所属未揭示团的 progress 每次正常累计
   let baseTimer = 0;
   function baseProduce() {
     const b = Game.base;
@@ -308,6 +323,7 @@
             if (!c.revealed) { c.progress += 1; touched.add(ci); }
           }
         }
+        if (Math.random() >= Game.BASE_PRODUCE_CHANCE) continue;
         Game.terrainOutput(t).forEach(([id, n]) => {
           if (Game.addItemToInventory(id, n)) Game.state.civ += n;
         });
