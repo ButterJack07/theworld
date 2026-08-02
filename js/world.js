@@ -588,104 +588,122 @@
   }
 
   // 钓船码头专属建模（3×1 / 1×3，格宽 30）：岸端是船坞小屋主体，水端是木制漂浮平台
-  // （栈板 + 桩柱 + 水面 + 靠泊的小渔船）；按 rot 绕中心旋转得到东西南北四种朝向
+  // （栈板 + 桩柱 + 水面 + 靠泊的小渔船）；四种朝向分别绘制，小屋与小船始终保持直立
   function drawDockyardEntity(b, px, py, pw, ph) {
-    const cx = px + pw / 2, cy = py + ph / 2;
+    ctx.lineWidth = 1;
     const rot = b.rot || 'E';
 
-    ctx.save();
-    ctx.translate(cx, cy);
-    const ang = { E: 0, S: Math.PI / 2, W: Math.PI, N: -Math.PI / 2 }[rot] || 0;
-    ctx.rotate(ang);
-    ctx.lineWidth = 1;
+    // 船坞小屋（直立）
+    const shed = (hx, hy) => {
+      ctx.fillStyle = '#c9b889';
+      rr(hx, hy + 8, 28, 19, 3);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
+      ctx.stroke();
+      ctx.fillStyle = '#8a7a4f';
+      ctx.beginPath();
+      ctx.moveTo(hx - 1, hy + 8);
+      ctx.lineTo(hx + 29, hy + 3);
+      ctx.lineTo(hx + 29, hy + 9);
+      ctx.lineTo(hx - 1, hy + 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(100, 80, 45, 0.5)';
+      ctx.stroke();
+      ctx.fillStyle = '#6a5a3a';
+      rr(hx + 5, hy + 16, 7, 11, 2);
+      ctx.fill();
+      ctx.fillStyle = '#fffdf5';
+      rr(hx + 18, hy + 12, 6, 6, 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
+      ctx.strokeRect(hx + 5, hy + 16, 7, 11);
+      ctx.strokeRect(hx + 18, hy + 12, 6, 6);
+    };
 
-    // 阴影
-    ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
-    rr(-44, -13, 88, 26, 10);
-    ctx.fill();
+    // 小渔船（直立）
+    const boat = (bx, by, faceRight) => {
+      ctx.fillStyle = '#9a5a3a';
+      ctx.beginPath();
+      ctx.moveTo(bx + 1, by + 5);
+      ctx.quadraticCurveTo(bx + 1, by + 16, bx + 10, by + 16);
+      ctx.quadraticCurveTo(bx + 19, by + 16, bx + 19, by + 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(90, 55, 35, 0.6)';
+      ctx.stroke();
+      ctx.fillStyle = '#c08060';
+      ctx.beginPath();
+      ctx.moveTo(bx + 3, by + 6);
+      ctx.quadraticCurveTo(bx + 3, by + 15, bx + 10, by + 15);
+      ctx.quadraticCurveTo(bx + 17, by + 15, bx + 17, by + 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#5a4a32';
+      ctx.fillRect(faceRight ? bx + 8 : bx + 10, by, 1.5, 6);
+      ctx.fillStyle = '#e8e2d2';
+      if (faceRight) {
+        ctx.beginPath(); ctx.moveTo(bx + 9, by + 1); ctx.lineTo(bx + 18, by + 5); ctx.lineTo(bx + 9, by + 6); ctx.closePath(); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.moveTo(bx + 11, by + 1); ctx.lineTo(bx + 2, by + 5); ctx.lineTo(bx + 11, by + 6); ctx.closePath(); ctx.fill();
+      }
+    };
 
-    // ---- 岸边船坞小屋（西端，占左侧 1/3） ----
-    // 墙体
-    ctx.fillStyle = '#c9b889';
-    rr(-44, -5, 29, 19, 3);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
-    ctx.stroke();
-    // 斜棚顶（岸侧高、水侧低）
-    ctx.fillStyle = '#8a7a4f';
-    ctx.beginPath();
-    ctx.moveTo(-45, -14);
-    ctx.lineTo(-14, -9);
-    ctx.lineTo(-14, -5);
-    ctx.lineTo(-45, -5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(100, 80, 45, 0.5)';
-    ctx.stroke();
-    // 门与窗
-    ctx.fillStyle = '#6a5a3a';
-    rr(-38, 3, 7, 10, 2);
-    ctx.fill();
-    ctx.fillStyle = '#fffdf5';
-    rr(-26, -2, 6, 6, 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 95, 55, 0.5)';
-    ctx.strokeRect(-38, 3, 7, 10);
-    ctx.strokeRect(-26, -2, 6, 6);
-
-    // ---- 木制漂浮平台（东端，占右侧 2/3） ----
-    // 栈板
-    ctx.fillStyle = '#d9c2a0';
-    rr(-14, -8, 59, 16, 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(120, 95, 55, 0.45)';
-    ctx.stroke();
-    // 板缝
-    ctx.strokeStyle = 'rgba(110, 85, 50, 0.5)';
-    ctx.beginPath(); ctx.moveTo(-12, -2.5); ctx.lineTo(43, -2.5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-12, 3); ctx.lineTo(43, 3); ctx.stroke();
-    // 桩柱
-    ctx.fillStyle = '#7a5a35';
-    for (const p of [-10, 2, 14, 26]) ctx.fillRect(p - 1.3, 7, 2.6, 8);
-    // 平台下水面
-    ctx.fillStyle = 'rgba(150, 210, 230, 0.85)';
-    ctx.fillRect(-14, 8, 59, 7);
-    // 水波
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    for (let wx = -10; wx < 42; wx += 8) {
-      ctx.beginPath(); ctx.moveTo(wx, 10); ctx.quadraticCurveTo(wx + 4, 12.5, wx + 8, 10); ctx.stroke();
+    if (rot === 'E' || rot === 'W') {
+      const face = rot === 'E';
+      const hx = face ? px + 1 : px + 61;      // 小屋在岸端（E 在西 / W 在东）
+      const platX = face ? px + 30 : px + 0;   // 栈板在另一侧
+      const boatX = face ? px + 62 : px + 3;   // 小船靠水端
+      // 水面（栈板下方）
+      ctx.fillStyle = 'rgba(150, 210, 230, 0.85)';
+      ctx.fillRect(platX, py + 18, 60, 12);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      for (let wx = platX + 3; wx < platX + 57; wx += 9) {
+        ctx.beginPath(); ctx.moveTo(wx, py + 21); ctx.quadraticCurveTo(wx + 4, py + 23.5, wx + 8, py + 21); ctx.stroke();
+      }
+      // 栈板
+      ctx.fillStyle = '#d9c2a0';
+      rr(platX, py + 6, 60, 13, 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 95, 55, 0.45)';
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(110, 85, 50, 0.5)';
+      ctx.beginPath(); ctx.moveTo(platX + 2, py + 10); ctx.lineTo(platX + 58, py + 10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(platX + 2, py + 14); ctx.lineTo(platX + 58, py + 14); ctx.stroke();
+      // 桩柱
+      ctx.fillStyle = '#7a5a35';
+      for (let p = platX + 6; p < platX + 56; p += 12) ctx.fillRect(p - 1.3, py + 18, 2.6, 9);
+      // 小屋 + 小船
+      shed(hx, py + 1);
+      boat(boatX, py + 9, face);
+    } else {
+      const face = rot === 'S';
+      const hy = face ? py + 1 : py + 61;      // 小屋在岸端（S 在北 / N 在南）
+      const platY = face ? py + 30 : py + 0;   // 栈板在另一侧
+      const boatY = face ? py + 62 : py + 3;   // 小船靠水端
+      // 水面（栈板右侧）
+      ctx.fillStyle = 'rgba(150, 210, 230, 0.85)';
+      ctx.fillRect(px + 17, platY, 13, 60);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      for (let wy = platY + 3; wy < platY + 57; wy += 9) {
+        ctx.beginPath(); ctx.moveTo(px + 20, wy); ctx.quadraticCurveTo(px + 22.5, wy + 4, px + 20, wy + 8); ctx.stroke();
+      }
+      // 栈板
+      ctx.fillStyle = '#d9c2a0';
+      rr(px + 5, platY, 13, 60, 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120, 95, 55, 0.45)';
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(110, 85, 50, 0.5)';
+      ctx.beginPath(); ctx.moveTo(px + 8, platY + 2); ctx.lineTo(px + 8, platY + 58); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px + 13, platY + 2); ctx.lineTo(px + 13, platY + 58); ctx.stroke();
+      // 桩柱（横向）
+      ctx.fillStyle = '#7a5a35';
+      for (let p = platY + 6; p < platY + 56; p += 12) ctx.fillRect(px + 18, p - 1.3, 9, 2.6);
+      // 小屋 + 小船
+      shed(px + 1, hy);
+      boat(px + 6, boatY, false);
     }
-
-    // ---- 靠泊的小渔船（平台东端） ----
-    ctx.fillStyle = '#9a5a3a';
-    ctx.beginPath();
-    ctx.moveTo(30, 0);
-    ctx.quadraticCurveTo(30, 7, 37, 7);
-    ctx.quadraticCurveTo(44, 7, 44, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(90, 55, 35, 0.6)';
-    ctx.stroke();
-    // 船内
-    ctx.fillStyle = '#c08060';
-    ctx.beginPath();
-    ctx.moveTo(32, 1);
-    ctx.quadraticCurveTo(32, 6, 37, 6);
-    ctx.quadraticCurveTo(42, 6, 42, 1);
-    ctx.closePath();
-    ctx.fill();
-    // 桅杆与小三角帆
-    ctx.fillStyle = '#5a4a32';
-    ctx.fillRect(38, -6, 1.5, 7);
-    ctx.fillStyle = '#e8e2d2';
-    ctx.beginPath();
-    ctx.moveTo(38.5, -5);
-    ctx.lineTo(44, 0);
-    ctx.lineTo(38.5, 1);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore();
   }
 
   // 统一圆角矩形卡通风建筑：阴影 + 主体 + 屋顶带 + 下沿高光 + 门 + 专属徽记（支持 1×1 / 2×2）
