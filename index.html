@@ -47,9 +47,15 @@
     <h2 class="panel-title">合成列表</h2>
     <div id="recipeList"></div>
   </div>
+  <div class="recipe-panel expand-panel hidden" id="expandPanel">
+    <h2 class="panel-title">扩建</h2>
+    <div class="expand-hint">地图上按指定形状摆放多个低级建筑，自动合并升级</div>
+    <div id="expandList"></div>
+  </div>
   <div class="controls">
     <button id="restart">重新开始</button>
     <button id="recipeToggle" class="play-btn recipe-btn" title="展开 / 收起合成列表"><span id="recipeIcon">📜</span><b>合成</b></button>
+    <button id="expandToggle" class="play-btn recipe-btn" title="展开 / 收起扩建规则"><span id="expandIcon">🏗️</span><b>扩建</b></button>
     <button id="playBtn" class="play-btn"><span id="playIcon">❚❚</span><b id="speedLabel">1x</b></button>
   </div>
 </div>

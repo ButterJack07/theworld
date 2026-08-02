@@ -49,6 +49,14 @@
     recipeToggle.classList.toggle('open', !recipePanel.classList.contains('hidden'));
   });
 
+  // 扩建规则：点击圆形按钮展开 / 收起
+  const expandToggle = document.getElementById('expandToggle');
+  const expandPanel = document.getElementById('expandPanel');
+  expandToggle.addEventListener('click', () => {
+    expandPanel.classList.toggle('hidden');
+    expandToggle.classList.toggle('open', !expandPanel.classList.contains('hidden'));
+  });
+
   Game.world = Game.generateWorld(Game.seed);
 
   document.getElementById('restart').addEventListener('click', () => {
@@ -367,6 +375,7 @@
   // ---------- 启动 ----------
   Game.loadState();
   Game.renderRecipeList();
+  Game.renderUpgrades();
   Game.renderInventory();
   Game.renderCrafting();
   updateStatus();

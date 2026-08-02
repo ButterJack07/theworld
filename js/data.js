@@ -457,6 +457,16 @@
     { key: 'building', title: '建筑合成' }
   ];
 
+  // ---------- 扩建（建筑自动升级规则） ----------
+  // 地图上按指定形状摆放多个低级建筑，自动合并升级为高级建筑（无直接合成配方）
+  Game.UPGRADES = [
+    { src: 'hut', n: 4, out: 'brickhouse', pattern: '2×2' },
+    { src: 'brickhouse', n: 4, out: 'courtyard', pattern: '2×2' },
+    { src: 'lumber', n: 4, out: 'lumbermill', pattern: '2×2' },
+    { src: 'mine', n: 4, out: 'minefactory', pattern: '2×2' },
+    { src: 'dock', n: 3, out: 'dockyard', pattern: '横 / 竖直线' }
+  ];
+
   function reqText(req) {
     return req.map(q => `${Game.ITEMS.find(i => i.id === q.id).name}×${q.n}`).join(' + ');
   }

@@ -103,6 +103,51 @@
   }
   Game.renderRecipeList = renderRecipeList;
 
+  // 扩建面板：展示建筑自动升级（合并）规则
+  function renderUpgrades() {
+    const listEl = document.getElementById('expandList');
+    listEl.innerHTML = '';
+    Game.UPGRADES.forEach(u => {
+      const src = Game.BUILDINGS[u.src];
+      const out = Game.BUILDINGS[u.out];
+      const row = document.createElement('div');
+      row.className = 'expand-row';
+
+      const line = document.createElement('div');
+      line.className = 'expand-line';
+      const left = document.createElement('div');
+      left.className = 'expand-side';
+      const icon = document.createElement('span');
+      icon.className = 'rc-icon';
+      icon.innerHTML = Game.itemIconSVG(u.src);
+      const name = document.createElement('span');
+      name.className = 'expand-name';
+      name.textContent = `${src.name} ×${u.n}`;
+      left.append(icon, name);
+      const arrow = document.createElement('span');
+      arrow.className = 'expand-arrow';
+      arrow.textContent = '→';
+      const right = document.createElement('div');
+      right.className = 'expand-side';
+      const rIcon = document.createElement('span');
+      rIcon.className = 'rc-icon';
+      rIcon.innerHTML = Game.itemIconSVG(u.out);
+      const rName = document.createElement('span');
+      rName.className = 'expand-name';
+      rName.textContent = out.name;
+      right.append(rIcon, rName);
+      line.append(left, arrow, right);
+
+      const note = document.createElement('div');
+      note.className = 'expand-note';
+      note.textContent = `${u.n} 个 ${src.name} 摆成 ${u.pattern} 自动合并`;
+
+      row.append(line, note);
+      listEl.appendChild(row);
+    });
+  }
+  Game.renderUpgrades = renderUpgrades;
+
   const craftPreviewEl = document.createElement('div');
   craftPreviewEl.className = 'preview';
   craftingEl.appendChild(craftPreviewEl);
