@@ -335,6 +335,234 @@
     ctx.beginPath(); ctx.arc(px + 62, py + 108, 1.4, 0, Math.PI * 2); ctx.fill();
   }
 
+  // 伐木工场专属建模（2×2）：右侧大工棚双坡顶，前立面挂圆形锯盘，
+  // 左侧原木堆与运木小车，突出「工场」质感
+  function drawLumbermillEntity(b, px, py, pw, ph) {
+    const roof = '#8a7a4f';
+    const body = '#c9b889';
+    const accent = '#6a5a3a';
+    const edge = 'rgba(120, 95, 55, 0.5)';
+
+    ctx.lineWidth = 1;
+    // 阴影
+    ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
+    rr(px + 3, py + 4, pw - 6, ph - 9, 12);
+    ctx.fill();
+
+    // ---- 右侧大工棚 ----
+    // 双坡屋顶
+    ctx.fillStyle = roof;
+    ctx.beginPath();
+    ctx.moveTo(px + 16, py + 16);
+    ctx.lineTo(px + 76, py + 16);
+    ctx.lineTo(px + 64, py + 5);
+    ctx.lineTo(px + 28, py + 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    // 屋脊高光
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(px + 29, py + 7); ctx.lineTo(px + 63, py + 7); ctx.stroke();
+    ctx.lineWidth = 1;
+    // 瓦片横线
+    ctx.strokeStyle = 'rgba(110, 85, 45, 0.5)';
+    ctx.beginPath(); ctx.moveTo(px + 21, py + 13); ctx.lineTo(px + 71, py + 13); ctx.stroke();
+    // 厂房墙
+    ctx.fillStyle = body;
+    rr(px + 20, py + 16, 54, 50, 4);
+    ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    // 墙板分隔线
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath(); ctx.moveTo(px + 24, py + 34); ctx.lineTo(px + 70, py + 34); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 24, py + 48); ctx.lineTo(px + 70, py + 48); ctx.stroke();
+
+    // 工场大门
+    ctx.fillStyle = accent;
+    rr(px + 40, py + 52, 14, 14, 3);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(80, 60, 30, 0.6)';
+    ctx.stroke();
+
+    // 圆形锯盘（挂在前立面左上方）
+    ctx.save();
+    ctx.translate(px + 38, py + 30);
+    ctx.fillStyle = '#e2e2da';
+    ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7a7a72';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.stroke();
+    // 锯齿（短辐条表现）
+    ctx.strokeStyle = '#9a9a92';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 3, Math.sin(a) * 3);
+      ctx.lineTo(Math.cos(a) * 10, Math.sin(a) * 10);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#6a6a62';
+    ctx.beginPath(); ctx.arc(0, 0, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // ---- 左侧原木堆 ----
+    ctx.fillStyle = '#a08a58';
+    rr(px + 5, py + 22, 11, 7, 2); ctx.fill();
+    rr(px + 5, py + 33, 11, 7, 2); ctx.fill();
+    ctx.fillStyle = '#8a6a45';
+    rr(px + 16, py + 33, 11, 7, 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 90, 50, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px + 6, py + 24); ctx.lineTo(px + 15, py + 24); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 6, py + 35); ctx.lineTo(px + 15, py + 35); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 17, py + 35); ctx.lineTo(px + 26, py + 35); ctx.stroke();
+    // 圆木横截面（左下方）
+    ctx.fillStyle = '#c9b889';
+    ctx.beginPath(); ctx.arc(px + 11, py + 52, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    ctx.fillStyle = '#e8dcbe';
+    ctx.beginPath(); ctx.arc(px + 11, py + 52, 2.6, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#c9b889';
+    ctx.beginPath(); ctx.arc(px + 11, py + 64, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#e8dcbe';
+    ctx.beginPath(); ctx.arc(px + 11, py + 64, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
+
+    // ---- 运木小车 ----
+    ctx.fillStyle = '#6a5a3a';
+    rr(px + 14, py + 58, 16, 5, 1.5); ctx.fill();
+    ctx.fillStyle = '#4a4a44';
+    ctx.beginPath(); ctx.arc(px + 17, py + 64, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 27, py + 64, 2.4, 0, Math.PI * 2); ctx.fill();
+    // 车上的原木
+    ctx.fillStyle = '#a08a58';
+    rr(px + 17, py + 51, 11, 7, 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 90, 50, 0.6)';
+    ctx.beginPath(); ctx.moveTo(px + 18, py + 53); ctx.lineTo(px + 27, py + 53); ctx.stroke();
+  }
+
+  // 采矿工场专属建模（2×2）：右侧井架塔楼与天轮，下方厂房横跨，厂前矿车沿
+  // 轨道驶出，左侧矿石堆与齿轮，突出「工场」质感
+  function drawMineFactoryEntity(b, px, py, pw, ph) {
+    const roof = '#6f6c64';
+    const body = '#9a968c';
+    const accent = '#4a4a44';
+    const edge = 'rgba(80, 80, 75, 0.5)';
+
+    ctx.lineWidth = 1;
+    // 阴影
+    ctx.fillStyle = 'rgba(120, 110, 90, 0.16)';
+    rr(px + 3, py + 4, pw - 6, ph - 9, 12);
+    ctx.fill();
+
+    // ---- 右侧井架塔楼 ----
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(px + 54, py + 34);
+    ctx.lineTo(px + 72, py + 34);
+    ctx.lineTo(px + 66, py + 8);
+    ctx.lineTo(px + 60, py + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    // 塔柱横撑
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath(); ctx.moveTo(px + 56, py + 16); ctx.lineTo(px + 70, py + 16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 55, py + 24); ctx.lineTo(px + 71, py + 24); ctx.stroke();
+    // 天轮（提升轮）
+    ctx.fillStyle = '#c8c8c0';
+    ctx.beginPath(); ctx.arc(px + 63, py + 22, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#5a5a52';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(px + 63, py + 22, 6, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(px + 63, py + 22, 2, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 58, py + 22); ctx.lineTo(px + 68, py + 22); ctx.stroke();
+    ctx.lineWidth = 1;
+
+    // ---- 底部厂房（横跨） ----
+    ctx.fillStyle = body;
+    rr(px + 8, py + 48, 66, 22, 4);
+    ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath(); ctx.moveTo(px + 12, py + 60); ctx.lineTo(px + 70, py + 60); ctx.stroke();
+    // 厂房顶的坡顶
+    ctx.fillStyle = roof;
+    rr(px + 8, py + 42, 66, 9, 4);
+    ctx.fill();
+    ctx.strokeStyle = edge;
+    ctx.stroke();
+
+    // 厂房上的小烟囱与烟气
+    ctx.fillStyle = '#5a5a52';
+    rr(px + 60, py + 34, 6, 9, 1.5); ctx.fill();
+    ctx.fillStyle = 'rgba(160, 160, 150, 0.6)';
+    ctx.beginPath();
+    ctx.arc(px + 63, py + 31, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ---- 左下方矿车 + 轨道 ----
+    ctx.strokeStyle = '#6a6a62';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(px + 4, py + 70); ctx.lineTo(px + 34, py + 70); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 4, py + 67); ctx.lineTo(px + 34, py + 67); ctx.stroke();
+    ctx.lineWidth = 1;
+    // 枕木
+    ctx.strokeStyle = 'rgba(90, 80, 65, 0.6)';
+    for (let tx = px + 6; tx <= px + 32; tx += 7) {
+      ctx.beginPath(); ctx.moveTo(tx, py + 66.5); ctx.lineTo(tx, py + 70.5); ctx.stroke();
+    }
+    // 矿车车斗
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(px + 14, py + 58);
+    ctx.lineTo(px + 26, py + 58);
+    ctx.lineTo(px + 24, py + 66);
+    ctx.lineTo(px + 16, py + 66);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(60, 60, 55, 0.7)';
+    ctx.stroke();
+    // 矿车里的矿石
+    ctx.fillStyle = '#7a5a35';
+    ctx.beginPath(); ctx.arc(px + 17, py + 57, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 21, py + 56, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 20, py + 58, 1.6, 0, Math.PI * 2); ctx.fill();
+    // 车轮
+    ctx.fillStyle = '#4a4a44';
+    ctx.beginPath(); ctx.arc(px + 17, py + 67, 2.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 23, py + 67, 2.2, 0, Math.PI * 2); ctx.fill();
+
+    // ---- 矿石堆与齿轮（厂房前） ----
+    ctx.fillStyle = '#7a5a35';
+    ctx.beginPath(); ctx.arc(px + 45, py + 55, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 49, py + 53, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(px + 47, py + 50, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(90, 65, 35, 0.6)';
+    ctx.beginPath(); ctx.arc(px + 45, py + 55, 4, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(px + 49, py + 53, 3, 0, Math.PI * 2); ctx.stroke();
+    // 齿轮（墙面）
+    ctx.fillStyle = '#c8c8c0';
+    ctx.beginPath(); ctx.arc(px + 62, py + 55, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#5a5a52';
+    ctx.stroke();
+    ctx.fillStyle = '#6a6a62';
+    ctx.beginPath(); ctx.arc(px + 62, py + 55, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#8a8a82';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px + 58, py + 55); ctx.lineTo(px + 66, py + 55); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px + 62, py + 51); ctx.lineTo(px + 62, py + 59); ctx.stroke();
+  }
+
   // 统一圆角矩形卡通风建筑：阴影 + 主体 + 屋顶带 + 下沿高光 + 门 + 专属徽记（支持 1×1 / 2×2）
   function drawBuildingEntity(b) {
     const def = Game.BUILDINGS[b.id];
@@ -343,6 +571,8 @@
     const pw = w * Game.CELL, ph = h * Game.CELL;
     if (b.id === 'brickhouse') { drawBrickhouseEntity(b, px, py, pw, ph); return; }
     if (b.id === 'courtyard') { drawCourtyardEntity(b, px, py, pw, ph); return; }
+    if (b.id === 'lumbermill') { drawLumbermillEntity(b, px, py, pw, ph); return; }
+    if (b.id === 'minefactory') { drawMineFactoryEntity(b, px, py, pw, ph); return; }
     const cx = px + pw / 2;
     const bx = px + 4, by = py + 5, bw = pw - 8, bh = ph - 10, br = 10;
     const roofH = Math.round(bh * 0.42);
@@ -764,28 +994,39 @@
   }
   Game.spawnStarterHut = spawnStarterHut;
 
-  // 地图上 4 个茅草屋摆成 2×2 → 自动合并为 1 个砖瓦屋（返回最后一个合并出的砖瓦屋，无则 null）
-  function mergeHuts() {
+  // 通用合并：地图上 4 个 srcId（1×1）摆成 2×2 → 合并为 1 个 outId（2×2，位于窗口左上角）
+  // 返回最后一个合并出的建筑，无则 null
+  function mergeGrid(srcId, outId) {
     let last = null;
     for (let y = 0; y < Game.MAP_H - 1; y++) {
       for (let x = 0; x < Game.MAP_W - 1; x++) {
         const cells = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]];
         let ok = true;
         for (const [cx, cy] of cells) {
-          if (!Game.state.buildings.some(bd => bd.id === 'hut' && bd.x === cx && bd.y === cy)) { ok = false; break; }
+          if (!Game.state.buildings.some(bd => bd.id === srcId && bd.x === cx && bd.y === cy)) { ok = false; break; }
         }
         if (!ok) continue;
         cells.forEach(([cx, cy]) => {
-          const i = Game.state.buildings.findIndex(bd => bd.id === 'hut' && bd.x === cx && bd.y === cy);
+          const i = Game.state.buildings.findIndex(bd => bd.id === srcId && bd.x === cx && bd.y === cy);
           Game.state.buildings.splice(i, 1);
         });
-        last = { id: 'brickhouse', x, y };
+        last = { id: outId, x, y };
         Game.state.buildings.push(last);
       }
     }
     return last;
   }
+  Game.mergeGrid = mergeGrid;
+
+  // 4 个茅草屋 → 砖瓦屋
+  function mergeHuts() { return mergeGrid('hut', 'brickhouse'); }
   Game.mergeHuts = mergeHuts;
+  // 4 个伐木小屋 → 伐木工场
+  function mergeLumbermills() { return mergeGrid('lumber', 'lumbermill'); }
+  Game.mergeLumbermills = mergeLumbermills;
+  // 4 个采矿小屋 → 采矿工场
+  function mergeMineFactories() { return mergeGrid('mine', 'minefactory'); }
+  Game.mergeMineFactories = mergeMineFactories;
 
   // 地图上 4 个砖瓦屋（每个 2×2）拼成 2×2 一块（合计覆盖 4×4）→ 自动合并为 1 个四合院
   // （砖瓦屋左上角按间隔 2 摆放，即 (x,y),(x+2,y),(x,y+2),(x+2,y+2)，互不重叠才可由玩家摆出）
@@ -834,10 +1075,14 @@
     Game.updateStatus();
     Game.saveState();
     drawWorld();
-    // 放下的茅草屋若与邻格拼成 2×2，自动升级为砖瓦屋；砖瓦屋若拼成 2×2，再自动升级为四合院
+    // 放下的低级建筑若拼成 2×2，自动合并升级为对应的工场/砖瓦屋/四合院
     let merged = mergeHuts();
     const mergedCourtyard = mergeBrickhouses();
     if (mergedCourtyard) merged = mergedCourtyard;
+    const mergedLumbermill = mergeLumbermills();
+    const mergedMineFactory = mergeMineFactories();
+    if (mergedLumbermill) merged = mergedLumbermill;
+    if (mergedMineFactory) merged = mergedMineFactory;
     if (merged) {
       Game.selectedBuilding = merged;
       Game.saveState();

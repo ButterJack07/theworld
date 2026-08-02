@@ -164,6 +164,8 @@
     { id: 'courtyard', name: '四合院', color: '#7a7a72', w: 4, h: 4 },
     { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1 },
     { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1 },
+    { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2 },
+    { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2 },
     { id: 'dock',   name: '钓船码头', color: '#cfe3e6', w: 1, h: 1 },
   ];
 
@@ -279,7 +281,35 @@
           '<rect x="8" y="23" width="4" height="3" rx="1" fill="#8d8a80"/>' +
           '<rect x="28" y="27" width="4" height="3" rx="1" fill="#8d8a80"/>' +
           '<rect x="10" y="30" width="3" height="3" rx="1" fill="#8d8a80"/>' +
-          '<path d="M14 24h13" stroke="#a7a29a" stroke-width="1" opacity="0.6"/>',
+           '<path d="M14 24h13" stroke="#a7a29a" stroke-width="1" opacity="0.6"/>',
+    lumbermill: '<rect x="5" y="13" width="30" height="22" rx="5" fill="#c9b889"/>' +
+                '<rect x="5" y="13" width="30" height="9" rx="5" fill="#8a7a4f"/>' +
+                '<g fill="none" stroke="#8a6a45" stroke-width="1.3">' +
+                '<rect x="5" y="13" width="30" height="9" rx="5"/>' +
+                '<rect x="5" y="13" width="30" height="22" rx="5"/></g>' +
+                '<circle cx="20" cy="23" r="4.8" fill="#d8d8d0" stroke="#6a6a62" stroke-width="1.2"/>' +
+                '<circle cx="20" cy="23" r="1.6" fill="#6a6a62"/>' +
+                '<path d="M20 18.2 l1.7 -2.3 M20 18.2 l-1.7 -2.3" stroke="#6a6a62" stroke-width="1.2" stroke-linecap="round"/>' +
+                '<path d="M20 27.8 l1.7 2.3 M20 27.8 l-1.7 2.3" stroke="#6a6a62" stroke-width="1.2" stroke-linecap="round"/>' +
+                '<path d="M15.2 23 l-2.3 1.7 M15.2 23 l-2.3 -1.7" stroke="#6a6a62" stroke-width="1.2" stroke-linecap="round"/>' +
+                '<path d="M24.8 23 l2.3 1.7 M24.8 23 l2.3 -1.7" stroke="#6a6a62" stroke-width="1.2" stroke-linecap="round"/>' +
+                '<rect x="8" y="29" width="8" height="5" rx="2" fill="#a08a58" stroke="#8a6a45" stroke-width="0.8"/>' +
+                '<rect x="17" y="29" width="8" height="5" rx="2" fill="#a08a58" stroke="#8a6a45" stroke-width="0.8"/>' +
+                '<rect x="26" y="29" width="8" height="5" rx="2" fill="#a08a58" stroke="#8a6a45" stroke-width="0.8"/>',
+    minefactory: '<rect x="5" y="13" width="30" height="22" rx="5" fill="#9a968c"/>' +
+                 '<rect x="5" y="13" width="30" height="9" rx="5" fill="#6f6c64"/>' +
+                 '<g fill="none" stroke="#5a5a52" stroke-width="1.3">' +
+                 '<rect x="5" y="13" width="30" height="9" rx="5"/>' +
+                 '<rect x="5" y="13" width="30" height="22" rx="5"/></g>' +
+                 '<path d="M12 26 v-4 h4 a4 4 0 0 1 8 0 h4 v4 Z" fill="#3f3f3a"/>' +
+                 '<path d="M12 22 h4 M24 22 h4" stroke="#7a5a35" stroke-width="1.6"/>' +
+                 '<path d="M12 22 v4 M28 22 v4" stroke="#7a5a35" stroke-width="1.6"/>' +
+                 '<circle cx="20" cy="26.5" r="1.1" fill="#e0b876"/>' +
+                 '<rect x="7" y="28" width="11" height="5" rx="1.5" fill="#7a5a35" stroke="#5a4025" stroke-width="0.8"/>' +
+                 '<rect x="9" y="29" width="7" height="3" fill="#9a968c"/>' +
+                 '<circle cx="9.5" cy="33.5" r="1.5" fill="none" stroke="#5a4025" stroke-width="1.1"/>' +
+                 '<circle cx="15.5" cy="33.5" r="1.5" fill="none" stroke="#5a4025" stroke-width="1.1"/>' +
+                 '<path d="M22 31 l2 2 l-2 2 M24 33 l4 0 M20 33 l3 1 l-2 2" fill="none" stroke="#6a6a62" stroke-width="1.2" stroke-linecap="round"/>',
     dock: '<rect x="5" y="13" width="30" height="22" rx="5" fill="#cfe3e6"/>' +
           '<rect x="5" y="13" width="30" height="9" rx="5" fill="#a9ccd4"/>' +
           '<g fill="none" stroke="#6f98a3" stroke-width="1.3">' +
@@ -358,6 +388,21 @@
       desc: '4 石头 + 1 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）',
       interval: 1
     },
+    lumbermill: {
+      id: 'lumbermill', name: '伐木工场',
+      body: '#c9b889', roof: '#8a7a4f', accent: '#6a5a3a',
+      produces: [{ item: 'wood', amount: 25 }], interval: 1
+    },
+    minefactory: {
+      id: 'minefactory', name: '采矿工场',
+      body: '#9a968c', roof: '#6f6c64', accent: '#4a4a44',
+      produces: [
+        { item: 'stone', amount: 20 },
+        { item: Game.rollMineMineral, amount: 5 }
+      ],
+      desc: '20 石头 + 5 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）',
+      interval: 1
+    },
     dock: {
       id: 'dock', name: '钓船码头',
       body: '#cfe3e6', roof: '#a9ccd4', accent: '#6f98a3',
@@ -383,8 +428,6 @@
     { out: 'brick', group: 'material', req: [{ id: 'stone', n: 2 }, { id: 'iron', n: 1 }] },
     { out: 'gold',  group: 'material', req: [{ id: 'iron', n: 2 }, { id: 'wood', n: 1 }] },
     { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
-    { out: 'brickhouse', group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'brick', n: 2 }, { id: 'stone', n: 2 }] },
-    { out: 'courtyard', group: 'building', req: [{ id: 'plank', n: 6 }, { id: 'brick', n: 6 }, { id: 'stone', n: 6 }] },
     { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'mine',   group: 'building', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 2 }] },
     { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 2 }, { id: 'gold', n: 1 }] }
