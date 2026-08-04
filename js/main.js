@@ -384,8 +384,9 @@
     });
   }
 
-  Game.startNewGame = function (modeId) {
+  Game.startNewGame = function (modeId, skipIntro) {
     Game.mode = modeId;
+    Game.store.set(Game.LAST_MODE_KEY, modeId);
     Game.seed = Math.floor(Math.random() * 1e9);
     Game.store.set(Game.seedKey(modeId), String(Game.seed));
     Game.world = Game.generateWorld(Game.seed);
@@ -405,11 +406,12 @@
     updateStatus();
     Game.drawWorld();
     hideStartMenu();
-    playIntro();
+    if (!skipIntro) playIntro();
   };
 
-  Game.resumeGame = function (modeId) {
+  Game.resumeGame = function (modeId, skipIntro) {
     Game.mode = modeId;
+    Game.store.set(Game.LAST_MODE_KEY, modeId);
     Game.seed = parseInt(Game.store.get(Game.seedKey(modeId)), 10);
     Game.world = Game.generateWorld(Game.seed);
     Game.loadState();
@@ -428,7 +430,7 @@
     updateStatus();
     Game.drawWorld();
     hideStartMenu();
-    playIntro();
+    if (!skipIntro) playIntro();
   };
 
   function updateModeLabel() {
@@ -1549,9 +1551,16 @@
   Game.tick = tick;
 
   // ---------- 启动 ----------
-  // 进入游戏一律经过开始菜单选择模式：各模式独立存档，点选模式后如有历史记录可选「继续发展 / 重新开始」
+  // 首次进入游戏经过开始菜单选择模式；之后若在游戏中刷新页面，则直接恢复到上次玩到的模式，不再退回主界面
   renderModeList();
   updateRankEntry();
-  showStartMenu();
+  const lastMode = Game.store.get(Game.LAST_MODE_KEY);
+  const validModes = Game.GAME_MODES.map(m => m.id);
+  if (validModes.includes(lastMode) && Game.hasSave(lastMode)) {
+    Game.resumeGame(lastMode, true);
+  } else {
+    Game.mode = null;
+    showStartMenu();
+  }
   setInterval(tick, 500);
 })();

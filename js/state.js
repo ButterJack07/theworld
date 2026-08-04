@@ -11,6 +11,8 @@
 
   const SEED_PREFIX = 'tw-seed-';
   const GAME_PREFIX = 'tw-game-';
+  const LAST_MODE_KEY = 'tw-last';
+  Game.LAST_MODE_KEY = LAST_MODE_KEY;
   Game.mode = null;
   Game.seed = null;
   Game.seedKey = function (mode) { return SEED_PREFIX + mode; };
