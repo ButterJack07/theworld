@@ -9,22 +9,35 @@
   };
   Game.store = store;
 
-  const SEED_KEY = 'tw-seed';
-  const GAME_KEY = 'tw-game';
-  Game.SEED_KEY = SEED_KEY;
-  Game.GAME_KEY = GAME_KEY;
-
-  let seed = parseInt(store.get(SEED_KEY), 10);
-  if (!Number.isInteger(seed) || seed < 0) {
-    seed = Math.floor(Math.random() * 1e9);
-    store.set(SEED_KEY, String(seed));
-  }
-  Game.seed = seed;
+  const SEED_PREFIX = 'tw-seed-';
+  const GAME_PREFIX = 'tw-game-';
+  Game.mode = null;
+  Game.seed = null;
+  Game.seedKey = function (mode) { return SEED_PREFIX + mode; };
+  Game.gameKey = function (mode) { return GAME_PREFIX + mode; };
 
   Game.state = null;
   Game.displayDay = 1;
 
+  // 迁移：旧版单一存档（tw-game / tw-seed）归入文明模式，避免历史进度丢失
+  (function migrateOldSave() {
+    const oldGame = store.get('tw-game');
+    if (!oldGame) return;
+    if (store.get(Game.gameKey('civilization'))) return;
+    try {
+      const s = JSON.parse(oldGame);
+      if (s && s.version === 2) {
+        store.set(Game.gameKey('civilization'), oldGame);
+        const oldSeed = store.get('tw-seed');
+        if (oldSeed) store.set(Game.seedKey('civilization'), oldSeed);
+        store.set('tw-game', 'null');
+        store.set('tw-seed', 'null');
+      }
+    } catch (e) {}
+  })();
+
   function resetState(mode) {
+    Game.mode = mode;
     Game.placed = Game.initInventory();
     Game.craftingItems = [];
     Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1, mode: mode || 'civilization', won: false };
@@ -44,7 +57,7 @@
   Game.resetState = resetState;
 
   function saveState() {
-    store.set(GAME_KEY, JSON.stringify({
+    store.set(Game.gameKey(Game.mode), JSON.stringify({
       version: 2,
       seed: Game.seed,
       villagers: Game.state.villagers,
@@ -64,7 +77,7 @@
 
   function loadState() {
     let saved = null;
-    try { saved = JSON.parse(store.get(GAME_KEY)); } catch (e) { saved = null; }
+    try { saved = JSON.parse(store.get(Game.gameKey(Game.mode))); } catch (e) { saved = null; }
     // 旧版存档（无 version）不兼容：改月制后直接重新开始
     if (saved && saved.version !== 2) saved = null;
     if (saved && saved.seed === Game.seed) {
@@ -119,10 +132,20 @@
   }
   Game.loadState = loadState;
 
-  // 是否存在可继续的存档（有存档且版本、seed 匹配 → 跳过开始菜单直接恢复游戏）
-  Game.hasSave = function () {
+  // 指定模式是否存在可继续的存档（有存档且版本、seed 匹配）
+  Game.hasSave = function (mode) {
     let saved = null;
-    try { saved = JSON.parse(store.get(GAME_KEY)); } catch (e) { saved = null; }
-    return !!(saved && saved.version === 2 && saved.seed === Game.seed);
+    try { saved = JSON.parse(store.get(Game.gameKey(mode))); } catch (e) { saved = null; }
+    if (!saved || saved.version !== 2) return false;
+    const savedSeed = parseInt(store.get(Game.seedKey(mode)), 10);
+    return Number.isInteger(savedSeed) && saved.seed === savedSeed;
+  };
+
+  // 读取指定模式的存档（用于开始菜单展示历史记录），无有效存档返回 null
+  Game.readSave = function (mode) {
+    let saved = null;
+    try { saved = JSON.parse(store.get(Game.gameKey(mode))); } catch (e) { saved = null; }
+    if (!saved || saved.version !== 2) return null;
+    return saved;
   };
 })();

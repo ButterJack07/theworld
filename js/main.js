@@ -282,7 +282,7 @@
     });
   });
 
-  Game.world = Game.generateWorld(Game.seed);
+  // 世界在进入具体模式时按该模式的种子生成（见 startNewGame / resumeGame）
 
   // 重新播放开场动画：标题逐字浮现 + 组件错峰浮入
   function playIntro() {
@@ -310,6 +310,41 @@
   function hideStartMenu() {
     document.getElementById('startMenu').classList.add('hidden');
   }
+
+  // 开始菜单点选模式：该模式有历史记录 → 询问继续 / 重新开始；否则直接开新档
+  let choiceMode = null;
+  function onSelectMode(modeId) {
+    if (Game.hasSave(modeId)) {
+      showChoice(modeId, Game.readSave(modeId));
+    } else {
+      Game.startNewGame(modeId);
+    }
+  }
+
+  function showChoice(modeId, saved) {
+    choiceMode = modeId;
+    document.getElementById('choiceMode').textContent = Game.modeName(modeId);
+    document.getElementById('choiceInfo').textContent =
+      `历时 ${formatElapsed(saved.day || 1)} · 文明指数 ${saved.civ || 0}`;
+    document.getElementById('choiceOverlay').classList.remove('hidden');
+    document.getElementById('choicePanel').classList.remove('hidden');
+  }
+
+  function hideChoice() {
+    document.getElementById('choiceOverlay').classList.add('hidden');
+    document.getElementById('choicePanel').classList.add('hidden');
+  }
+  document.getElementById('choiceOverlay').addEventListener('click', hideChoice);
+  document.getElementById('choiceResume').addEventListener('click', () => {
+    const id = choiceMode;
+    hideChoice();
+    if (id) Game.resumeGame(id);
+  });
+  document.getElementById('choiceRestart').addEventListener('click', () => {
+    const id = choiceMode;
+    hideChoice();
+    if (id) Game.startNewGame(id);
+  });
 
   function renderModeList() {
     const list = document.getElementById('modeList');
@@ -339,17 +374,41 @@
         card.appendChild(lock);
         card.title = m.lockNote || '尚未开放';
       } else {
-        card.addEventListener('click', () => Game.startNewGame(m.id));
+        card.addEventListener('click', () => onSelectMode(m.id));
       }
       list.appendChild(card);
     });
   }
 
   Game.startNewGame = function (modeId) {
+    Game.mode = modeId;
     Game.seed = Math.floor(Math.random() * 1e9);
-    Game.store.set(Game.SEED_KEY, String(Game.seed));
+    Game.store.set(Game.seedKey(modeId), String(Game.seed));
     Game.world = Game.generateWorld(Game.seed);
     Game.resetState(modeId);
+    Game.selectedBuilding = null;
+    Game.selectedBase = false;
+    Game.selectedTerrain = null;
+    Game.selectedItem = null;
+    mode = 0;
+    applyMode();
+    updateControls();
+    Game.renderRecipeList();
+    Game.renderUpgrades();
+    Game.renderInventory();
+    Game.renderCrafting();
+    updateModeLabel();
+    updateStatus();
+    Game.drawWorld();
+    hideStartMenu();
+    playIntro();
+  };
+
+  Game.resumeGame = function (modeId) {
+    Game.mode = modeId;
+    Game.seed = parseInt(Game.store.get(Game.seedKey(modeId)), 10);
+    Game.world = Game.generateWorld(Game.seed);
+    Game.loadState();
     Game.selectedBuilding = null;
     Game.selectedBase = false;
     Game.selectedTerrain = null;
@@ -824,19 +883,8 @@
   Game.tick = tick;
 
   // ---------- 启动 ----------
-  // 有存档 → 恢复游戏；无存档（初次访问）→ 显示开始菜单选择模式
-  if (Game.hasSave()) {
-    Game.loadState();
-    Game.renderRecipeList();
-    Game.renderUpgrades();
-    Game.renderInventory();
-    Game.renderCrafting();
-    updateModeLabel();
-    updateStatus();
-    Game.drawWorld();
-  } else {
-    renderModeList();
-    showStartMenu();
-  }
+  // 进入游戏一律经过开始菜单选择模式：各模式独立存档，点选模式后如有历史记录可选「继续发展 / 重新开始」
+  renderModeList();
+  showStartMenu();
   setInterval(tick, 500);
 })();

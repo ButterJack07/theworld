@@ -1031,15 +1031,15 @@ button:active { transform: translateY(1px); }
   user-select: none;
 }
 
-/* ---------- 胜利面板 ---------- */
-.victory-overlay {
+/* ---------- 胜利面板 / 模式选择面板 ---------- */
+.victory-overlay, .choice-overlay {
   position: fixed;
   inset: 0;
   z-index: 35;
   background: rgba(0, 0, 0, 0.5);
 }
-.victory-overlay.hidden { display: none; }
-.victory-panel {
+.victory-overlay.hidden, .choice-overlay.hidden { display: none; }
+.victory-panel, .choice-panel {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -1058,7 +1058,7 @@ button:active { transform: translateY(1px); }
   user-select: none;
   text-align: center;
 }
-.victory-panel.hidden { display: none; }
+.victory-panel.hidden, .choice-panel.hidden { display: none; }
 .victory-mode {
   font-size: 18px;
   letter-spacing: 4px;
@@ -1114,4 +1114,23 @@ button:active { transform: translateY(1px); }
   display: flex;
   gap: 10px;
   justify-content: center;
+}
+.choice-mode {
+  font-size: 17px;
+  letter-spacing: 4px;
+  color: #5e6e55;
+  margin-bottom: 10px;
+}
+.choice-info {
+  font-size: 13px;
+  letter-spacing: 1px;
+  line-height: 1.8;
+  color: #909184;
+  margin-bottom: 8px;
+}
+.choice-note {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #a8a99a;
+  margin-bottom: 16px;
 }
