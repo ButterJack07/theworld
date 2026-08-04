@@ -1144,6 +1144,51 @@ button:active { transform: translateY(1px); }
   margin-bottom: 16px;
 }
 
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.name-label {
+  flex: 0 0 88px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #5e6e55;
+  text-align: right;
+}
+.name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid rgba(212, 178, 106, 0.5);
+  border-radius: 8px;
+  background: #fffdf7;
+  color: #5e6e55;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 1px;
+  outline: none;
+}
+.name-input:focus {
+  border-color: #d4b26a;
+  box-shadow: 0 0 0 2px rgba(212, 178, 106, 0.25);
+}
+.settings-name {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 2px;
+}
+.settings-name .name-input { flex: 1; }
+.settings-name .restart-btn { flex: none; }
+.settings-name-tip {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #a8a99a;
+  margin-bottom: 8px;
+}
+
 /* ---------- 排行榜 ---------- */
 .rank-entry {
   position: absolute;
@@ -1276,6 +1321,35 @@ button:active { transform: translateY(1px); }
   color: #5e6e55;
   font-weight: 600;
 }
+.rank-name {
+  flex: 1;
+  margin: 0 8px;
+  text-align: left;
+  color: #5e6e55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #a8a99a;
+}
+.rank-loading::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(212, 178, 106, 0.35);
+  border-top-color: #a3823f;
+  border-radius: 50%;
+  animation: rankSpin 0.8s linear infinite;
+}
+@keyframes rankSpin { to { transform: rotate(360deg); } }
 .rank-empty {
   font-size: 12px;
   letter-spacing: 2px;

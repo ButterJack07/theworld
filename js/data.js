@@ -612,4 +612,13 @@
   Game.OCEAN_COLOR = '#a4becb';
   Game.LAND_COLOR  = '#b5c5a3';
   Game.GRID_LINE   = 'rgba(255, 253, 247, 0.5)';
+
+  // ---------- 在线排行（Supabase）配置 ----------
+  // 在 Supabase 建表并填入 URL 与 anon key 后即可启用（建表 SQL 见 README「在线排行接入」）。
+  Game.SUPABASE_URL = '';
+  Game.SUPABASE_ANON_KEY = '';
+  Game.ONLINE_ENABLED = function () {
+    return Boolean(Game.SUPABASE_URL && Game.SUPABASE_ANON_KEY);
+  };
+  Game.ONLINE_TABLE = 'scores';
 })();

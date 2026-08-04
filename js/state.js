@@ -45,7 +45,7 @@
     Game.mode = mode;
     Game.placed = Game.initInventory();
     Game.craftingItems = [];
-    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1, mode: mode || 'civilization', won: false };
+    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '' };
     Game.base = { ...Game.BASE_DEFAULT };
     Game.spawnStarterTown();
     // 初始人口 2：为每位人口分配一个站格（空闲劳动力 = 探索者）
@@ -72,6 +72,8 @@
       day: Game.state.day,
       mode: Game.state.mode,
       won: Game.state.won,
+      playerName: Game.state.playerName || '',
+      saveName: Game.state.saveName || '',
       base: Game.base,
       placed: Game.placed.map(p => ({ id: p.item.id, col: p.col, row: p.row, count: p.count })),
       crafting: Game.craftingItems.map(p => ({ id: p.item.id, col: p.col, row: p.row, count: p.count })),
@@ -95,7 +97,9 @@
         civ: saved.civ || 0,
         day: saved.day || 1,
         mode: ['civilization', 'technology', 'freedom'].includes(saved.mode) ? saved.mode : 'civilization',
-        won: !!saved.won
+        won: !!saved.won,
+        playerName: String(saved.playerName || ''),
+        saveName: String(saved.saveName || '')
       };
       if (saved.towncenter) Game.state.buildings.push({ id: 'towncenter', x: saved.towncenter.x, y: saved.towncenter.y, workers: 0 });
       Game.displayDay = Game.state.day;

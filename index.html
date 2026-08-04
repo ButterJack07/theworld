@@ -92,6 +92,13 @@
         <li><b>👥 劳动力</b>：弹出菜单查看各工种劳动力分配情况</li>
         <li><b>⚙️ 设置</b>：打开 / 关闭本菜单</li>
       </ul>
+      <div class="settings-section">存档与玩家名</div>
+      <div class="settings-name">
+        <input id="setPlayerName" class="name-input" maxlength="12" placeholder="玩家名（在线排行显示）">
+        <input id="setSaveName" class="name-input" maxlength="12" placeholder="存档名（可选）">
+        <button id="setNameSave" class="restart-btn">保存</button>
+      </div>
+      <div class="settings-name-tip">玩家名用于在线排行榜；留空则不参与在线排行</div>
     </div>
     <div class="settings-page" id="page-restart">
       <div class="settings-game">
@@ -148,13 +155,31 @@
       <button id="choiceRestart" class="restart-btn">重新开始</button>
     </div>
   </div>
+  <div class="choice-overlay hidden" id="nameOverlay"></div>
+  <div class="choice-panel hidden" id="namePanel">
+    <h2 class="panel-title">新游戏 · 起个名字</h2>
+    <div class="choice-mode" id="nameMode"></div>
+    <div class="name-row">
+      <span class="name-label">玩家名</span>
+      <input id="namePlayer" class="name-input" maxlength="12" placeholder="用于在线排行榜显示">
+    </div>
+    <div class="name-row">
+      <span class="name-label">存档名（可选）</span>
+      <input id="nameSave" class="name-input" maxlength="12" placeholder="本存档备注">
+    </div>
+    <div class="choice-note">玩家名留空则不参与在线排行；游戏中可随时从设置菜单修改</div>
+    <div class="victory-actions">
+      <button id="nameConfirm" class="restart-btn">开始游戏</button>
+      <button id="nameCancel" class="restart-btn">返回</button>
+    </div>
+  </div>
   <div class="choice-overlay hidden" id="rankOverlay"></div>
   <div class="choice-panel leader-panel hidden" id="rankPanel">
     <button id="rankClose" class="settings-close" title="关闭排行榜">✕</button>
     <h2 class="panel-title">排行榜</h2>
     <div class="rank-tabs">
       <button class="rank-tab active" data-source="local">本地排行</button>
-      <button class="rank-tab locked" data-source="network" title="网络排行暂未开放">网络排行<span class="rank-soon">暂未开放</span></button>
+      <button class="rank-tab" data-source="network" title="在线排行榜（Supabase）">在线排行</button>
     </div>
     <div class="rank-modes" id="rankModeTabs"></div>
     <div class="rank-body" id="rankBody"></div>

@@ -69,6 +69,12 @@
     mode = 2;
     applyMode();
     updateControls();
+    if (Game.state) {
+      const sp = document.getElementById('setPlayerName');
+      const ss = document.getElementById('setSaveName');
+      if (sp) sp.value = Game.state.playerName || '';
+      if (ss) ss.value = Game.state.saveName || '';
+    }
     settingsPanel.classList.remove('hidden');
     settingsOverlay.classList.remove('hidden');
     settingsToggle.classList.add('open');
@@ -87,6 +93,15 @@
   });
   settingsClose.addEventListener('click', closeSettings);
   settingsOverlay.addEventListener('click', closeSettings);
+
+  document.getElementById('setNameSave').addEventListener('click', () => {
+    if (!Game.state) return;
+    const sp = document.getElementById('setPlayerName');
+    const ss = document.getElementById('setSaveName');
+    Game.state.playerName = sp ? sp.value.trim() : '';
+    Game.state.saveName = ss ? ss.value.trim() : '';
+    Game.saveState();
+  });
 
   // 劳动力菜单：点击「👥 劳动力」按钮展开 / 收起左侧面板（与合成列表一致），展示当前劳动力分配情况
   const laborToggle = document.getElementById('laborToggle');
@@ -316,13 +331,13 @@
     document.getElementById('startMenu').classList.add('hidden');
   }
 
-  // 开始菜单点选模式：该模式有历史记录 → 询问继续 / 重新开始；否则直接开新档
+  // 开始菜单点选模式：该模式有历史记录 → 询问继续 / 重新开始；否则开新档前先设置玩家名
   let choiceMode = null;
   function onSelectMode(modeId) {
     if (Game.hasSave(modeId)) {
       showChoice(modeId, Game.readSave(modeId));
     } else {
-      Game.startNewGame(modeId);
+      promptName(modeId);
     }
   }
 
@@ -348,7 +363,35 @@
   document.getElementById('choiceRestart').addEventListener('click', () => {
     const id = choiceMode;
     hideChoice();
-    if (id) Game.startNewGame(id);
+    if (id) promptName(id);
+  });
+
+  // 新游戏起名：玩家名（在线排行用）与可选存档名；确认后开始新游戏
+  let pendingNameMode = null;
+  function promptName(modeId) {
+    pendingNameMode = modeId;
+    document.getElementById('nameMode').textContent = Game.modeName(modeId);
+    const saved = Game.readSave(modeId);
+    document.getElementById('namePlayer').value = (saved && saved.playerName) ? saved.playerName : '';
+    document.getElementById('nameSave').value = (saved && saved.saveName) ? saved.saveName : '';
+    document.getElementById('nameOverlay').classList.remove('hidden');
+    document.getElementById('namePanel').classList.remove('hidden');
+    document.getElementById('namePlayer').focus();
+  }
+
+  function hideName() {
+    document.getElementById('nameOverlay').classList.add('hidden');
+    document.getElementById('namePanel').classList.add('hidden');
+  }
+  document.getElementById('nameOverlay').addEventListener('click', hideName);
+  document.getElementById('nameCancel').addEventListener('click', hideName);
+  document.getElementById('nameConfirm').addEventListener('click', () => {
+    const id = pendingNameMode;
+    hideName();
+    if (id) Game.startNewGame(id, false, {
+      playerName: document.getElementById('namePlayer').value.trim(),
+      saveName: document.getElementById('nameSave').value.trim()
+    });
   });
 
   function renderModeList() {
@@ -385,7 +428,7 @@
     });
   }
 
-  Game.startNewGame = function (modeId, skipIntro) {
+  Game.startNewGame = function (modeId, skipIntro, meta) {
     Game.mode = modeId;
     Game.setScreen('game');
     Game.store.set(Game.LAST_MODE_KEY, modeId);
@@ -393,6 +436,11 @@
     Game.store.set(Game.seedKey(modeId), String(Game.seed));
     Game.world = Game.generateWorld(Game.seed);
     Game.resetState(modeId);
+    if (meta && (meta.playerName || meta.saveName)) {
+      Game.state.playerName = meta.playerName || '';
+      Game.state.saveName = meta.saveName || '';
+      Game.saveState();
+    }
     Game.selectedBuilding = null;
     Game.selectedBase = false;
     Game.selectedTerrain = null;
@@ -494,6 +542,7 @@
     const trimmed = list.slice(0, 10);
     Game.rankings[mode] = trimmed;
     saveRankings();
+    submitOnlineRanking(mode, day, civ);
     updateRankEntry();
     return { list: trimmed, index: trimmed.indexOf(entry) };
   }
@@ -612,14 +661,109 @@
     });
   }
 
+  // ---------- 在线排行（Supabase REST）----------
+  function onlineHeaders() {
+    return {
+      apikey: Game.SUPABASE_ANON_KEY,
+      Authorization: 'Bearer ' + Game.SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  // 把一条成绩异步提交到在线榜单（静默失败，不影响本地）
+  function submitOnlineRanking(mode, day, civ) {
+    if (!Game.ONLINE_ENABLED()) return;
+    if (!Game.state || !Game.state.playerName) return;
+    fetch(Game.SUPABASE_URL + '/rest/v1/' + Game.ONLINE_TABLE, {
+      method: 'POST',
+      headers: onlineHeaders(),
+      body: JSON.stringify({
+        mode,
+        player_name: Game.state.playerName,
+        save_name: Game.state.saveName || '',
+        days: Math.max(1, day),
+        civ: Math.max(0, civ)
+      })
+    }).catch(function () {});
+  }
+  Game.submitOnlineRanking = submitOnlineRanking;
+
+  // 拉取某模式在线榜单前 10：文明 / 科技按历时升序，自由按文明指数降序
+  function loadOnlineRanking(mode) {
+    const order = mode === 'freedom' ? 'civ.desc' : 'days.asc';
+    const url = Game.SUPABASE_URL + '/rest/v1/' + Game.ONLINE_TABLE +
+      '?select=player_name,save_name,days,civ' +
+      '&mode=eq.' + encodeURIComponent(mode) +
+      '&order=' + order + '&limit=10';
+    return fetch(url, {
+      headers: { apikey: Game.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + Game.SUPABASE_ANON_KEY }
+    }).then(function (res) { return res.json(); });
+  }
+  Game.loadOnlineRanking = loadOnlineRanking;
+
+  function renderNetworkRows(body, rows) {
+    if (!Array.isArray(rows) || !rows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'rank-empty';
+      empty.textContent = '暂无在线成绩 · 快去创造第一个纪录吧';
+      body.appendChild(empty);
+      return;
+    }
+    const head = document.createElement('div');
+    head.className = 'rank-head';
+    const h0 = document.createElement('span');
+    h0.textContent = '排名';
+    const h1 = document.createElement('span');
+    h1.textContent = '玩家';
+    const h2 = document.createElement('span');
+    h2.textContent = rankMode === 'freedom' ? '文明指数' : '历时';
+    head.append(h0, h1, h2);
+    body.appendChild(head);
+
+    rows.forEach((r, i) => {
+      const row = document.createElement('div');
+      row.className = 'rank-row' + (i === 0 ? ' top' : '');
+      const no = document.createElement('span');
+      no.className = 'rank-no';
+      no.textContent = String(i + 1);
+      const nm = document.createElement('span');
+      nm.className = 'rank-name';
+      nm.textContent = r.player_name || '匿名';
+      const sc = document.createElement('span');
+      sc.className = 'rank-score';
+      sc.textContent = rankMode === 'freedom' ? String(r.civ || 0) : formatElapsed(r.days || 1);
+      row.append(no, nm, sc);
+      body.appendChild(row);
+    });
+  }
+
   function renderRankBody() {
     const body = document.getElementById('rankBody');
     body.innerHTML = '';
     if (rankSource === 'network') {
-      const note = document.createElement('div');
-      note.className = 'rank-empty';
-      note.textContent = '网络排行暂未开放 · 敬请期待';
-      body.appendChild(note);
+      if (!Game.ONLINE_ENABLED()) {
+        const note = document.createElement('div');
+        note.className = 'rank-empty';
+        note.textContent = '在线排行未配置\n请在 js/data.js 填入 Supabase URL 与 anon key';
+        body.appendChild(note);
+        return;
+      }
+      const loading = document.createElement('div');
+      loading.className = 'rank-loading';
+      loading.textContent = '加载中';
+      body.appendChild(loading);
+      loadOnlineRanking(rankMode).then(function (rows) {
+        if (rankSource !== 'network') return;
+        body.innerHTML = '';
+        renderNetworkRows(body, rows);
+      }).catch(function () {
+        if (rankSource !== 'network') return;
+        body.innerHTML = '';
+        const note = document.createElement('div');
+        note.className = 'rank-empty';
+        note.textContent = '在线排行加载失败\n请检查网络后重试';
+        body.appendChild(note);
+      });
       return;
     }
     const list = rankEntries(rankMode);
