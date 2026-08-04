@@ -615,8 +615,8 @@
 
   // ---------- 在线排行（Supabase）配置 ----------
   // 在 Supabase 建表并填入 URL 与 anon key 后即可启用（建表 SQL 见 README「在线排行接入」）。
-  Game.SUPABASE_URL = '';
-  Game.SUPABASE_ANON_KEY = '';
+  Game.SUPABASE_URL = 'https://tvunqhfwetecjmjvuldu.supabase.co';
+  Game.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2dW5xaGZ3ZXRlY2ptanZ1bGR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MjY3MjgsImV4cCI6MjEwMTQwMjcyOH0.PSsza0qLGn-M7WZIep2-1kaKmIg0CMPktC_0Z4WvYXE';
   Game.ONLINE_ENABLED = function () {
     return Boolean(Game.SUPABASE_URL && Game.SUPABASE_ANON_KEY);
   };
