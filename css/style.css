@@ -1321,7 +1321,7 @@ button:active { transform: translateY(1px); }
   user-select: none;
 }
 .gs-scene { position: absolute; inset: 0; }
-.gs-scene svg { display: block; }
+.gs-scene svg { display: block; width: 100%; height: 100%; }
 
 /* 通用动效 */
 @keyframes gsBob {
@@ -1715,3 +1715,338 @@ button:active { transform: translateY(1px); }
 }
 .guide-dot.active { background: #a3823f; transform: scale(1.35); }
 .guide-dot:hover { background: #d9b877; }
+
+/* ===== 新版指南场景（14 页 · 复刻游戏样式） ===== */
+.gs-grid {
+  display: grid;
+  gap: 1px;
+  background: rgba(255, 253, 247, 0.55);
+  border: 1px solid rgba(170, 166, 146, 0.45);
+  border-radius: 8px;
+  padding: 2px;
+  box-shadow: 0 6px 18px rgba(150, 140, 110, 0.14);
+}
+.gs-grid .gs-cell {
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(255, 253, 247, 0.35);
+}
+
+/* 第 1 页：欢迎（地图 + 基地窗口） */
+.gs-w-map { position: absolute; left: 130px; top: 40px; }
+.gs-w-base {
+  position: absolute;
+  left: 250px; top: 100px;
+  width: 60px; height: 60px;
+  border: 2px dashed rgba(163, 130, 63, 0.85);
+  background: rgba(255, 253, 247, 0.35);
+  border-radius: 8px;
+  animation: gsPulse 2.4s ease-in-out infinite;
+}
+.gs-w-town { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; }
+.gs-w-e1 { left: 6px; bottom: 5px; }
+.gs-w-e2 { right: 6px; top: 4px; animation-delay: 0.4s; }
+.gs-w-civ {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 16px; border-radius: 999px;
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid rgba(212, 178, 106, 0.55);
+  font-size: 12px; letter-spacing: 2px; color: #909184;
+}
+.gs-w-civ b { color: #a3823f; font-size: 16px; font-weight: 700; min-width: 34px; text-align: center; }
+
+/* 第 2 页：选择模式 */
+.gs-modes { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.gs-mode-list { display: flex; gap: 12px; }
+.gs-mode-card {
+  width: 148px; padding: 16px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  border-radius: 14px;
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid rgba(180, 176, 156, 0.4);
+  box-shadow: 0 14px 34px rgba(150, 140, 110, 0.16);
+  animation: gsSpot 6s ease-in-out infinite;
+}
+.gs-mode-card:nth-child(2) { animation-delay: 2s; }
+.gs-mode-card:nth-child(3) { animation-delay: 4s; }
+.gs-mode-card.gs-mode-civ { border-color: rgba(212, 178, 106, 0.75); }
+.gs-mode-card.gs-mode-locked { opacity: 0.65; filter: grayscale(0.5); }
+.gs-mode-ico { width: 52px; height: 52px; display: block; }
+.gs-mode-card b { font-size: 14px; letter-spacing: 2px; color: #5e6e55; }
+.gs-mode-card i { font-style: normal; font-size: 10px; letter-spacing: 1px; color: #909184; text-align: center; }
+.gs-mode-note {
+  font-size: 10px; letter-spacing: 1px; color: #a8a99a;
+  background: rgba(255, 253, 247, 0.85);
+  padding: 4px 14px; border-radius: 999px;
+}
+
+/* 第 3 页：顶部与地图 */
+.gs-ui { background: #ece4d3; }
+.gs-ui-top {
+  position: absolute; left: 16px; top: 14px; right: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.gs-ui-date { font-size: 11px; color: #a8a99a; letter-spacing: 1px; animation: gsSpot 8s ease-in-out infinite; }
+.gs-ui-pills { display: flex; gap: 6px; }
+.gs-ui-pill {
+  font-size: 10px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(170, 166, 146, 0.35);
+  background: rgba(255, 255, 255, 0.6); color: #909184;
+  animation: gsSpot 8s ease-in-out infinite;
+}
+.gs-ui-pill b { color: #5e6e55; font-weight: 600; }
+.gs-ui-pill-civ { border-color: rgba(212, 178, 106, 0.45); background: rgba(255, 253, 247, 0.7); }
+.gs-ui-pill-civ b { color: #a3823f; }
+.gs-ui-pill:nth-child(2) { animation-delay: 2.4s; }
+.gs-ui-pill:nth-child(3) { animation-delay: 4.2s; }
+.gs-ui-map { position: absolute; left: 160px; top: 62px; animation: gsSpot 8s ease-in-out 1s infinite; }
+.gs-ui-base {
+  position: absolute; left: 190px; top: 92px;
+  width: 60px; height: 60px;
+  border: 2px dashed rgba(163, 130, 63, 0.85);
+  background: rgba(255, 253, 247, 0.3);
+  border-radius: 8px;
+  animation: gsSpot 8s ease-in-out 2.8s infinite;
+}
+.gs-ui-coord {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+  font-size: 10px; letter-spacing: 1px; color: #6b6f63;
+  background: rgba(255, 253, 247, 0.9);
+  padding: 4px 14px; border-radius: 999px;
+  animation: gsSpot 8s ease-in-out 5.2s infinite;
+}
+
+/* 第 4 页：物品栏与合成器 */
+.gs-ui2 { background: #ece4d3; }
+.gs-ui2-info {
+  position: absolute; left: 16px; top: 14px; right: 16px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; letter-spacing: 2px; color: #8a8c7c;
+  border-radius: 8px; border: 1px solid rgba(180, 176, 156, 0.4);
+  background: rgba(255, 253, 247, 0.85);
+  animation: gsSpot 9s ease-in-out infinite;
+}
+.gs-ui2-left { position: absolute; left: 16px; top: 54px; }
+.gs-ui2-right { position: absolute; right: 16px; top: 54px; }
+.gs-ui2-label { font-size: 10px; letter-spacing: 2px; color: #a8a99a; text-align: center; margin-bottom: 5px; }
+.gs-ui2-inv {
+  display: grid; grid-template-columns: repeat(8, 34px); gap: 1px;
+  background: rgba(170, 166, 146, 0.35);
+  border: 1px solid rgba(170, 166, 146, 0.5);
+  border-radius: 8px; padding: 1px;
+}
+.gs-ui2-craft {
+  display: grid; grid-template-columns: repeat(3, 34px); gap: 1px;
+  background: rgba(170, 166, 146, 0.35);
+  border: 1px solid rgba(170, 166, 146, 0.5);
+  border-radius: 8px; padding: 1px;
+}
+.gs-inv-cell {
+  width: 34px; height: 34px;
+  background: rgba(255, 255, 255, 0.55);
+  position: relative;
+}
+.gs-inv-ico { position: absolute; inset: 4px; }
+.gs-inv-ico svg { width: 100%; height: 100%; }
+.gs-craft-cell { width: 34px; height: 34px; background: rgba(255, 255, 255, 0.55); position: relative; }
+.gs-ui2-btns {
+  position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
+  display: flex; gap: 8px;
+}
+.gs-ui2-btns i {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #ede6d3; border: 1px solid rgba(140, 150, 120, 0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-style: normal; font-size: 12px;
+  animation: gsSpot 9s ease-in-out infinite;
+}
+.gs-ui2-btns i:nth-child(2) { animation-delay: 2s; }
+.gs-ui2-btns i:nth-child(3) { animation-delay: 3.6s; }
+.gs-ui2-btns i:nth-child(4) { animation-delay: 5.2s; }
+.gs-ui2-btns i:nth-child(5) { animation-delay: 6.8s; }
+
+/* 第 5 页：基地采集 */
+.gs-gather { background: #dcd6c2; }
+.gs-g-map { position: absolute; left: 34px; top: 64px; }
+.gs-g-base {
+  position: absolute; left: 94px; top: 94px;
+  width: 60px; height: 60px;
+  border: 2px dashed rgba(163, 130, 63, 0.85);
+  background: rgba(255, 253, 247, 0.35);
+  border-radius: 8px;
+  animation: gsPulse 2.4s infinite;
+}
+.gs-g-town { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; }
+.gs-g-e1 { left: 5px; bottom: 5px; }
+.gs-g-e2 { right: 5px; top: 4px; animation-delay: 0.4s; }
+.gs-g-flow { position: absolute; width: 24px; height: 24px; z-index: 3; opacity: 0; }
+.gs-g-fw { left: 118px; top: 108px; animation: gsFlyG 3.6s ease-in-out infinite; }
+.gs-g-fs { left: 118px; top: 118px; animation: gsFlyG 3.6s ease-in-out 1.2s infinite; }
+.gs-g-fi { left: 126px; top: 104px; animation: gsFlyG 3.6s ease-in-out 2.4s infinite; }
+@keyframes gsFlyG {
+  0% { opacity: 0; transform: translate(0, 0); }
+  8% { opacity: 1; }
+  45% { opacity: 1; transform: translate(170px, 4px); }
+  60% { opacity: 0; transform: translate(230px, 8px); }
+  100% { opacity: 0; transform: translate(230px, 8px); }
+}
+.gs-g-count {
+  position: absolute; left: 16px; bottom: 12px;
+  font-size: 11px; letter-spacing: 1px; color: #5e6e55;
+  background: rgba(255, 253, 247, 0.88);
+  padding: 4px 12px; border-radius: 999px;
+}
+.gs-g-inv {
+  position: absolute; right: 16px; top: 72px;
+  display: grid; grid-template-columns: repeat(4, 34px); gap: 1px;
+  background: rgba(170, 166, 146, 0.35);
+  border: 1px solid rgba(170, 166, 146, 0.5);
+  border-radius: 8px; padding: 1px;
+  animation: gsPulse 2.4s infinite;
+}
+
+/* 第 6 页：地貌与产出 */
+.gs-terr { display: flex; align-items: center; justify-content: center; padding: 14px; }
+.gs-terr-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+  width: 100%; max-width: 500px;
+}
+.gs-terr-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  background: rgba(255, 253, 247, 0.9);
+  border: 1px solid rgba(180, 176, 156, 0.4);
+  animation: gsSpot 9s ease-in-out infinite;
+}
+.gs-terr-item:nth-child(3n) { animation-delay: 1.5s; }
+.gs-terr-item:nth-child(3n+1) { animation-delay: 3s; }
+.gs-terr-swatch { width: 22px; height: 22px; border-radius: 5px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+.gs-terr-name { font-size: 12px; letter-spacing: 1px; color: #5e6e55; flex: none; }
+.gs-terr-out { font-size: 10px; letter-spacing: 1px; color: #8a8c7c; }
+
+/* 第 7 / 8 页：合成列表 */
+.gs-rec { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px; }
+.gs-rec-title { font-size: 12px; letter-spacing: 3px; color: #5e6e55; margin-bottom: 2px; }
+.gs-rec-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 5px 14px; border-radius: 10px;
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid rgba(180, 176, 156, 0.4);
+  animation: gsSpot 9s ease-in-out infinite;
+}
+.gs-rec-row:nth-child(2n+1) { animation-delay: 2s; }
+.gs-rec-src { display: flex; align-items: center; gap: 6px; }
+.gs-rec-src i { width: 30px; height: 30px; padding: 3px; border-radius: 7px; background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(170, 166, 146, 0.4); }
+.gs-rec-src i svg { width: 100%; height: 100%; }
+.gs-rec-src b { font-size: 13px; color: #a8a99a; font-weight: 500; }
+.gs-rec-arrow { font-size: 18px; color: #a3823f; }
+.gs-rec-out { display: flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: 1px; color: #5e6e55; }
+.gs-rec-out i { width: 32px; height: 32px; padding: 3px; border-radius: 7px; background: #f0e7d0; border: 1px solid rgba(212, 178, 106, 0.5); }
+.gs-rec-out i svg { width: 100%; height: 100%; }
+.gs-rec-note { font-size: 10px; letter-spacing: 1px; color: #a8a99a; margin-top: 2px; }
+
+/* 第 9 页：摆放建筑 */
+.gs-place { position: absolute; background: #dcd6c2; }
+.gs-p-map { position: absolute; left: 154px; top: 34px; }
+.gs-p-ghost {
+  position: absolute; width: 34px; height: 34px; padding: 3px; z-index: 3;
+  background: rgba(94, 183, 224, 0.18);
+  border: 2px solid rgba(94, 183, 224, 0.9);
+  border-radius: 6px;
+  animation: gsPMove 7s linear infinite;
+}
+@keyframes gsPMove {
+  0%   { left: 158px; top: 38px;  border-color: rgba(94, 183, 224, 0.9); }
+  16%  { left: 248px; top: 38px;  border-color: rgba(94, 183, 224, 0.9); }
+  30%  { left: 308px; top: 38px;  border-color: rgba(224, 106, 90, 0.9); }
+  44%  { left: 342px; top: 67px;  border-color: rgba(224, 106, 90, 0.9); }
+  58%  { left: 308px; top: 128px; border-color: rgba(94, 183, 224, 0.9); }
+  74%  { left: 188px; top: 128px; border-color: rgba(94, 183, 224, 0.9); }
+  100% { left: 158px; top: 38px;  border-color: rgba(94, 183, 224, 0.9); }
+}
+.gs-p-legend {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+  display: flex; gap: 12px; align-items: center;
+  font-size: 11px; letter-spacing: 1px; color: #6b6f63;
+  background: rgba(255, 253, 247, 0.9);
+  padding: 5px 14px; border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* 第 10 页：地形要求 */
+.gs-req { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 12px; }
+.gs-req-row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; max-width: 500px;
+  padding: 7px 14px; border-radius: 10px;
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid rgba(180, 176, 156, 0.4);
+  animation: gsSpot 9s ease-in-out infinite;
+}
+.gs-req-row:nth-child(2n+1) { animation-delay: 1.6s; }
+.gs-req-ico { width: 32px; height: 32px; padding: 3px; border-radius: 7px; background: #f0e7d0; border: 1px solid rgba(212, 178, 106, 0.4); flex: none; }
+.gs-req-ico svg { width: 100%; height: 100%; }
+.gs-req-row b { font-size: 12px; letter-spacing: 1px; color: #5e6e55; flex: none; }
+.gs-req-terr { display: flex; gap: 4px; }
+.gs-req-terr i { width: 16px; height: 16px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+.gs-req-row em { font-style: normal; font-size: 10px; letter-spacing: 1px; color: #909184; margin-left: auto; text-align: right; }
+
+/* 第 12 页：扩张基地 */
+.gs-expand2 { background: #dcd6c2; }
+.gs-e-map { position: absolute; left: 154px; top: 44px; }
+.gs-e-base {
+  position: absolute; left: 184px; top: 74px;
+  width: 60px; height: 60px;
+  border: 2px dashed rgba(163, 130, 63, 0.85);
+  background: rgba(255, 253, 247, 0.3);
+  border-radius: 8px;
+  animation: gsGrowE 4s ease-in-out infinite;
+}
+@keyframes gsGrowE {
+  0%, 100% { width: 60px; height: 60px; left: 184px; top: 74px; }
+  50% { width: 120px; height: 120px; left: 154px; top: 44px; }
+}
+.gs-e-label {
+  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
+  font-size: 11px; letter-spacing: 1px; color: #5e6e55;
+  background: rgba(255, 253, 247, 0.88);
+  padding: 4px 12px; border-radius: 999px;
+}
+
+/* 第 13 页：合并升级 */
+.gs-merge { display: flex; gap: 18px; align-items: center; justify-content: center; padding: 20px; }
+.gs-merge-wrap { position: relative; width: 150px; height: 110px; }
+.gs-merge-hut {
+  position: absolute; width: 34px; height: 34px; padding: 3px;
+  background: rgba(255, 253, 247, 0.92);
+  border: 1px solid rgba(180, 176, 156, 0.4);
+  border-radius: 6px;
+}
+.gs-merge-arrow { font-size: 24px; color: #a3823f; animation: gsSlide 0.9s ease-in-out infinite alternate; }
+.gs-merge-next { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gs-merge-next-ico { width: 58px; height: 58px; padding: 4px; animation: gsPop 2s ease-out infinite; }
+.gs-merge-next-ico svg { width: 100%; height: 100%; }
+.gs-merge-next-label { font-size: 10px; letter-spacing: 1px; color: #6b6f63; }
+
+/* 第 14 页：胜利 */
+.gs-win { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.gs-win-ico { width: 74px; height: 74px; padding: 6px; animation: gsPop 2.4s ease-in-out infinite; }
+.gs-win-ico svg { width: 100%; height: 100%; }
+.gs-win-civ {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 14px; letter-spacing: 3px; color: #5e6e55;
+}
+.gs-win-civ b { color: #a3823f; font-size: 22px; font-weight: 700; min-width: 56px; text-align: center; }
+.gs-win-civ i { font-style: normal; font-size: 12px; color: #a8a99a; }
+.gs-win-bar { width: 260px; height: 14px; border-radius: 7px; background: rgba(170, 166, 146, 0.25); overflow: hidden; }
+.gs-win-bar i {
+  display: block; height: 100%; width: 0;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #d9b877, #a3823f);
+  transition: width 2s ease;
+}
+.gs-win-tips {
+  font-size: 11px; letter-spacing: 2px; color: #6b6f63;
+  background: rgba(255, 253, 247, 0.9);
+  padding: 5px 16px; border-radius: 999px;
+}

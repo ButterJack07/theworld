@@ -692,30 +692,54 @@
     requestAnimationFrame(frame);
   }
 
+  const GT = Game.TERRAIN;
+  const TC = Game.TERRAIN_COLORS;
+  const TN = Game.TERRAIN_NAMES;
+
+  function gsCell(t, extra) {
+    return `<i class="gs-cell ${extra || ''}" style="background:${TC[t]}"></i>`;
+  }
+
+  function gsGrid(rows, size) {
+    const cols = rows[0].length;
+    const cells = [];
+    rows.forEach(r => r.forEach(t => cells.push(gsCell(t))));
+    return `<div class="gs-grid" style="grid-template-columns:repeat(${cols},${size}px);grid-template-rows:repeat(${rows.length},${size}px)">${cells.join('')}</div>`;
+  }
+
+  function gsModeIcon(id) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" style="width:100%;height:100%">${Game.MODE_ICONS[id] || ''}</svg>`;
+  }
+
   const GUIDE_PAGES = [
     {
       scene() {
+        const map = [
+          [GT.FOREST, GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA, GT.SEA],
+          [GT.FOREST, GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.MOUNTAIN, GT.MOUNTAIN, GT.SEA, GT.SEA],
+          [GT.PLAIN, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.MOUNTAIN, GT.MOUNTAIN, GT.MOUNTAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN],
+          [GT.SEA, GT.SEA, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA, GT.SEA, GT.SEA]
+        ];
         return `
         <div class="gs-scene gs-welcome">
-          <div class="gs-hill"></div>
-          <div class="gs-tree gs-t1"></div>
-          <div class="gs-tree gs-t2"></div>
-          <div class="gs-tree gs-t3"></div>
-          <div class="gs-sea"></div>
-          <div class="gs-base">
-            <div class="gs-town">${Game.itemIconSVG('towncenter')}</div>
-            <span class="gs-explorer gs-e1">${Game.explorerIconSVG()}</span>
-            <span class="gs-explorer gs-e2">${Game.explorerIconSVG()}</span>
+          <div class="gs-w-map">${gsGrid(map, 30)}</div>
+          <div class="gs-w-base">
+            <span class="gs-w-town">${Game.itemIconSVG('towncenter')}</span>
+            <span class="gs-explorer gs-w-e1">${Game.explorerIconSVG()}</span>
+            <span class="gs-explorer gs-w-e2">${Game.explorerIconSVG()}</span>
           </div>
-          <div class="gs-civbar"><span>文明指数</span><b class="gs-civnum">0</b></div>
+          <div class="gs-w-civ"><span>文明指数</span><b class="gs-civnum">0</b></div>
         </div>`;
       },
       text: `<div class="guide-page-title">欢迎来到 The World</div>
-<p>这是一款<b>放置经营游戏</b>——让时间慢慢走，你的文明会自己长大。你只需要规划节奏：先建什么、把劳动力放哪里、基地往哪边扩。</p>
+<p>这是一款<b>放置经营游戏</b>——时间流逝，文明自动成长。你只需要规划节奏：先建什么、把劳动力放哪里、基地往哪边扩。</p>
 <ul>
   <li><b>目标</b>：从一座城镇中心起步，把文明指数发展到 <b>9999</b> 即获胜（文明模式）。</li>
-  <li><b>核心循环</b>：基地采集 → 合成建筑 → 分配劳动力 → 扩张升级。</li>
-  <li>初始 2 名探索者会自动采集，无需时刻操作。</li>
+  <li><b>核心循环</b>：基地采集 → 合成建筑 → 摆放建筑 → 分配劳动力 → 扩张合并升级。</li>
+  <li>初始自带 1 座城镇中心（容 3 人）与 <b>2 名探索者</b>，他们会自动采集、无需时刻操作。</li>
+  <li>本指南共 14 页，跟着箭头逐页看，很快就能上手。</li>
 </ul>`,
       onShow(stage) {
         const n = stage.querySelector('.gs-civnum');
@@ -724,117 +748,279 @@
     },
     {
       scene() {
+        const cards = Game.GAME_MODES.map(m => `
+          <div class="gs-mode-card${m.locked ? ' gs-mode-locked' : (m.id === 'civilization' ? ' gs-mode-civ' : '')}">
+            <span class="gs-mode-ico">${gsModeIcon(m.id)}</span>
+            <b>${m.name}</b>
+            <i>${m.locked ? (m.lockNote || '尚未开放') : (m.id === 'civilization' ? '文明指数达 9999 获胜' : '无胜利标准 · 自由发展')}</i>
+          </div>`).join('');
         return `
-        <div class="gs-scene gs-layout">
-          <div class="gs-l-top">
-            <span class="gs-l-date">1 年 1 月</span>
-            <div class="gs-l-pills">
-              <span class="gs-l-pill">人口 1/5</span>
-              <span class="gs-l-pill gs-l-pill-civ">文明 0</span>
-              <span class="gs-l-pill">模式</span>
-            </div>
-          </div>
-          <div class="gs-l-main">
-            <div class="gs-l-left">
-              <div class="gs-l-block gs-l-info">信息面板</div>
-              <div class="gs-l-block gs-l-inv">物品栏</div>
-            </div>
-            <div class="gs-l-block gs-l-map">地图 · 基地</div>
-            <div class="gs-l-block gs-l-craft">合成器</div>
-          </div>
-          <div class="gs-l-btns"><i>⚙️</i><i>📜</i><i>🏗️</i><i>▶</i></div>
+        <div class="gs-scene gs-modes">
+          <div class="gs-mode-list">${cards}</div>
+          <div class="gs-mode-note">选择模式后进入游戏 · 各模式独立记录最佳成绩</div>
         </div>`;
       },
-      text: `<div class="guide-page-title">认识界面</div>
-<p>画面上会按顺序循环高亮每个区域，跟着它走一遍：</p>
+      text: `<div class="guide-page-title">选择游戏模式</div>
+<p>开始菜单提供 <b>3 种模式</b>，各自<b>独立存档</b>并<b>独立排行</b>：</p>
 <ul>
-  <li><b>中央地图</b>：摆放建筑、拖动基地、观察地貌。</li>
-  <li><b>信息面板</b>：点击建筑 / 地块后显示详细数据。</li>
-  <li><b>物品栏</b>：存放材料与合成好的建筑。</li>
-  <li><b>合成器</b>：放入材料，合成新物品。</li>
-  <li>右上角状态胶囊：人口 / 文明程度 / 模式。</li>
-  <li>左上角按钮：⚙️ 设置 · 📜 合成 · 🏗️ 扩建 · ▶ 速度。</li>
+  <li><b>文明模式</b>：文明指数达到 <b>9999</b> 获胜，按游戏内历时排名。</li>
+  <li><b>科技模式</b>：发展出任一项高级科技获胜 —— <b>尚未开放</b>，敬请期待。</li>
+  <li><b>自由模式</b>：没有胜负标准，自由发展，返回主菜单时按文明指数留档。</li>
+  <li>已有存档时再次选择，会询问<b>继续发展</b>还是<b>重新开始</b>。</li>
 </ul>`
     },
     {
       scene() {
-        const map = ['FPMF', 'PFMF', 'MMPP', 'PFFP'];
-        const cells = [];
-        map.forEach(r => r.split('').forEach(c => {
-          const cls = c === 'F' ? 'forest' : c === 'M' ? 'mtn' : 'plain';
-          cells.push(`<span class="gs-cell gs-cell-${cls}"></span>`);
-        }));
+        const map = [
+          [GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA, GT.SEA],
+          [GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.MOUNTAIN, GT.MOUNTAIN, GT.SEA, GT.SEA],
+          [GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.MOUNTAIN, GT.MOUNTAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA, GT.SEA, GT.SEA]
+        ];
+        return `
+        <div class="gs-scene gs-ui">
+          <div class="gs-ui-top">
+            <span class="gs-ui-date">1 年 1 月</span>
+            <div class="gs-ui-pills">
+              <span class="gs-ui-pill">人口 <b>1/5</b></span>
+              <span class="gs-ui-pill gs-ui-pill-civ">文明 <b>0</b></span>
+              <span class="gs-ui-pill gs-ui-pill-mode">模式 文明</span>
+            </div>
+          </div>
+          <div class="gs-ui-map">${gsGrid(map, 30)}</div>
+          <div class="gs-ui-base"></div>
+          <div class="gs-ui-coord">地图 · 双击地块查看地貌</div>
+        </div>`;
+      },
+      text: `<div class="guide-page-title">认识界面 · 顶部与地图</div>
+<p>画面上会按顺序循环高亮每个区域：</p>
+<ul>
+  <li><b>右上角状态胶囊</b>：人口（当前/上限）、文明程度、当前模式。</li>
+  <li><b>中央地图</b>：核心操作区，彩色方格 = 地貌。摆放建筑、拖动基地、观察地形都在这里。</li>
+  <li><b>虚线窗口</b>是你的基地，拖动其边框可<b>扩张覆盖</b>。</li>
+  <li>单击建筑 / 地块在<b>信息面板</b>看数据，<b>双击</b>地块查看该格地貌。</li>
+</ul>`
+    },
+    {
+      scene() {
+        const icons = ['wood', 'stone', 'plank', 'iron', 'hut', 'lumber', 'mine', 'farm'];
+        const inv = [];
+        for (let i = 0; i < 32; i++) {
+          const id = icons[i];
+          inv.push(id
+            ? `<span class="gs-inv-cell"><span class="gs-inv-ico">${Game.itemIconSVG(id)}</span></span>`
+            : `<span class="gs-inv-cell"></span>`);
+        }
+        const craft = [];
+        const cicons = ['wood', 'wood', 'stone', '', 'plank', '', '', '', ''];
+        for (let i = 0; i < 9; i++) {
+          const id = cicons[i];
+          craft.push(id
+            ? `<span class="gs-craft-cell"><span class="gs-inv-ico">${Game.itemIconSVG(id)}</span></span>`
+            : `<span class="gs-craft-cell"></span>`);
+        }
+        return `
+        <div class="gs-scene gs-ui2">
+          <div class="gs-ui2-info">信息面板 · 点击建筑查看详细数据</div>
+          <div class="gs-ui2-left">
+            <div class="gs-ui2-label">物品栏</div>
+            <div class="gs-ui2-inv">${inv.join('')}</div>
+          </div>
+          <div class="gs-ui2-right">
+            <div class="gs-ui2-label">合成器</div>
+            <div class="gs-ui2-craft">${craft.join('')}</div>
+          </div>
+          <div class="gs-ui2-btns"><i>⚙️</i><i>📜</i><i>🏗️</i><i>👥</i><i>▶</i></div>
+        </div>`;
+      },
+      text: `<div class="guide-page-title">认识界面 · 物品栏与合成器</div>
+<ul>
+  <li><b>物品栏（8×4 格）</b>：存放材料与合成好的建筑。支持拖动移动、双击合并堆叠、长按约 0.5 秒整组移动。</li>
+  <li><b>合成器（3×3 格）</b>：把材料拖进格子，凑齐配方后点击下方<b>成品</b>合成。</li>
+  <li><b>信息面板</b>：点击地图上的建筑 / 地块后，这里显示详细数据。</li>
+  <li>底部按钮：<b>⚙️ 设置 · 📜 合成 · 🏗️ 扩建 · 👥 劳动力 · ▶ 速度</b>。</li>
+</ul>`
+    },
+    {
+      scene() {
+        const map = [
+          [GT.FOREST, GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA],
+          [GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.MOUNTAIN, GT.MOUNTAIN, GT.SEA],
+          [GT.PLAIN, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.MOUNTAIN, GT.MOUNTAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN]
+        ];
+        const inv = ['wood', 'wood', 'stone', 'iron', '', 'berry', '', ''];
         return `
         <div class="gs-scene gs-gather">
-          <div class="gs-gather-grid">${cells.join('')}</div>
-          <div class="gs-gather-base"></div>
-          <div class="gs-gather-exp">探索者 ×2</div>
-          <span class="gs-flow-icon gs-flow-wood">${Game.itemIconSVG('wood')}</span>
-          <span class="gs-flow-icon gs-flow-stone">${Game.itemIconSVG('stone')}</span>
-          <span class="gs-flow-icon gs-flow-iron">${Game.itemIconSVG('iron')}</span>
-          <div class="gs-gather-inv">物品栏</div>
+          <div class="gs-g-map">${gsGrid(map, 30)}</div>
+          <div class="gs-g-base">
+            <span class="gs-g-town">${Game.itemIconSVG('towncenter')}</span>
+            <span class="gs-explorer gs-g-e1">${Game.explorerIconSVG()}</span>
+            <span class="gs-explorer gs-g-e2">${Game.explorerIconSVG()}</span>
+          </div>
+          <span class="gs-g-flow gs-g-fw">${Game.itemIconSVG('wood')}</span>
+          <span class="gs-g-flow gs-g-fs">${Game.itemIconSVG('stone')}</span>
+          <span class="gs-g-flow gs-g-fi">${Game.itemIconSVG('iron')}</span>
+          <div class="gs-g-count">探索者 ×2 · 每月采集 2 次</div>
+          <div class="gs-g-inv">
+            ${inv.map(id => id
+              ? `<span class="gs-inv-cell"><span class="gs-inv-ico">${Game.itemIconSVG(id)}</span></span>`
+              : `<span class="gs-inv-cell"></span>`).join('')}
+          </div>
         </div>`;
       },
       text: `<div class="guide-page-title">基地采集</div>
-<p><b>基地</b>（地图上的灰色窗口）是你自动采集的引擎：</p>
+<p><b>基地</b>（地图上的虚线窗口）是自动采集引擎，每月按<b>探索者人数</b>产出：</p>
 <ul>
-  <li>每月产出次数 = <b>探索者人数</b>（空闲人口）。</li>
-  <li>产出内容按基地覆盖的<b>地貌加权</b>决定：森林多→多出木头，山地多→多出石头。</li>
-  <li>把基地扩到更富的地貌上，产出更丰富、揭示更快。</li>
+  <li>每月产出<b>次数</b> = 探索者人数（空闲人口）。初始 2 名探索者 = 每月 2 次。</li>
+  <li>产出<b>内容</b>按基地覆盖的<b>地貌加权</b>：森林格多→多出木头，山地格多→多出石头，海洋格→出鱼。</li>
+  <li>把基地扩到更富的地貌上，产出更丰富、地貌揭示更快。</li>
+  <li>点击基地可查看各地貌格数与<b>产出概率</b>。</li>
 </ul>`
     },
     {
       scene() {
+        const list = [GT.FOREST, GT.GRASSLAND, GT.MOUNTAIN, GT.CLAY_MOUNTAIN, GT.WETLAND, GT.MINE, GT.SEA, GT.PLAIN];
+        const items = list.map(t => `
+          <div class="gs-terr-item">
+            <span class="gs-terr-swatch" style="background:${TC[t]}"></span>
+            <span class="gs-terr-name">${TN[t]}</span>
+            <span class="gs-terr-out">${Game.TERRAIN_TABLE[t].desc}</span>
+          </div>`).join('');
         return `
-        <div class="gs-scene gs-craft">
-          <span class="gs-craft-ghost gs-craft-ghost-a">${Game.itemIconSVG('wood')}</span>
-          <span class="gs-craft-ghost gs-craft-ghost-b">${Game.itemIconSVG('stone')}</span>
-          <div class="gs-craft-src">
-            <div class="gs-craft-slot">${Game.itemIconSVG('wood')}</div>
-            <div class="gs-craft-slot">${Game.itemIconSVG('stone')}</div>
-          </div>
-          <div class="gs-craft-arrow">➜</div>
-          <div class="gs-craft-grid">
-            <span class="gs-craft-cell">${Game.itemIconSVG('wood')}</span>
-            <span class="gs-craft-cell">${Game.itemIconSVG('stone')}</span>
-            ${'<span class="gs-craft-cell"></span>'.repeat(7)}
-          </div>
-          <div class="gs-craft-btn">合成</div>
-          <div class="gs-craft-product">
-            <span class="gs-craft-product-ico">${Game.itemIconSVG('hut')}</span>
-            <span>茅草屋</span>
-          </div>
+        <div class="gs-scene gs-terr">
+          <div class="gs-terr-grid">${items}</div>
+        </div>`;
+      },
+      text: `<div class="guide-page-title">地貌与产出</div>
+<p>地图由多种地貌组成，颜色代表类型，每种地貌的<b>每月产出</b>不同：</p>
+<ul>
+  <li><b>森林</b>：3~6 木头，木材主力。</li>
+  <li><b>草原</b>：3 木头 / 浆果 / 石头。</li>
+  <li><b>山地</b>：3~5 石头 + 0~2 铁矿。</li>
+  <li><b>黏土山</b>：2~4 黏土；<b>湿地</b>：木头 / 浆果 / 生肉 / 黏土。</li>
+  <li><b>矿洞</b>：石头 + 铁矿，小概率金 / 铜 / 琥珀 / 钻石。</li>
+  <li><b>海洋</b>：1 条鱼；<b>平原</b>：随机 2 木头 / 石头 / 铁矿 / 黏土 / 浆果。</li>
+</ul>`
+    },
+    {
+      scene() {
+        const rows = [
+          { src: ['wood', 'wood'], out: 'plank', name: '木板' },
+          { src: ['stone', 'stone', 'iron'], out: 'brick', name: '砖块' },
+          { src: ['wood', 'stone'], out: 'cloth', name: '布匹' },
+          { src: ['iron', 'iron', 'wood'], out: 'gold', name: '金矿' }
+        ];
+        const html = rows.map(r => `
+          <div class="gs-rec-row">
+            <span class="gs-rec-src">${r.src.map(id => `<i>${Game.itemIconSVG(id)}</i>`).join('<b>+</b>')}</span>
+            <span class="gs-rec-arrow">➜</span>
+            <span class="gs-rec-out"><i>${Game.itemIconSVG(r.out)}</i>${r.name}</span>
+          </div>`).join('');
+        return `
+        <div class="gs-scene gs-rec">
+          <div class="gs-rec-title">材料合成</div>
+          ${html}
+        </div>`;
+      },
+      text: `<div class="guide-page-title">合成材料</div>
+<p>把材料<b>拖进合成器</b>，凑齐配方后点击「合成」得到<b>建材</b>：</p>
+<ul>
+  <li><b>木板</b>：2 木头 —— 最常用建材，几乎所有建筑都要。</li>
+  <li><b>砖块</b>：2 石头 + 1 铁矿 —— 高级建筑与城镇中心需要。</li>
+  <li><b>布匹</b>：1 木头 + 1 石头 —— 造船与牧场的必需材料。</li>
+  <li><b>金矿</b>：2 铁矿 + 1 木头 —— 经济路线的基础。</li>
+  <li>合成好的建材自动进入<b>物品栏</b>。</li>
+</ul>`
+    },
+    {
+      scene() {
+        const rows = [
+          { src: ['plank', 'stone'], out: 'hut', name: '茅草屋' },
+          { src: ['plank', 'stone'], out: 'lumber', name: '伐木小屋' },
+          { src: ['wood', 'stone', 'stone'], out: 'mine', name: '采矿小屋' },
+          { src: ['plank', 'stone'], out: 'farm', name: '农田' },
+          { src: ['plank', 'plank', 'cloth'], out: 'dock', name: '钓船小屋' }
+        ];
+        const html = rows.map(r => `
+          <div class="gs-rec-row">
+            <span class="gs-rec-src">${r.src.map(id => `<i>${Game.itemIconSVG(id)}</i>`).join('<b>+</b>')}</span>
+            <span class="gs-rec-arrow">➜</span>
+            <span class="gs-rec-out"><i>${Game.itemIconSVG(r.out)}</i>${r.name}</span>
+          </div>`).join('');
+        return `
+        <div class="gs-scene gs-rec">
+          <div class="gs-rec-title">建筑合成</div>
+          ${html}
+          <div class="gs-rec-note">合成后进入物品栏 · 拖到地图安装</div>
         </div>`;
       },
       text: `<div class="guide-page-title">合成建筑</div>
-<p>把材料<b>拖进合成器</b>，点击「合成」得到成品：</p>
+<p>再用<b>建材</b>合成<b>建筑</b>，建筑会进入物品栏，随后拖到地图上安装：</p>
 <ul>
-  <li>先用基础材料合成<b>建材</b>：木板（2 木头）、砖块（2 石头 + 1 铁矿）…</li>
-  <li>再用建材合成<b>建筑</b>：茅草屋、伐木小屋、农田…</li>
-  <li>合成好的建筑会进入<b>物品栏</b>，随后拖到地图上安装。</li>
+  <li><b>茅草屋</b>：1 木板 + 1 石头 —— 住宅，容 1 人。</li>
+  <li><b>伐木小屋</b>：1 木板 + 1 石头 —— 须建在森林，每月产 5 木头。</li>
+  <li><b>采矿小屋</b>：1 木头 + 2 石头 —— 须建在山地 / 矿洞。</li>
+  <li><b>农田</b>：1 木板 + 1 石头 —— 任意陆地，每月产 5 小麦。</li>
+  <li><b>钓船小屋</b>：2 木板 + 1 布匹 —— 须临水，每月产 2 食物。</li>
+  <li>点右上角 <b>📜 合成</b> 可随时查看全部配方。</li>
 </ul>`
     },
     {
       scene() {
-        const map = ['PPPPPSSP', 'FFPMMSSP', 'PPPPSSSP', 'MPPPSSSP'];
-        const cells = [];
-        map.forEach(r => r.split('').forEach(c => {
-          const cls = c === 'F' ? 'forest' : c === 'M' ? 'mtn' : c === 'S' ? 'sea' : 'plain';
-          cells.push(`<span class="gs-place-cell gs-cell-${cls}"></span>`);
-        }));
+        const map = [
+          [GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA, GT.SEA],
+          [GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.MOUNTAIN, GT.MOUNTAIN, GT.SEA, GT.SEA],
+          [GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.MOUNTAIN, GT.MOUNTAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN]
+        ];
         return `
         <div class="gs-scene gs-place">
-          <div class="gs-place-map">${cells.join('')}</div>
-          <div class="gs-place-ghost">${Game.itemIconSVG('hut')}</div>
-          <div class="gs-place-legend"><i class="gs-ok"></i>可放置<i class="gs-bad"></i>不可放置</div>
+          <div class="gs-p-map">${gsGrid(map, 30)}</div>
+          <div class="gs-p-ghost">${Game.itemIconSVG('hut')}</div>
+          <div class="gs-p-legend"><i class="gs-ok"></i>可放置<i class="gs-bad"></i>不可放置</div>
         </div>`;
       },
       text: `<div class="guide-page-title">摆放建筑</div>
-<p>从物品栏把建筑<b>拖到地图</b>上：</p>
+<p>从物品栏把建筑<b>拖到地图</b>上释放即安装：</p>
 <ul>
-  <li><b>蓝框</b> = 可以放；<b>红框</b> = 不能放（被挡或落在海里）。</li>
-  <li>部分建筑有地形要求：伐木小屋须在<b>森林</b>、采矿小屋须在<b>山地 / 矿洞</b>、钓船小屋须<b>临水</b>、牧场须在<b>已揭示草原</b>。</li>
-  <li>放不下时，把基地扩到正确地形附近再放。</li>
+  <li><b>蓝框</b> = 可以放；<b>红框</b> = 不能放（与建筑重叠 / 落在海里 / 地形不符）。</li>
+  <li>拖到地图边缘会<b>自动弹回</b>物品栏，不会丢失。</li>
+  <li>建筑是<b>占地格子</b>的：茅草屋占 1×1、砖瓦屋占 2×2、四合院占 4×4。</li>
+  <li>放不下时，把基地扩到正确地形附近再放（地形要求见下一页）。</li>
+</ul>`
+    },
+    {
+      scene() {
+        const rows = [
+          { id: 'lumber', name: '伐木小屋', terr: [GT.FOREST] },
+          { id: 'mine', name: '采矿小屋', terr: [GT.MOUNTAIN, GT.MINE] },
+          { id: 'dock', name: '钓船小屋', terr: [GT.SEA], note: '须临水' },
+          { id: 'pasture', name: '牧场', terr: [GT.GRASSLAND], note: '4 格全草原' },
+          { id: 'farm', name: '农田', terr: [GT.PLAIN, GT.GRASSLAND, GT.FOREST], note: '任意陆地' }
+        ];
+        const html = rows.map(r => `
+          <div class="gs-req-row">
+            <span class="gs-req-ico">${Game.itemIconSVG(r.id)}</span>
+            <b>${r.name}</b>
+            <span class="gs-req-terr">${r.terr.map(t => `<i style="background:${TC[t]}" title="${TN[t]}"></i>`).join('')}</span>
+            <em>${r.note || '须建在' + r.terr.map(t => TN[t]).join(' / ')}</em>
+          </div>`).join('');
+        return `
+        <div class="gs-scene gs-req">
+          ${html}
+        </div>`;
+      },
+      text: `<div class="guide-page-title">建筑的地形要求</div>
+<p>摆放建筑时常遇到<b>红框</b>，多半是地形不符：</p>
+<ul>
+  <li><b>伐木小屋</b> → 必须建在<b>森林</b>上。</li>
+  <li><b>采矿小屋</b> → 必须建在<b>山地 / 矿洞</b>上。</li>
+  <li><b>钓船小屋</b> → 必须<b>临水</b>（相邻一格是海洋）。</li>
+  <li><b>牧场</b> → 必须建在<b>草原</b>上（覆盖 4 格全为草原）。</li>
+  <li><b>农田</b> → 任意陆地均可，最灵活。</li>
+  <li>双击地块确认地貌，再把基地扩到目标地形附近即可摆放。</li>
 </ul>`
     },
     {
@@ -860,11 +1046,12 @@
         </div>`;
       },
       text: `<div class="guide-page-title">分配劳动力</div>
-<p>点击生产建筑 → 点「👥 劳动力分配」，用 <b>+ / −</b> 安排工人：</p>
+<p>点击地图上的生产建筑 → 点「<b>👥 劳动力分配</b>」，用 <b>+ / −</b> 安排工人：</p>
 <ul>
-  <li>每个工人每月产出一份，人越多产出越多。</li>
-  <li><b>总人口 − 已分配 = 探索者</b>：探索者负责基地采集与地貌揭示。</li>
-  <li>工人塞太多会让探索者不足、基地采集变慢，初期注意平衡。</li>
+  <li>每个工人每月产出一份，<b>工人越多产出越多</b>（伐木小屋 5 木头/人/月）。</li>
+  <li><b>总人口 − 已分配工人 = 探索者</b>：探索者负责基地采集与地貌揭示。</li>
+  <li>住宅决定人口上限：城镇中心 3、茅草屋 1、砖瓦屋 5、四合院 25。</li>
+  <li>工人塞太多会让探索者不足、基地采集变慢，初期注意<b>平衡</b>。</li>
 </ul>`,
       onShow(stage) {
         animateNumber(stage.querySelector('.gs-worknum'), 0, 4, 1200);
@@ -878,30 +1065,78 @@
     },
     {
       scene() {
+        const map = [
+          [GT.GRASSLAND, GT.FOREST, GT.FOREST, GT.GRASSLAND, GT.PLAIN, GT.PLAIN, GT.SEA, GT.SEA],
+          [GT.GRASSLAND, GT.FOREST, GT.GRASSLAND, GT.GRASSLAND, GT.PLAIN, GT.MOUNTAIN, GT.MOUNTAIN, GT.SEA],
+          [GT.PLAIN, GT.GRASSLAND, GT.GRASSLAND, GT.GRASSLAND, GT.MOUNTAIN, GT.MOUNTAIN, GT.PLAIN, GT.PLAIN],
+          [GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN, GT.PLAIN]
+        ];
         return `
-        <div class="gs-scene gs-expand">
-          <div class="gs-expand-wrap">
-            <div class="gs-expand-target"></div>
-            <div class="gs-expand-base"></div>
-            <div class="gs-expand-label">拖动边框扩张基地</div>
-          </div>
-          <div class="gs-expand-arrow">➜</div>
-          <div class="gs-expand-merge">
+        <div class="gs-scene gs-expand2">
+          <div class="gs-e-map">${gsGrid(map, 30)}</div>
+          <div class="gs-e-base"></div>
+          <div class="gs-e-label">拖动基地边框扩张</div>
+        </div>`;
+      },
+      text: `<div class="guide-page-title">扩张基地</div>
+<ul>
+  <li>基地默认 <b>2×2</b>，拖动<b>基地窗口的边框</b>可向外扩张。</li>
+  <li>覆盖更多、更富的地貌 → 采集更快、产出更丰富。</li>
+  <li>扩到<b>海洋</b>可产出鱼，扩到<b>湿地</b>可获生肉 / 浆果。</li>
+  <li>覆盖的每一格地貌都会<b>自动揭示</b>，双击地块可查看具体产出。</li>
+</ul>`
+    },
+    {
+      scene() {
+        return `
+        <div class="gs-scene gs-merge">
+          <div class="gs-merge-wrap">
             <span class="gs-merge-hut gs-mh1">${Game.itemIconSVG('hut')}</span>
             <span class="gs-merge-hut gs-mh2">${Game.itemIconSVG('hut')}</span>
             <span class="gs-merge-hut gs-mh3">${Game.itemIconSVG('hut')}</span>
             <span class="gs-merge-hut gs-mh4">${Game.itemIconSVG('hut')}</span>
             <span class="gs-merge-out">${Game.itemIconSVG('brickhouse')}</span>
           </div>
+          <div class="gs-merge-arrow">➜</div>
+          <div class="gs-merge-next">
+            <span class="gs-merge-next-ico">${Game.itemIconSVG('courtyard')}</span>
+            <span class="gs-merge-next-label">砖瓦屋 ×4 → 四合院</span>
+          </div>
         </div>`;
       },
-      text: `<div class="guide-page-title">扩张与合并升级</div>
+      text: `<div class="guide-page-title">合并升级</div>
 <ul>
-  <li><b>拖动基地边角</b>扩大覆盖：覆盖更多、更富的地貌，采集更快。</li>
-  <li>把 <b>4 个低级建筑摆成 2×2</b>，会自动合并升级：茅草屋→砖瓦屋→四合院、伐木小屋→伐木工场、农田→农庄…</li>
-  <li>合并后<b>劳动力上限提到 5</b>、产能大增，工人会自动结转。</li>
-  <li>「🏗️ 扩建」面板可查看全部升级规则。</li>
+  <li>把 <b>4 个低级建筑摆成 2×2</b>，会自动合并为高级建筑。</li>
+  <li>合并链：<b>茅草屋 ×4 → 砖瓦屋 → 四合院</b>；伐木小屋 ×4 → 伐木工场；农田 ×4 → 农庄；采矿小屋 ×4 → 采矿工场。</li>
+  <li><b>3 座钓船小屋排成直线</b> → 钓船码头（横向 / 竖向均可）。</li>
+  <li>合并后<b>劳动力上限提升</b>、产能大增，已分配工人自动结转。</li>
+  <li>「🏗️ 扩建」面板可查看全部合并规则。</li>
 </ul>`
+    },
+    {
+      scene() {
+        return `
+        <div class="gs-scene gs-win">
+          <span class="gs-win-ico">${Game.itemIconSVG('courtyard')}</span>
+          <div class="gs-win-civ"><span>文明指数</span><b class="gs-win-num">0</b><i>/ 9999</i></div>
+          <div class="gs-win-bar"><i></i></div>
+          <div class="gs-win-tips">🏆 采集 · 合成 · 摆放 · 分配 · 合并</div>
+        </div>`;
+      },
+      text: `<div class="guide-page-title">胜利条件与小贴士</div>
+<ul>
+  <li><b>文明模式</b>：文明指数达到 <b>9999</b> 弹出胜利面板，可选择继续发展或返回菜单。</li>
+  <li><b>科技模式</b>：发展出任一项高级科技获胜（尚未开放）。</li>
+  <li><b>自由模式</b>：没有胜负，尽情扩张文明。</li>
+  <li><b>小贴士</b>：前期先扩基地多采集 → 合木板砖块 → 建住宅提人口 → 建伐木/采矿小屋分配工人 → 合并升级放大产能。</li>
+  <li>随时可点 <b>⚙️ 设置</b> 查看操作说明，或在开始菜单查看<b>排行榜</b>。</li>
+</ul>`,
+      onShow(stage) {
+        const n = stage.querySelector('.gs-win-num');
+        if (n) animateNumber(n, 0, 9999, 2200);
+        const bar = stage.querySelector('.gs-win-bar i');
+        if (bar) setTimeout(() => { bar.style.width = '100%'; }, 300);
+      }
     }
   ];
 
