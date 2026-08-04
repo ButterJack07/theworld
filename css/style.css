@@ -605,10 +605,11 @@ button:active { transform: translateY(1px); }
     border-color: rgba(163, 130, 63, 0.7);
     box-shadow: 0 6px 20px rgba(163, 130, 63, 0.35);
   }
-  .settings-note {
-    font-size: 11px;
+  .restart-ask {
+    font-size: 12px;
+    line-height: 1.7;
     letter-spacing: 1px;
-    color: #a8a99a;
+    color: #6b6f63;
     text-align: center;
   }
   button.play-btn.recipe-btn.open {

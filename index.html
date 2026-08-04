@@ -56,7 +56,7 @@
     <h2 class="panel-title">设置</h2>
     <div class="settings-tabs">
       <button class="settings-tab active" data-tab="help">操作说明</button>
-      <button class="settings-tab" data-tab="game">游戏</button>
+      <button class="settings-tab" data-tab="restart">重新开始</button>
     </div>
     <div class="settings-page active" id="page-help">
       <div class="settings-section">地图操作</div>
@@ -83,18 +83,18 @@
         <li><b>⚙️ 设置</b>：打开 / 关闭本菜单</li>
       </ul>
     </div>
-    <div class="settings-page" id="page-game">
+    <div class="settings-page" id="page-restart">
       <div class="settings-game">
-        <button id="restart" class="restart-btn">重新开始</button>
-        <div class="settings-note">随机生成新世界并清空当前进度</div>
+        <div class="restart-ask">是否确认重新开始游戏？<br>将生成新世界并清空当前进度</div>
+        <button id="restart" class="restart-btn">确认重新开始游戏</button>
       </div>
     </div>
   </div>
   <div class="controls">
+    <button id="settingsToggle" class="play-btn recipe-btn" title="展开 / 收起设置菜单"><span>⚙️</span><b>设置</b></button>
     <button id="recipeToggle" class="play-btn recipe-btn" title="展开 / 收起合成列表"><span id="recipeIcon">📜</span><b>合成</b></button>
     <button id="expandToggle" class="play-btn recipe-btn" title="展开 / 收起扩建规则"><span id="expandIcon">🏗️</span><b>扩建</b></button>
     <button id="playBtn" class="play-btn"><span id="playIcon">❚❚</span><b id="speedLabel">1x</b></button>
-    <button id="settingsToggle" class="play-btn recipe-btn" title="展开 / 收起设置菜单"><span>⚙️</span><b>设置</b></button>
   </div>
 </div>
 
