@@ -41,7 +41,7 @@
       seed: Game.seed,
       villagers: Game.state.villagers,
       villagersCells: Game.state.villagersCells,
-      buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot })),
+      buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot, workers: b.workers || 0 })),
       civ: Game.state.civ,
       day: Game.state.day,
       base: Game.base,
@@ -61,11 +61,13 @@
       Game.state = {
         villagers: saved.villagers || 0,
         villagersCells: Array.isArray(saved.villagersCells) ? saved.villagersCells : [],
-        buildings: (saved.buildings || []).filter(b => Game.BUILDINGS[b.id]),
+        buildings: (saved.buildings || []).filter(b => Game.BUILDINGS[b.id]).map(b => ({
+          id: b.id, x: b.x, y: b.y, rot: b.rot, workers: Math.min(b.workers || 0, Game.BUILDINGS[b.id].laborCap || 0)
+        })),
         civ: saved.civ || 0,
         day: saved.day || 1
       };
-      if (saved.hut) Game.state.buildings.push({ id: 'hut', x: saved.hut.x, y: saved.hut.y });
+      if (saved.hut) Game.state.buildings.push({ id: 'hut', x: saved.hut.x, y: saved.hut.y, workers: 0 });
       Game.displayDay = Game.state.day;
       Game.base = saved.base && saved.base.x !== undefined
         ? { x: saved.base.x, y: saved.base.y, w: saved.base.w, h: saved.base.h }

@@ -163,15 +163,15 @@
     { id: 'hut',    name: '茅草屋', color: '#f0e2c0', w: 1, h: 1, desc: '一级住宅，可容纳 1 人。4 座摆成 2×2 可合并为砖瓦屋' },
     { id: 'brickhouse', name: '砖瓦屋', color: '#d9c1a6', w: 2, h: 2, desc: '二级住宅，可容纳 5 人。由 4 座茅草屋合并而成' },
     { id: 'courtyard', name: '四合院', color: '#7a7a72', w: 4, h: 4, desc: '三级住宅，可容纳 25 人。由 4 座砖瓦屋合并而成' },
-    { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1, desc: '须建在森林上，每月产出 5 木头' },
-    { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1, desc: '须建在山地或矿洞上，每月产出石头与矿物' },
-    { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2, desc: '由 4 座伐木小屋合并而成，每月产出 25 木头' },
-    { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2, desc: '由 4 座采矿小屋合并而成，每月产出大量石头与矿物' },
-    { id: 'dock',   name: '钓船小屋', color: '#cfe3e6', w: 1, h: 1, desc: '须临水建造，每月产出 2 食物' },
-    { id: 'dockyard', name: '钓船码头', color: '#c9b889', w: 3, h: 1, desc: '由 3 座钓船小屋排成一线合并而成，每月产出 10 食物' },
-    { id: 'farm',      name: '农田', color: '#d9cba0', w: 1, h: 1, desc: '可建在任意陆地，每月产出 5 小麦。4 座摆成 2×2 合并为农庄' },
-    { id: 'farmstead', name: '农庄', color: '#cdbf95', w: 2, h: 2, desc: '由 4 座农田合并而成，每月产出 25 小麦' },
-    { id: 'pasture',   name: '牧场', color: '#cfe0b0', w: 2, h: 2, desc: '须建在草原上（覆盖 4 格全为草原），每月产出 10 生肉' },
+    { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1, desc: '须建在森林上，每月生产 5 木头' },
+    { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1, desc: '须建在山地或矿洞上，每月生产 4 石头 + 1 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）' },
+    { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2, desc: '由 4 座伐木小屋合并而成，至多 5 劳动力，满员每月生产 25 木头' },
+    { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2, desc: '由 4 座采矿小屋合并而成，至多 5 劳动力，满员每月生产 20 石头 + 5 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）' },
+    { id: 'dock',   name: '钓船小屋', color: '#cfe3e6', w: 1, h: 1, desc: '须临水建造，每月生产 2 食物' },
+    { id: 'dockyard', name: '钓船码头', color: '#c9b889', w: 3, h: 1, desc: '由 3 座钓船小屋排成一线合并而成，至多 5 劳动力，满员每月生产 10 食物' },
+    { id: 'farm',      name: '农田', color: '#d9cba0', w: 1, h: 1, desc: '可建在任意陆地，每月生产 5 小麦。4 座摆成 2×2 合并为农庄' },
+    { id: 'farmstead', name: '农庄', color: '#cdbf95', w: 2, h: 2, desc: '由 4 座农田合并而成，至多 5 劳动力，满员每月生产 25 小麦' },
+    { id: 'pasture',   name: '牧场', color: '#cfe0b0', w: 2, h: 2, desc: '须建在草原上（覆盖 4 格全为草原），至多 5 劳动力，满员每月生产 10 生肉' },
   ];
 
   // 卡通简约物品图标（统一 viewBox 40x40）
@@ -426,64 +426,81 @@
       produces: [], interval: 1, capacity: 25
     },
     lumber: {
-      id: 'lumber', name: '伐木小屋',
+      id: 'lumber', name: '伐木小屋', job: '伐木工',
       body: '#e9dcba', roof: '#b8c99e', accent: '#a9855f',
-      produces: [{ item: 'wood', amount: 5 }], interval: 1
+      produces: [{ item: 'wood', amount: 5 }], interval: 1, laborCap: 1
     },
     mine: {
-      id: 'mine', name: '采矿小屋',
+      id: 'mine', name: '采矿小屋', job: '采矿工',
       body: '#dbd4c6', roof: '#b4ada0', accent: '#7d7a70',
       produces: [
         { item: 'stone', amount: 4 },
         { item: Game.rollMineMineral, amount: 1 }
       ],
       desc: '4 石头 + 1 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）',
-      interval: 1
+      interval: 1, laborCap: 1
     },
     lumbermill: {
-      id: 'lumbermill', name: '伐木工场',
+      id: 'lumbermill', name: '伐木工场', job: '伐木工',
       body: '#c9b889', roof: '#8a7a4f', accent: '#6a5a3a',
-      produces: [{ item: 'wood', amount: 25 }], interval: 1
+      produces: [{ item: 'wood', amount: 5 }],
+      desc: '至多 5 劳动力，满员每月生产 25 木头',
+      interval: 1, laborCap: 5
     },
     minefactory: {
-      id: 'minefactory', name: '采矿工场',
+      id: 'minefactory', name: '采矿工场', job: '采矿工',
       body: '#9a968c', roof: '#6f6c64', accent: '#4a4a44',
       produces: [
-        { item: 'stone', amount: 20 },
-        { item: Game.rollMineMineral, amount: 5 }
+        { item: 'stone', amount: 4 },
+        { item: Game.rollMineMineral, amount: 1 }
       ],
-      desc: '20 石头 + 5 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）',
-      interval: 1
+      desc: '至多 5 劳动力，满员每月生产 20 石头 + 5 矿物（铁 60% / 金 15% / 铜 15% / 稀有 10%）',
+      interval: 1, laborCap: 5
     },
     dock: {
-      id: 'dock', name: '钓船小屋',
+      id: 'dock', name: '钓船小屋', job: '渔夫',
       body: '#cfe3e6', roof: '#a9ccd4', accent: '#6f98a3',
-      produces: [{ item: 'food', amount: 2 }], interval: 1
+      produces: [{ item: 'food', amount: 2 }], interval: 1, laborCap: 1
     },
     dockyard: {
-      id: 'dockyard', name: '钓船码头',
+      id: 'dockyard', name: '钓船码头', job: '渔夫',
       body: '#c9b889', roof: '#8a7a4f', accent: '#6a5a3a',
-      produces: [{ item: 'food', amount: 10 }],
-      desc: '10 食物（无直接配方：地图上 3 个钓船小屋排成横 / 竖直线自动合并，船坞在岸、木制浮台伸向水域）',
-      interval: 1
+      produces: [{ item: 'food', amount: 2 }],
+      desc: '至多 5 劳动力，满员每月生产 10 食物。无直接配方：地图上 3 个钓船小屋排成横 / 竖直线自动合并，船坞在岸、木制浮台伸向水域',
+      interval: 1, laborCap: 5
     },
     farm: {
-      id: 'farm', name: '农田',
+      id: 'farm', name: '农田', job: '农民',
       body: '#d9cba0', roof: '#b8c99e', accent: '#7a7a3f',
-      produces: [{ item: 'wheat', amount: 5 }], interval: 1
+      produces: [{ item: 'wheat', amount: 5 }], interval: 1, laborCap: 1
     },
     farmstead: {
-      id: 'farmstead', name: '农庄',
+      id: 'farmstead', name: '农庄', job: '农民',
       body: '#cdbf95', roof: '#8a9a5a', accent: '#5f6a3a',
-      produces: [{ item: 'wheat', amount: 25 }],
-      desc: '25 小麦（无直接配方：地图上 4 个农田摆成 2×2 自动合并）',
-      interval: 1
+      produces: [{ item: 'wheat', amount: 5 }],
+      desc: '至多 5 劳动力，满员每月生产 25 小麦。无直接配方：地图上 4 个农田摆成 2×2 自动合并',
+      interval: 1, laborCap: 5
     },
     pasture: {
-      id: 'pasture', name: '牧场',
+      id: 'pasture', name: '牧场', job: '牧民',
       body: '#cfe0b0', roof: '#9aae6a', accent: '#6a7a45',
-      produces: [{ item: 'meat', amount: 10 }], interval: 1
+      produces: [{ item: 'meat', amount: 2 }],
+      desc: '至多 5 劳动力，满员每月生产 10 生肉',
+      interval: 1, laborCap: 5
     }
+  };
+
+  // 工种一览：劳动力面板按工种统计总人数（icon 用该类建筑的代表图标）
+  Game.LABOR_JOBS = [
+    { name: '伐木工', icon: 'lumber' },
+    { name: '采矿工', icon: 'mine' },
+    { name: '渔夫',   icon: 'dock' },
+    { name: '农民',   icon: 'farm' },
+    { name: '牧民',   icon: 'pasture' }
+  ];
+  Game.jobName = function (id) {
+    const def = Game.BUILDINGS[id];
+    return def && def.job ? def.job : (def ? def.name : '');
   };
 
   // ---------- 物品栏 ----------
@@ -491,7 +508,6 @@
   Game.INV_ROWS = 4;
   Game.INV_CELL = 42;
   Game.MAX_STACK = 100;    // 每组物品堆叠上限
-
   // ---------- 合成器 ----------
   Game.CRAFT_COLS = 3;
   Game.CRAFT_ROWS = 3;

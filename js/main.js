@@ -87,6 +87,195 @@
   });
   settingsClose.addEventListener('click', closeSettings);
   settingsOverlay.addEventListener('click', closeSettings);
+
+  // 劳动力分配视图：切换后隐藏右侧物品栏 / 信息栏 / 合成器，主地图隐藏已揭示地貌与基地
+  const laborToggle = document.getElementById('laborToggle');
+  Game.laborMode = false;
+  function setLaborMode(on) {
+    Game.laborMode = on;
+    document.getElementById('app').classList.toggle('labor-mode', on);
+    laborToggle.classList.toggle('active', on);
+    if (on) {
+      if (!recipePanel.classList.contains('hidden')) {
+        recipePanel.classList.add('hidden');
+        recipeToggle.classList.remove('open');
+      }
+      if (!expandPanel.classList.contains('hidden')) {
+        expandPanel.classList.add('hidden');
+        expandToggle.classList.remove('open');
+      }
+      Game.selectedItem = null;
+      Game.selectedBuilding = null;
+      Game.selectedBase = false;
+      Game.selectedTerrain = null;
+      Game.updateStatus();
+    }
+    renderLabor();
+    Game.drawWorld();
+  }
+  laborToggle.addEventListener('click', () => setLaborMode(!Game.laborMode));
+
+  // 劳动力分配面板：统计总人口 / 已分配 / 空闲，并按工种统计人数
+  // 具体分配：点击地图上的生产力建筑弹出分配窗口（openAssign）
+  function laborBuildings() {
+    return Game.state.buildings.filter(b => (Game.BUILDINGS[b.id].laborCap || 0) > 0);
+  }
+  Game.laborBuildings = laborBuildings;
+
+  function renderLabor() {
+    const summaryEl = document.getElementById('laborSummary');
+    const listEl = document.getElementById('laborList');
+    if (!summaryEl || !listEl) return;
+    const buildings = laborBuildings();
+    const assigned = buildings.reduce((s, b) => s + (b.workers || 0), 0);
+    const total = Game.state.villagers;
+    const idle = Math.max(0, total - assigned);
+    summaryEl.innerHTML = '';
+    const line = document.createElement('div');
+    line.className = 'labor-summary';
+    line.innerHTML = `总人口 <b>${total}</b>　已分配 <b>${assigned}</b>　空闲 <b>${idle}</b>`;
+    summaryEl.appendChild(line);
+
+    listEl.innerHTML = '';
+    if (!buildings.length) {
+      const empty = document.createElement('div');
+      empty.className = 'labor-empty';
+      empty.textContent = '尚无生产力建筑\n先在地图上建造农田 / 伐木小屋等';
+      listEl.appendChild(empty);
+      return;
+    }
+
+    // 按工种汇总人数
+    Game.LABOR_JOBS.forEach(job => {
+      const workers = buildings
+        .filter(b => Game.BUILDINGS[b.id].job === job.name)
+        .reduce((s, b) => s + (b.workers || 0), 0);
+      if (!workers) return;
+      const row = document.createElement('div');
+      row.className = 'labor-row labor-job';
+
+      const icon = document.createElement('span');
+      icon.className = 'labor-icon';
+      icon.innerHTML = Game.itemIconSVG(job.icon);
+
+      const name = document.createElement('span');
+      name.className = 'labor-name';
+      name.textContent = job.name;
+
+      const count = document.createElement('span');
+      count.className = 'labor-count';
+      count.textContent = `${workers} 人`;
+
+      row.append(icon, name, count);
+      listEl.appendChild(row);
+    });
+
+    const hint = document.createElement('div');
+    hint.className = 'labor-hint';
+    hint.textContent = '点击地图上的生产力建筑分配劳动力';
+    listEl.appendChild(hint);
+  }
+  Game.renderLabor = renderLabor;
+
+  // 分配劳动力弹窗：点击地图上的生产力建筑打开，显示当前 / 最多劳动力并 +/− 调整
+  let assignBuilding = null;
+
+  function totalAssigned() {
+    return laborBuildings().reduce((s, b) => s + (b.workers || 0), 0);
+  }
+  Game.totalAssigned = totalAssigned;
+
+  function openAssign(b) {
+    assignBuilding = b;
+    document.getElementById('assignOverlay').classList.remove('hidden');
+    document.getElementById('assignPanel').classList.remove('hidden');
+    renderAssign();
+  }
+  Game.openAssign = openAssign;
+
+  function closeAssign() {
+    assignBuilding = null;
+    document.getElementById('assignOverlay').classList.add('hidden');
+    document.getElementById('assignPanel').classList.add('hidden');
+  }
+  Game.closeAssign = closeAssign;
+  document.getElementById('assignClose').addEventListener('click', closeAssign);
+  document.getElementById('assignOverlay').addEventListener('click', closeAssign);
+
+  function renderAssign() {
+    const body = document.getElementById('assignBody');
+    if (!body || !assignBuilding) return;
+    const b = assignBuilding;
+    const def = Game.BUILDINGS[b.id];
+    const laborCap = def.laborCap || 0;
+    const workers = b.workers || 0;
+    const idle = Math.max(0, Game.state.villagers - totalAssigned());
+
+    body.innerHTML = '';
+
+    const head = document.createElement('div');
+    head.className = 'assign-head';
+    const icon = document.createElement('span');
+    icon.className = 'assign-icon';
+    icon.innerHTML = Game.itemIconSVG(b.id);
+    const name = document.createElement('span');
+    name.className = 'assign-name';
+    name.textContent = `${def.name} · ${def.job}`;
+    head.append(icon, name);
+    body.appendChild(head);
+
+    const stats = document.createElement('div');
+    stats.className = 'assign-stats';
+    [
+      ['已分配', `${workers} / ${laborCap}`],
+      ['当前空闲人口', `${idle} 人`]
+    ].forEach(([label, value]) => {
+      const line = document.createElement('div');
+      line.className = 'assign-line';
+      const l = document.createElement('span');
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.innerHTML = `<b>${value}</b>`;
+      line.append(l, v);
+      stats.appendChild(line);
+    });
+    body.appendChild(stats);
+
+    const ctrl = document.createElement('div');
+    ctrl.className = 'assign-ctrl';
+    const minus = document.createElement('button');
+    minus.className = 'labor-btn';
+    minus.textContent = '−';
+    minus.disabled = workers <= 0;
+    minus.addEventListener('click', () => {
+      b.workers = Math.max(0, workers - 1);
+      Game.saveState();
+      Game.renderLabor();
+      Game.updateStatus();
+      renderAssign();
+    });
+    const count = document.createElement('span');
+    count.className = 'assign-count';
+    count.textContent = `${workers} 人`;
+    const plus = document.createElement('button');
+    plus.className = 'labor-btn';
+    plus.textContent = '+';
+    plus.disabled = workers >= laborCap || idle <= 0;
+    plus.addEventListener('click', () => {
+      b.workers = Math.min(laborCap, workers + 1);
+      Game.saveState();
+      Game.renderLabor();
+      Game.updateStatus();
+      renderAssign();
+    });
+    ctrl.append(minus, count, plus);
+    body.appendChild(ctrl);
+
+    const note = document.createElement('div');
+    note.className = 'assign-note';
+    note.textContent = '空闲人口不足时无法继续分配\n点击 + / − 调整此建筑的劳动力';
+    body.appendChild(note);
+  }
   settingsPanel.querySelectorAll('.settings-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       settingsPanel.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b === btn));
@@ -314,54 +503,64 @@
     head.append(icon, title);
     card.appendChild(head);
 
-    if (def.desc) {
-      const line = document.createElement('div');
-      line.className = 'bi-line';
-      const label = document.createElement('span');
-      label.className = 'bi-label';
-      label.textContent = `每 ${def.interval} 个月产出`;
-      const val = document.createElement('span');
-      val.className = 'bi-val';
-      val.textContent = def.desc;
-      line.append(label, val);
-      card.appendChild(line);
-    } else {
-      def.produces.forEach(p => {
-        const item = Game.ITEMS.find(i => i.id === p.item);
+    const laborCap = def.laborCap || 0;
+    const workers = b.workers || 0;
+
+    if (laborCap > 0) {
+      if (!workers) {
         const line = document.createElement('div');
-        line.className = 'bi-line';
-        const label = document.createElement('span');
-        label.className = 'bi-label';
-        label.textContent = `每 ${def.interval} 个月产出`;
+        line.className = 'bi-line bi-nolabor';
         const val = document.createElement('span');
         val.className = 'bi-val';
-        const vIcon = document.createElement('span');
-        vIcon.className = 'bi-icon-sm';
-        vIcon.innerHTML = Game.itemIconSVG(item.id);
-        const vName = document.createElement('span');
-        vName.textContent = `${item.name}  +${p.amount}`;
-        val.append(vIcon, vName);
-        line.append(label, val);
+        val.textContent = '请分配劳动力到该生产建筑';
+        line.append(val);
         card.appendChild(line);
-      });
+      } else {
+        def.produces.forEach(p => {
+          const base = typeof p.amount === 'function' ? 1 : p.amount;
+          const amount = base * workers;
+          const itemId = typeof p.item === 'function' ? null : p.item;
+          const line = document.createElement('div');
+          line.className = 'bi-line';
+          const label = document.createElement('span');
+          label.className = 'bi-label';
+          label.textContent = '每月生产';
+          const val = document.createElement('span');
+          val.className = 'bi-val';
+          if (itemId) {
+            const item = Game.ITEMS.find(i => i.id === itemId);
+            const vIcon = document.createElement('span');
+            vIcon.className = 'bi-icon-sm';
+            vIcon.innerHTML = Game.itemIconSVG(item.id);
+            const vName = document.createElement('span');
+            vName.textContent = `${item.name}  +${amount}`;
+            val.append(vIcon, vName);
+          } else {
+            val.textContent = `矿物  +${amount}`;
+          }
+          line.append(label, val);
+          card.appendChild(line);
+        });
+      }
     }
-
-    const timer = b.timer || 0;
-    const cycle = def.interval * Game.DAYS_PER_MONTH;
-    const pct = Math.min(100, Math.round((timer / cycle) * 100));
-    const prog = document.createElement('div');
-    prog.className = 'bi-progress';
-    const fill = document.createElement('div');
-    fill.className = 'bi-progress-fill';
-    fill.style.width = pct + '%';
-    prog.appendChild(fill);
-    card.appendChild(prog);
 
     if (def.capacity) {
       const foot = document.createElement('div');
       foot.className = 'bi-foot';
       foot.textContent = `住宅容量  ${def.capacity} 人 / 座`;
       card.appendChild(foot);
+    }
+
+    if (laborCap > 0) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bi-labor-btn';
+      btn.textContent = '👥 劳动力分配';
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Game.openAssign(b);
+      });
+      card.appendChild(btn);
     }
 
     statusEl.appendChild(card);
@@ -373,18 +572,24 @@
   let saveTick = 0;
 
   function tickBuilding(b, def) {
+    const laborCap = def.laborCap || 0;
+    if (!laborCap) return;
     b.timer = (b.timer || 0) + speed;
     if (b.timer >= def.interval * Game.DAYS_PER_MONTH) {
       b.timer = 0;
+      if (!b.workers) return;
       let produced = false;
-      def.produces.forEach(p => {
-        const itemId = typeof p.item === 'function' ? p.item() : p.item;
-        const amount = typeof p.amount === 'function' ? p.amount() : p.amount;
-        if (Game.addItemToInventory(itemId, amount)) {
-          Game.state.civ += amount;
-          produced = true;
-        }
-      });
+      // 生产力建筑：n 个劳动力 → 每个劳动力按基准 x 独立产出一次（含矿物等随机产出）
+      for (let i = 0; i < b.workers; i++) {
+        def.produces.forEach(p => {
+          const itemId = typeof p.item === 'function' ? p.item() : p.item;
+          const amount = typeof p.amount === 'function' ? p.amount() : p.amount;
+          if (Game.addItemToInventory(itemId, amount)) {
+            Game.state.civ += amount;
+            produced = true;
+          }
+        });
+      }
       if (produced) Game.saveState();
     }
   }
@@ -428,14 +633,21 @@
     baseTimer += speed;
     if (baseTimer >= Game.DAYS_PER_MONTH) { baseTimer = 0; baseProduce(); }
     popTimer += speed;
-    if (popTimer >= Game.DAYS_PER_MONTH && Game.state.villagers < Game.hutCapacity()) {
-      const spot = Game.findVillagerSpot(Game.state.villagersCells);
-      if (spot) {
-        Game.state.villagersCells.push(spot);
-        Game.state.villagers++;
-      }
+    if (popTimer >= Game.DAYS_PER_MONTH) {
       popTimer = 0;
-      Game.saveState();
+      const cap = Game.hutCapacity();
+      if (Game.state.villagers < cap) {
+        // 增长速度随当前人口基数决定：每月增长 max(1, 当前人口×10%)，直到人口上限
+        const grow = Math.min(cap - Game.state.villagers, Math.max(1, Math.floor(Game.state.villagers * 0.1)));
+        for (let i = 0; i < grow; i++) {
+          const spot = Game.findVillagerSpot(Game.state.villagersCells);
+          if (!spot) break;
+          Game.state.villagersCells.push(spot);
+          Game.state.villagers++;
+        }
+        if (Game.laborMode) renderLabor();
+        Game.saveState();
+      }
     }
     Game.state.day += speed;
     Game.displayDay += 1;

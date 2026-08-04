@@ -952,25 +952,7 @@
     }
   }
 
-  function drawVillagers() {
-    Game.state.villagersCells.forEach(v => {
-      const cx = v.x * Game.CELL + Game.CELL / 2;
-      const cy = v.y * Game.CELL + Game.CELL / 2;
-      ctx.fillStyle = '#c0a078';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 9, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
-      ctx.beginPath();
-      ctx.arc(cx, cy - 2, 6, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(120, 90, 60, 0.5)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 9, 0, Math.PI * 2);
-      ctx.stroke();
-    });
-  }
+  // 劳动力不在地图上实体显示（仅作为数量统计），不再绘制小人
 
   // ---------- 基地：灰色窗口，可拖动边角缩放 ----------
   function drawBase() {
@@ -1088,11 +1070,11 @@
         ctx.strokeRect(x * Game.CELL + 0.5, y * Game.CELL + 0.5, Game.CELL - 1, Game.CELL - 1);
       }
     }
-    drawRevealedTerrain();
-    drawBase();
+    if (!Game.laborMode) {
+      drawRevealedTerrain();
+      drawBase();
+    }
     Game.state.buildings.forEach(drawBuildingEntity);
-    drawVillagers();
-    // 拖放建筑落点预览
     if (Game.dragBuildingId && Game.hoverCell && Game.hoverCell.x >= 0 && Game.hoverCell.x < Game.MAP_W && Game.hoverCell.y >= 0 && Game.hoverCell.y < Game.MAP_H) {
       const { w, h } = buildingSize(Game.dragBuildingId);
       const ok = canBuildAt(Game.dragBuildingId, Game.hoverCell.x, Game.hoverCell.y);
@@ -1126,11 +1108,11 @@
     } else {
       coordEl.textContent = '';
     }
-    if (baseResize) {
+    if (baseResize && !Game.laborMode) {
       applyBaseResize(px, py);
       return;
     }
-    const side = baseHitTest(px, py);
+    const side = Game.laborMode ? null : baseHitTest(px, py);
     const cursors = { nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize', n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize' };
     canvas.style.cursor = side ? cursors[side] : 'crosshair';
   });
@@ -1179,7 +1161,7 @@
     const r = canvas.getBoundingClientRect();
     const px = e.clientX - r.left;
     const py = e.clientY - r.top;
-    const side = baseHitTest(px, py);
+    const side = Game.laborMode ? null : baseHitTest(px, py);
     if (!side) return;
     baseResize = { side, startX: px, startY: py, startBase: { ...Game.base } };
     resizeMoved = false;
@@ -1200,10 +1182,11 @@
     const c = canvasCell(e);
     const b = Game.state.buildings.find(bd => buildingCells(bd).some(cell => cell.x === c.x && cell.y === c.y));
     Game.selectedBuilding = b || null;
-    Game.selectedBase = !b && insideBase(c.x, c.y);
+    Game.selectedBase = !b && !Game.laborMode && insideBase(c.x, c.y);
     Game.selectedTerrain = null;
     Game.selectedItem = null;
     Game.updateStatus();
+    if (Game.laborMode && b && (Game.BUILDINGS[b.id].laborCap || 0) > 0) Game.openAssign(b);
   });
 
   // 双击地块：信息栏持续显示该地块地貌的类型与产出内容
@@ -1242,7 +1225,6 @@
     if (x < 0 || y < 0 || x + w > Game.MAP_W || y + h > Game.MAP_H) return false;
     const occupied = new Set();
     Game.state.buildings.forEach(bd => buildingCells(bd).forEach(c => occupied.add(c.x + ',' + c.y)));
-    Game.state.villagersCells.forEach(v => occupied.add(v.x + ',' + v.y));
     for (let dy = 0; dy < h; dy++) {
       for (let dx = 0; dx < w; dx++) {
         const cx = x + dx, cy = y + dy;
@@ -1282,27 +1264,31 @@
     }
     if (!spots.length) return;
     const s = spots[Math.floor(Math.random() * spots.length)];
-    Game.state.buildings.push({ id: 'hut', x: s.x, y: s.y });
+    Game.state.buildings.push({ id: 'hut', x: s.x, y: s.y, workers: 0 });
   }
   Game.spawnStarterHut = spawnStarterHut;
 
   // 通用合并：地图上 4 个 srcId（1×1）摆成 2×2 → 合并为 1 个 outId（2×2，位于窗口左上角）
-  // 返回最后一个合并出的建筑，无则 null
+  // 返回最后一个合并出的建筑，无则 null。合并时已分配劳动力结转（不超过新建筑 laborCap）
   function mergeGrid(srcId, outId) {
     let last = null;
+    const cap = Game.BUILDINGS[outId].laborCap || 0;
     for (let y = 0; y < Game.MAP_H - 1; y++) {
       for (let x = 0; x < Game.MAP_W - 1; x++) {
         const cells = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]];
         let ok = true;
+        let workers = 0;
         for (const [cx, cy] of cells) {
-          if (!Game.state.buildings.some(bd => bd.id === srcId && bd.x === cx && bd.y === cy)) { ok = false; break; }
+          const bd = Game.state.buildings.find(b => b.id === srcId && b.x === cx && b.y === cy);
+          if (!bd) { ok = false; break; }
+          workers += bd.workers || 0;
         }
         if (!ok) continue;
         cells.forEach(([cx, cy]) => {
           const i = Game.state.buildings.findIndex(bd => bd.id === srcId && bd.x === cx && bd.y === cy);
           Game.state.buildings.splice(i, 1);
         });
-        last = { id: outId, x, y };
+        last = { id: outId, x, y, workers: Math.min(workers, cap) };
         Game.state.buildings.push(last);
       }
     }
@@ -1327,7 +1313,12 @@
   // 朝向由水在哪一端决定：木制浮台伸向水域，船坞小屋在岸端（rot: E/W 横、S/N 竖）
   function mergeDockyards() {
     let last = null;
+    const cap = Game.BUILDINGS.dockyard.laborCap || 0;
     const isWater = (x, y) => x >= 0 && x < Game.MAP_W && y >= 0 && y < Game.MAP_H && Game.world.map[y][x] === Game.TILE.OCEAN;
+    const lineWorkers = (cells) => cells.reduce((s, [gx, gy]) => {
+      const bd = Game.state.buildings.find(bd => bd.id === 'dock' && bd.x === gx && bd.y === gy);
+      return s + (bd ? (bd.workers || 0) : 0);
+    }, 0);
     const hasLine = (cx, cy, cells) => cells.every(([gx, gy]) =>
       Game.state.buildings.some(bd => bd.id === 'dock' && bd.x === gx && bd.y === gy));
     const take = (cells) => cells.forEach(([gx, gy]) => {
@@ -1339,11 +1330,12 @@
       for (let x = 0; x < Game.MAP_W - 2; x++) {
         const cells = [[x, y], [x + 1, y], [x + 2, y]];
         if (!hasLine(x, y, cells)) continue;
+        const workers = Math.min(lineWorkers(cells), cap);
         let rot = 'E';
         if (isWater(x - 1, y)) rot = 'W';
         else if (isWater(x + 3, y)) rot = 'E';
         take(cells);
-        last = { id: 'dockyard', x, y, rot };
+        last = { id: 'dockyard', x, y, rot, workers };
         Game.state.buildings.push(last);
       }
     }
@@ -1352,11 +1344,12 @@
       for (let y = 0; y < Game.MAP_H - 2; y++) {
         const cells = [[x, y], [x, y + 1], [x, y + 2]];
         if (!hasLine(x, y, cells)) continue;
+        const workers = Math.min(lineWorkers(cells), cap);
         let rot = 'S';
         if (isWater(x, y - 1)) rot = 'N';
         else if (isWater(x, y + 3)) rot = 'S';
         take(cells);
-        last = { id: 'dockyard', x, y, rot };
+        last = { id: 'dockyard', x, y, rot, workers };
         Game.state.buildings.push(last);
       }
     }
@@ -1368,19 +1361,23 @@
   // （砖瓦屋左上角按间隔 2 摆放，即 (x,y),(x+2,y),(x,y+2),(x+2,y+2)，互不重叠才可由玩家摆出）
   function mergeBrickhouses() {
     let last = null;
+    const cap = Game.BUILDINGS.courtyard.laborCap || 0;
     for (let y = 0; y <= Game.MAP_H - 4; y++) {
       for (let x = 0; x <= Game.MAP_W - 4; x++) {
         const cells = [[x, y], [x + 2, y], [x, y + 2], [x + 2, y + 2]];
         let ok = true;
+        let workers = 0;
         for (const [cx, cy] of cells) {
-          if (!Game.state.buildings.some(bd => bd.id === 'brickhouse' && bd.x === cx && bd.y === cy)) { ok = false; break; }
+          const bd = Game.state.buildings.find(b => b.id === 'brickhouse' && b.x === cx && b.y === cy);
+          if (!bd) { ok = false; break; }
+          workers += bd.workers || 0;
         }
         if (!ok) continue;
         cells.forEach(([cx, cy]) => {
           const i = Game.state.buildings.findIndex(bd => bd.id === 'brickhouse' && bd.x === cx && bd.y === cy);
           Game.state.buildings.splice(i, 1);
         });
-        last = { id: 'courtyard', x, y };
+        last = { id: 'courtyard', x, y, workers: Math.min(workers, cap) };
         Game.state.buildings.push(last);
       }
     }
@@ -1400,7 +1397,7 @@
     const from = Game.dragContext ? Game.dragContext.from : null;
     const grid = from === 'crafting' ? Game.craftingItems : Game.placed;
     if (!takeOneFrom(grid, Game.dragContext.entry)) return;
-    Game.state.buildings.push({ id: itemId, x, y });
+    Game.state.buildings.push({ id: itemId, x, y, workers: 0 });
     Game.dragContext = null;
     Game.dragBuildingId = null;
     Game.selectedBuilding = Game.state.buildings[Game.state.buildings.length - 1];

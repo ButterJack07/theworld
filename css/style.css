@@ -67,6 +67,10 @@ h1 {
   color: #909184;
 }
 .bi-label { color: #a8a99a; }
+.bi-nolabor .bi-val {
+  color: #c08a5a;
+  font-weight: 400;
+}
 .bi-val {
   display: flex;
   align-items: center;
@@ -106,6 +110,13 @@ h1 {
   color: #a3823f;
   text-align: center;
   padding-top: 2px;
+}
+.bi-labor-btn {
+  align-self: center;
+  margin-top: auto;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 5px 16px;
 }
 .info-hint {
   font-size: 12px;
@@ -217,9 +228,120 @@ button:active { transform: translateY(1px); }
   flex-direction: column;
   gap: 18px;
 }
+.labor-panel {
+  display: none;
+  width: 556px;
+  min-height: 360px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.labor-summary {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #909184;
+  text-align: center;
+  margin-bottom: 12px;
+  user-select: none;
+}
+.labor-summary b { color: #5e6e55; font-weight: 600; }
+.labor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 420px;
+}
+.labor-empty {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #a8a99a;
+  text-align: center;
+  line-height: 1.9;
+  padding: 30px 0;
+  user-select: none;
+}
+.labor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(170, 166, 146, 0.35);
+  background: rgba(255, 255, 255, 0.35);
+}
+.labor-row .labor-icon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.labor-row .labor-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.labor-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #5e6e55;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+.labor-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.labor-ctrl .labor-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(170, 166, 146, 0.5);
+  background: rgba(255, 255, 255, 0.7);
+  color: #5e6e55;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.labor-ctrl .labor-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.95); }
+.labor-ctrl .labor-btn:active:not(:disabled) { transform: translateY(1px); }
+.labor-ctrl .labor-btn:disabled { opacity: 0.35; cursor: default; }
+.labor-count {
+  font-size: 13px;
+  color: #5e6e55;
+  min-width: 44px;
+  text-align: center;
+  user-select: none;
+}
+.labor-hint {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #a8a99a;
+  text-align: center;
+  margin-top: 6px;
+  user-select: none;
+}
+.labor-job .labor-name {
+  color: #5e6e55;
+}
+.labor-mode .side > .frame:not(.labor-panel),
+.labor-mode .side > .side-left {
+  display: none;
+}
+.labor-mode .labor-panel {
+  display: flex;
+}
 .info-card {
   width: 372px;
-  height: 150px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,7 +352,12 @@ button:active { transform: translateY(1px); }
   right: 20px;
   display: flex;
   gap: 10px;
+  align-items: center;
   z-index: 10;
+}
+.top-right button.play-btn.recipe-btn {
+  width: 54px;
+  height: 54px;
 }
 .pop-pill {
   display: flex;
@@ -574,6 +701,103 @@ button:active { transform: translateY(1px); }
     background: #e2d9c1;
     color: #5e6e55;
     box-shadow: 0 4px 14px rgba(150, 140, 110, 0.25);
+  }
+  .assign-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.35);
+  }
+  .assign-overlay.hidden { display: none; }
+  .assign-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+    z-index: 20;
+    padding: 20px 22px;
+    border-radius: 16px;
+    background: rgba(255, 253, 247, 0.96);
+    border: 1px solid rgba(180, 176, 156, 0.4);
+    box-shadow:
+      0 24px 70px rgba(150, 140, 110, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    user-select: none;
+  }
+  .assign-panel.hidden { display: none; }
+  .assign-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .assign-head .assign-icon {
+    width: 40px;
+    height: 40px;
+    flex: none;
+  }
+  .assign-head .assign-icon svg { width: 100%; height: 100%; }
+  .assign-head .assign-name {
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: #5e6e55;
+  }
+  .assign-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .assign-stats .assign-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #909184;
+    letter-spacing: 1px;
+  }
+  .assign-stats .assign-line b { color: #5e6e55; font-weight: 600; }
+  .assign-ctrl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .assign-ctrl .labor-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(170, 166, 146, 0.5);
+    background: rgba(255, 255, 255, 0.8);
+    color: #5e6e55;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  .assign-ctrl .labor-btn:hover:not(:disabled) { background: #e2d9c1; }
+  .assign-ctrl .labor-btn:active:not(:disabled) { transform: translateY(1px); }
+  .assign-ctrl .labor-btn:disabled { opacity: 0.35; cursor: default; }
+  .assign-count {
+    font-size: 18px;
+    color: #5e6e55;
+    min-width: 60px;
+    text-align: center;
+  }
+  .assign-note {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #a8a99a;
+    text-align: center;
+    line-height: 1.6;
   }
   .settings-tabs {
     display: flex;
