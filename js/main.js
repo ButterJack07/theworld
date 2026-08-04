@@ -682,27 +682,43 @@
         player_name: Game.state.playerName,
         save_name: Game.state.saveName || '',
         days: Math.max(1, day),
-        civ: Math.max(0, civ)
+        civ: Math.max(0, civ),
+        created_at: new Date().toISOString()
       })
     }).catch(function () {});
   }
   Game.submitOnlineRanking = submitOnlineRanking;
 
-  // 拉取某模式在线榜单前 10：文明 / 科技按历时升序，自由按文明指数降序
+  // 拉取某模式在线成绩（按时间戳倒序，前端再按玩家去重保留最新记录）
   function loadOnlineRanking(mode) {
-    const order = mode === 'freedom' ? 'civ.desc' : 'days.asc';
     const url = Game.SUPABASE_URL + '/rest/v1/' + Game.ONLINE_TABLE +
-      '?select=player_name,save_name,days,civ' +
+      '?select=player_name,save_name,days,civ,created_at' +
       '&mode=eq.' + encodeURIComponent(mode) +
-      '&order=' + order + '&limit=10';
+      '&order=created_at.desc';
     return fetch(url, {
       headers: { apikey: Game.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + Game.SUPABASE_ANON_KEY }
     }).then(function (res) { return res.json(); });
   }
   Game.loadOnlineRanking = loadOnlineRanking;
 
+  // 在线成绩：同一玩家多次存档只保留最新一条，再按模式规则排序取前 10
+  function onlineEntries(rows) {
+    if (!Array.isArray(rows)) return [];
+    const latest = new Map();
+    rows.forEach(r => {
+      const name = r.player_name || '';
+      if (!name || latest.has(name)) return;
+      latest.set(name, r);
+    });
+    const list = Array.from(latest.values());
+    if (rankMode === 'freedom') list.sort((a, b) => (b.civ || 0) - (a.civ || 0));
+    else list.sort((a, b) => (a.days || 99999) - (b.days || 99999));
+    return list.slice(0, 10);
+  }
+
   function renderNetworkRows(body, rows) {
-    if (!Array.isArray(rows) || !rows.length) {
+    const entries = onlineEntries(rows);
+    if (!entries.length) {
       const empty = document.createElement('div');
       empty.className = 'rank-empty';
       empty.textContent = '暂无在线成绩 · 快去创造第一个纪录吧';
@@ -720,7 +736,7 @@
     head.append(h0, h1, h2);
     body.appendChild(head);
 
-    rows.forEach((r, i) => {
+    entries.forEach((r, i) => {
       const row = document.createElement('div');
       row.className = 'rank-row' + (i === 0 ? ' top' : '');
       const no = document.createElement('span');
@@ -805,7 +821,7 @@
   Game.renderLeaderboard = renderLeaderboard;
 
   function openLeaderboard() {
-    rankSource = 'local';
+    rankSource = 'network';
     rankMode = 'civilization';
     document.getElementById('rankOverlay').classList.remove('hidden');
     document.getElementById('rankPanel').classList.remove('hidden');
