@@ -24,10 +24,10 @@
   Game.state = null;
   Game.displayDay = 1;
 
-  function resetState() {
+  function resetState(mode) {
     Game.placed = Game.initInventory();
     Game.craftingItems = [];
-    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1 };
+    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1, mode: mode || 'civilization', won: false };
     Game.base = { ...Game.BASE_DEFAULT };
     Game.spawnStarterTown();
     // 初始人口 2：为每位人口分配一个站格（空闲劳动力 = 探索者）
@@ -52,6 +52,8 @@
       buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot, workers: b.workers || 0 })),
       civ: Game.state.civ,
       day: Game.state.day,
+      mode: Game.state.mode,
+      won: Game.state.won,
       base: Game.base,
       placed: Game.placed.map(p => ({ id: p.item.id, col: p.col, row: p.row, count: p.count })),
       crafting: Game.craftingItems.map(p => ({ id: p.item.id, col: p.col, row: p.row, count: p.count })),
@@ -73,7 +75,9 @@
           id: b.id, x: b.x, y: b.y, rot: b.rot, workers: Math.min(b.workers || 0, Game.BUILDINGS[b.id].laborCap || 0)
         })),
         civ: saved.civ || 0,
-        day: saved.day || 1
+        day: saved.day || 1,
+        mode: ['civilization', 'technology', 'freedom'].includes(saved.mode) ? saved.mode : 'civilization',
+        won: !!saved.won
       };
       if (saved.towncenter) Game.state.buildings.push({ id: 'towncenter', x: saved.towncenter.x, y: saved.towncenter.y, workers: 0 });
       Game.displayDay = Game.state.day;
@@ -111,9 +115,14 @@
         if (!spot) break;
         Game.state.villagersCells.push(spot);
       }
-    } else {
-      resetState();
     }
   }
   Game.loadState = loadState;
+
+  // 是否存在可继续的存档（有存档且版本、seed 匹配 → 跳过开始菜单直接恢复游戏）
+  Game.hasSave = function () {
+    let saved = null;
+    try { saved = JSON.parse(store.get(GAME_KEY)); } catch (e) { saved = null; }
+    return !!(saved && saved.version === 2 && saved.seed === Game.seed);
+  };
 })();

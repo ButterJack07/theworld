@@ -18,6 +18,7 @@
     <button id="laborToggle" class="play-btn recipe-btn" title="查看劳动力分配情况"><span>👥</span><b>劳动力</b></button>
     <div class="pop-pill">人口 <b id="pop">1 / 5</b></div>
     <div class="pop-pill civ">文明程度 <b id="civ">0</b></div>
+    <div class="pop-pill mode">模式 <b id="modeLabel"></b></div>
   </div>
 
   <div class="stage enter d2">
@@ -93,7 +94,7 @@
     </div>
     <div class="settings-page" id="page-restart">
       <div class="settings-game">
-        <div class="restart-ask">是否确认重新开始游戏？<br>将生成新世界并清空当前进度</div>
+        <div class="restart-ask">是否确认重新开始游戏？<br>将返回开始菜单选择游戏模式，并生成新世界清空当前进度</div>
         <button id="restart" class="restart-btn">确认重新开始游戏</button>
       </div>
     </div>
@@ -110,6 +111,24 @@
     <button id="recipeToggle" class="play-btn recipe-btn" title="展开 / 收起合成列表"><span id="recipeIcon">📜</span><b>合成</b></button>
     <button id="expandToggle" class="play-btn recipe-btn" title="展开 / 收起扩建规则"><span id="expandIcon">🏗️</span><b>扩建</b></button>
     <button id="playBtn" class="play-btn"><span id="playIcon">❚❚</span><b id="speedLabel">1x</b></button>
+  </div>
+  <div class="start-menu" id="startMenu">
+    <div class="start-title">The World</div>
+    <div class="start-sub">· 文明经营 · 选择游戏模式</div>
+    <div class="mode-list" id="modeList"></div>
+    <div class="start-foot">选择模式后进入游戏 · 各模式独立记录历史最佳成绩</div>
+  </div>
+  <div class="victory-overlay hidden" id="victoryOverlay"></div>
+  <div class="victory-panel hidden" id="victoryPanel">
+    <h2 class="panel-title">文明达成</h2>
+    <div class="victory-mode" id="victoryMode"></div>
+    <div class="victory-time" id="victoryTime"></div>
+    <div class="victory-score" id="victoryScore"></div>
+    <div class="victory-rank" id="victoryRank"></div>
+    <div class="victory-actions">
+      <button id="victoryContinue" class="restart-btn">继续发展</button>
+      <button id="victoryMenu" class="restart-btn">返回开始菜单</button>
+    </div>
   </div>
 </div>
 

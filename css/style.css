@@ -925,3 +925,193 @@ button:active { transform: translateY(1px); }
 #app.intro .enter.d4 { animation-delay: 0.90s; }
 #app.intro .enter.d5 { animation-delay: 1.10s; }
 #app.intro .enter.d6 { animation-delay: 1.30s; }
+
+/* ---------- 模式标签 ---------- */
+.pop-pill.mode { border-color: rgba(140, 160, 130, 0.4); }
+.pop-pill.mode b { color: #5e6e55; font-weight: 600; }
+
+/* ---------- 开始菜单 ---------- */
+.start-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255, 253, 247, 0.92), rgba(245, 239, 226, 0.97)),
+    #f5efe2;
+}
+.start-menu.hidden { display: none; }
+.start-title {
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: 16px;
+  text-indent: 16px;
+  color: #5e6e55;
+  user-select: none;
+}
+.start-sub {
+  font-size: 13px;
+  letter-spacing: 6px;
+  text-indent: 6px;
+  color: #a8a99a;
+  user-select: none;
+}
+.mode-list {
+  display: flex;
+  gap: 16px;
+  margin-top: 22px;
+}
+.mode-card {
+  width: 224px;
+  padding: 20px 16px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  background: rgba(255, 253, 247, 0.72);
+  border: 1px solid rgba(180, 176, 156, 0.35);
+  box-shadow:
+    0 24px 70px rgba(150, 140, 110, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.mode-card:hover:not(.locked) {
+  transform: translateY(-3px);
+  border-color: rgba(212, 178, 106, 0.65);
+  box-shadow:
+    0 30px 84px rgba(150, 140, 110, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.mode-card:active:not(.locked) { transform: translateY(0); }
+.mode-card.locked {
+  cursor: default;
+  opacity: 0.55;
+  filter: grayscale(0.75);
+}
+.mode-icon {
+  width: 48px;
+  height: 48px;
+  flex: none;
+}
+.mode-icon svg { width: 100%; height: 100%; }
+.mode-name {
+  font-size: 16px;
+  letter-spacing: 4px;
+  text-indent: 4px;
+  color: #5e6e55;
+}
+.mode-desc {
+  font-size: 11px;
+  letter-spacing: 1px;
+  line-height: 1.9;
+  color: #909184;
+  white-space: pre-line;
+}
+.mode-lock {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #a3823f;
+  margin-top: 2px;
+}
+.start-foot {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #a8a99a;
+  user-select: none;
+}
+
+/* ---------- 胜利面板 ---------- */
+.victory-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(0, 0, 0, 0.5);
+}
+.victory-overlay.hidden { display: none; }
+.victory-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  z-index: 40;
+  padding: 22px 24px;
+  border-radius: 16px;
+  background: rgba(255, 253, 247, 0.96);
+  border: 1px solid rgba(212, 178, 106, 0.5);
+  box-shadow:
+    0 24px 70px rgba(150, 140, 110, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  user-select: none;
+  text-align: center;
+}
+.victory-panel.hidden { display: none; }
+.victory-mode {
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: #a3823f;
+  margin-bottom: 8px;
+}
+.victory-time {
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #5e6e55;
+  margin-bottom: 6px;
+}
+.victory-score {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #909184;
+  margin-bottom: 14px;
+}
+.victory-rank-title {
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #8a8c7c;
+  border-bottom: 1px dashed rgba(170, 166, 146, 0.4);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+.victory-rank {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.rank-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #6b6f63;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.rank-row.me {
+  background: rgba(212, 178, 106, 0.2);
+  color: #5e4a1e;
+}
+.rank-no {
+  color: #a3823f;
+  min-width: 26px;
+  text-align: center;
+}
+.victory-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}

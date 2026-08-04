@@ -294,20 +294,165 @@
   }
 
   document.getElementById('restart').addEventListener('click', () => {
+    closeSettings();
+    showStartMenu();
+  });
+
+  // ---------- 开始菜单与新模式 ----------
+  function showStartMenu() {
+    document.getElementById('startMenu').classList.remove('hidden');
+    mode = 2;
+    applyMode();
+    updateControls();
+  }
+  Game.showStartMenu = showStartMenu;
+
+  function hideStartMenu() {
+    document.getElementById('startMenu').classList.add('hidden');
+  }
+
+  function renderModeList() {
+    const list = document.getElementById('modeList');
+    if (!list) return;
+    list.innerHTML = '';
+    Game.GAME_MODES.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'mode-card' + (m.locked ? ' locked' : '');
+
+      const icon = document.createElement('div');
+      icon.className = 'mode-icon';
+      icon.innerHTML = m.icon;
+
+      const name = document.createElement('div');
+      name.className = 'mode-name';
+      name.textContent = m.name;
+
+      const desc = document.createElement('div');
+      desc.className = 'mode-desc';
+      desc.textContent = m.desc;
+
+      card.append(icon, name, desc);
+      if (m.locked) {
+        const lock = document.createElement('div');
+        lock.className = 'mode-lock';
+        lock.textContent = m.lockNote || '尚未开放';
+        card.appendChild(lock);
+        card.title = m.lockNote || '尚未开放';
+      } else {
+        card.addEventListener('click', () => Game.startNewGame(m.id));
+      }
+      list.appendChild(card);
+    });
+  }
+
+  Game.startNewGame = function (modeId) {
     Game.seed = Math.floor(Math.random() * 1e9);
     Game.store.set(Game.SEED_KEY, String(Game.seed));
     Game.world = Game.generateWorld(Game.seed);
-    Game.resetState();
+    Game.resetState(modeId);
     Game.selectedBuilding = null;
     Game.selectedBase = false;
     Game.selectedTerrain = null;
     Game.selectedItem = null;
+    mode = 0;
+    applyMode();
+    updateControls();
+    Game.renderRecipeList();
+    Game.renderUpgrades();
     Game.renderInventory();
     Game.renderCrafting();
+    updateModeLabel();
     updateStatus();
     Game.drawWorld();
-    closeSettings();
+    hideStartMenu();
     playIntro();
+  };
+
+  function updateModeLabel() {
+    const el = document.getElementById('modeLabel');
+    if (!el) return;
+    const id = Game.state && Game.state.mode;
+    const def = Game.GAME_MODES.find(m => m.id === id);
+    el.textContent = def ? def.name.replace('模式', '') : '';
+  }
+
+  // ---------- 胜利与成绩排名 ----------
+  const RANK_KEY = 'tw-rank';
+  Game.RANK_KEY = RANK_KEY;
+  Game.rankings = (() => {
+    try { return JSON.parse(Game.store.get(RANK_KEY) || '{}'); } catch (e) { return {}; }
+  })();
+
+  function saveRankings() {
+    Game.store.set(RANK_KEY, JSON.stringify(Game.rankings));
+  }
+
+  function formatElapsed(days) {
+    const y = Math.floor((days - 1) / Game.DAYS_PER_YEAR) + 1;
+    const m = Math.floor(((days - 1) % Game.DAYS_PER_YEAR) / Game.DAYS_PER_MONTH) + 1;
+    const d = ((days - 1) % Game.DAYS_PER_MONTH) + 1;
+    return `${y} 年 ${m} 月 ${d} 天`;
+  }
+
+  let victorySavedMode = 0;
+  function showVictory() {
+    victorySavedMode = mode;
+    mode = 2;
+    applyMode();
+    updateControls();
+
+    const days = Game.state.day;
+    const arr = Game.rankings[Game.state.mode] || [];
+    arr.push(days);
+    arr.sort((a, b) => a - b);
+    Game.rankings[Game.state.mode] = arr.slice(0, 10);
+    saveRankings();
+
+    document.getElementById('victoryMode').textContent = Game.modeName(Game.state.mode);
+    document.getElementById('victoryTime').textContent = `历时 ${formatElapsed(days)}`;
+    document.getElementById('victoryScore').textContent = `文明指数 ${Game.state.civ}`;
+
+    const rankEl = document.getElementById('victoryRank');
+    rankEl.innerHTML = '';
+    const title = document.createElement('div');
+    title.className = 'victory-rank-title';
+    title.textContent = `${Game.modeName(Game.state.mode)} · 历史最佳成绩`;
+    rankEl.appendChild(title);
+
+    const myRank = arr.indexOf(days);
+    arr.forEach((d, i) => {
+      const row = document.createElement('div');
+      row.className = 'rank-row' + (i === myRank ? ' me' : '');
+      const no = document.createElement('span');
+      no.className = 'rank-no';
+      no.textContent = String(i + 1);
+      const time = document.createElement('span');
+      time.textContent = formatElapsed(d);
+      row.append(no, time);
+      rankEl.appendChild(row);
+    });
+
+    document.getElementById('victoryOverlay').classList.remove('hidden');
+    document.getElementById('victoryPanel').classList.remove('hidden');
+  }
+  Game.showVictory = showVictory;
+
+  function hideVictory() {
+    document.getElementById('victoryOverlay').classList.add('hidden');
+    document.getElementById('victoryPanel').classList.add('hidden');
+  }
+  document.getElementById('victoryContinue').addEventListener('click', () => {
+    hideVictory();
+    mode = victorySavedMode;
+    applyMode();
+    updateControls();
+  });
+  document.getElementById('victoryMenu').addEventListener('click', () => {
+    hideVictory();
+    mode = victorySavedMode;
+    applyMode();
+    updateControls();
+    showStartMenu();
   });
 
   // ---------- 状态栏：展示点选地图上建筑的信息 ----------
@@ -638,6 +783,7 @@
   Game.baseProduce = baseProduce;
 
   function tick() {
+    if (!Game.state) return;
     if (paused) { Game.drawWorld(); return; }
     Game.state.buildings.forEach(b => tickBuilding(b, Game.BUILDINGS[b.id]));
     baseTimer += speed;
@@ -662,6 +808,13 @@
     Game.displayDay += 1;
     updateStatus();
     Game.drawWorld();
+    // 文明模式：文明指数达到 9999 即获胜
+    if (Game.state.mode === 'civilization' && !Game.state.won && Game.state.civ >= Game.CIV_WIN) {
+      Game.state.won = true;
+      Game.saveState();
+      showVictory();
+      return;
+    }
     saveTick++;
     if (saveTick >= 5) {
       saveTick = 0;
@@ -671,12 +824,19 @@
   Game.tick = tick;
 
   // ---------- 启动 ----------
-  Game.loadState();
-  Game.renderRecipeList();
-  Game.renderUpgrades();
-  Game.renderInventory();
-  Game.renderCrafting();
-  updateStatus();
-  Game.drawWorld();
+  // 有存档 → 恢复游戏；无存档（初次访问）→ 显示开始菜单选择模式
+  if (Game.hasSave()) {
+    Game.loadState();
+    Game.renderRecipeList();
+    Game.renderUpgrades();
+    Game.renderInventory();
+    Game.renderCrafting();
+    updateModeLabel();
+    updateStatus();
+    Game.drawWorld();
+  } else {
+    renderModeList();
+    showStartMenu();
+  }
   setInterval(tick, 500);
 })();

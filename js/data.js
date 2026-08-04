@@ -569,6 +569,45 @@
   }
   Game.reqText = reqText;
 
+  // ---------- 游戏模式 ----------
+  Game.CIV_WIN = 9999;
+
+  Game.MODE_ICONS = {
+    civilization: '<path d="M14 33 h12 M15 33 v-14 q0 -5 5 -5 q5 0 5 5 v14 M20 14 q3 -3 6 0" fill="none" stroke="#8a6a4f" stroke-width="1.6"/>' +
+                  '<circle cx="20" cy="8" r="3" fill="#a3823f"/>' +
+                  '<path d="M17 8 h6 M20 5 v6" stroke="#a3823f" stroke-width="1.3"/>' +
+                  '<rect x="10" y="34" width="20" height="3" rx="1.5" fill="#8a6a4f"/>',
+    technology: '<circle cx="20" cy="20" r="7" fill="none" stroke="#7d7a70" stroke-width="2.6"/>' +
+                '<circle cx="20" cy="20" r="2.4" fill="#7d7a70"/>' +
+                '<path d="M20 12 v-4 M20 28 v4 M12 20 h-4 M28 20 h4 M14 14 l-3 -3 M26 26 l3 3 M26 14 l3 -3 M14 26 l-3 3" stroke="#7d7a70" stroke-width="2" stroke-linecap="round"/>',
+    freedom: '<rect x="8" y="25" width="24" height="5" rx="2" fill="#c9b889" stroke="#8a7a4f" stroke-width="1"/>' +
+             '<path d="M16 25 L16 11 L27 25 Z" fill="#fffdf5" stroke="#8a7a4f" stroke-width="1.2"/>' +
+             '<path d="M16 25 L20 13 L25 25" stroke="#e0b876" stroke-width="1.2" fill="none"/>' +
+             '<path d="M18 25 L16 31 M24 25 L26 31 M12 31 h16" stroke="#8a7a4f" stroke-width="1.2" fill="none"/>'
+  };
+
+  Game.GAME_MODES = [
+    {
+      id: 'civilization', name: '文明模式', icon: Game.MODE_ICONS.civilization,
+      desc: '文明指数达到 9999 即获胜\n按游戏内历时计算成绩排名',
+      locked: false
+    },
+    {
+      id: 'technology', name: '科技模式', icon: Game.MODE_ICONS.technology,
+      desc: '发展出任一项高级科技即获胜\n按游戏内历时计算成绩排名',
+      locked: true, lockNote: '尚未开放 · 高级科技设计中'
+    },
+    {
+      id: 'freedom', name: '自由模式', icon: Game.MODE_ICONS.freedom,
+      desc: '没有胜利标准\n自由发展你的文明',
+      locked: false
+    }
+  ];
+  Game.modeName = function (id) {
+    const def = Game.GAME_MODES.find(m => m.id === id);
+    return def ? def.name : '';
+  };
+
   // ---------- 绘制配色 ----------
   Game.OCEAN_COLOR = '#a4becb';
   Game.LAND_COLOR  = '#b5c5a3';
