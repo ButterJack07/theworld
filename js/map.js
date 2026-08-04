@@ -133,13 +133,19 @@
     const mineCells = growClump(rand, mineSize, terrain, reserved, land);
     clumps.push({ id: 0, type: Game.TERRAIN.MINE, cells: mineCells, revealed: false, progress: 0 });
 
-    // 本次刷新哪些特殊地貌（除矿洞、平原外并非每张图都会出现）
+    // 森林：每张地图至少刷一团
+    const forestCells = growClump(rand, 3 + Math.floor(rand() * 18), terrain, reserved, land);
+    if (forestCells.length) {
+      clumps.push({ id: 1, type: Game.TERRAIN.FOREST, cells: forestCells, revealed: false, progress: 0 });
+    }
+
+    // 本次刷新哪些特殊地貌（除矿洞、平原外并非每张图都会出现；森林已保证一团）
     const present = Game.TERRAIN_SPECIALS.filter(s => rand() < s.appear);
     const totalWeight = present.reduce((s, t) => s + t.weight, 0);
 
     const target = Math.round(land.length * 0.5); // 特殊地貌总面积约占 50%
-    let covered = mineCells.length;
-    let clumpId = 1;
+    let covered = mineCells.length + (forestCells.length || 0);
+    let clumpId = forestCells.length ? 2 : 1;
     let guard = 0;
     while (covered < target && present.length && guard < 120) {
       guard++;

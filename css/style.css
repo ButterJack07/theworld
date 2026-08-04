@@ -228,14 +228,7 @@ button:active { transform: translateY(1px); }
   flex-direction: column;
   gap: 18px;
 }
-.labor-panel {
-  display: none;
-  width: 556px;
-  min-height: 360px;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-}
+.recipe-panel.labor-panel { left: auto; right: 20px; }
 .labor-summary {
   font-size: 13px;
   letter-spacing: 1px;
@@ -249,8 +242,6 @@ button:active { transform: translateY(1px); }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow-y: auto;
-  max-height: 420px;
 }
 .labor-empty {
   font-size: 13px;
@@ -263,12 +254,17 @@ button:active { transform: translateY(1px); }
 }
 .labor-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px dashed rgba(170, 166, 146, 0.35);
   background: rgba(255, 255, 255, 0.35);
+}
+.labor-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .labor-row .labor-icon {
   width: 34px;
@@ -290,36 +286,24 @@ button:active { transform: translateY(1px); }
   text-overflow: ellipsis;
   user-select: none;
 }
-.labor-ctrl {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-}
-.labor-ctrl .labor-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid rgba(170, 166, 146, 0.5);
-  background: rgba(255, 255, 255, 0.7);
-  color: #5e6e55;
-  font-size: 15px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-.labor-ctrl .labor-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.95); }
-.labor-ctrl .labor-btn:active:not(:disabled) { transform: translateY(1px); }
-.labor-ctrl .labor-btn:disabled { opacity: 0.35; cursor: default; }
 .labor-count {
   font-size: 13px;
   color: #5e6e55;
   min-width: 44px;
   text-align: center;
   user-select: none;
+}
+.labor-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(170, 166, 146, 0.25);
+  overflow: hidden;
+}
+.labor-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: #a8b89a;
+  transition: width 0.3s ease;
 }
 .labor-hint {
   font-size: 11px;
@@ -331,13 +315,6 @@ button:active { transform: translateY(1px); }
 }
 .labor-job .labor-name {
   color: #5e6e55;
-}
-.labor-mode .side > .frame:not(.labor-panel),
-.labor-mode .side > .side-left {
-  display: none;
-}
-.labor-mode .labor-panel {
-  display: flex;
 }
 .info-card {
   width: 372px;

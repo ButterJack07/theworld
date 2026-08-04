@@ -15,7 +15,7 @@
   </header>
 
   <div class="top-right enter d1">
-    <button id="laborToggle" class="play-btn recipe-btn" title="切换劳动力分配视图"><span>👥</span><b>劳动力</b></button>
+    <button id="laborToggle" class="play-btn recipe-btn" title="查看劳动力分配情况"><span>👥</span><b>劳动力</b></button>
     <div class="pop-pill">人口 <b id="pop">1 / 5</b></div>
     <div class="pop-pill civ">文明程度 <b id="civ">0</b></div>
   </div>
@@ -42,11 +42,6 @@
         <div class="crafting" id="crafting"></div>
         <div class="craft-result" id="craftResult"></div>
       </div>
-      <div class="frame labor-panel hidden" id="laborPanel">
-        <h2 class="panel-title">劳动力分配</h2>
-        <div class="labor-summary" id="laborSummary"></div>
-        <div class="labor-list" id="laborList"></div>
-      </div>
     </div>
   </div>
   <div class="recipe-panel hidden" id="recipePanel">
@@ -57,6 +52,11 @@
     <h2 class="panel-title">扩建</h2>
     <div class="expand-hint">地图上按指定形状摆放多个低级建筑，自动合并升级</div>
     <div id="expandList"></div>
+  </div>
+  <div class="recipe-panel labor-panel hidden" id="laborPanel">
+    <h2 class="panel-title">劳动力分配</h2>
+    <div class="labor-summary" id="laborSummary"></div>
+    <div class="labor-list" id="laborList"></div>
   </div>
   <div class="settings-panel hidden" id="settingsPanel">
     <button id="settingsClose" class="settings-close" title="关闭设置">✕</button>
@@ -87,7 +87,7 @@
         <li><b>▶ 暂停</b>：开始 / 暂停 / 2 倍速循环</li>
         <li><b>📜 合成</b>：展开 / 收起合成列表</li>
         <li><b>🏗️ 扩建</b>：展开 / 收起升级规则</li>
-        <li><b>👥 劳动力</b>：切换劳动力分配视图，用 +/− 给生产力建筑分配劳动力</li>
+        <li><b>👥 劳动力</b>：弹出菜单查看各工种劳动力分配情况</li>
         <li><b>⚙️ 设置</b>：打开 / 关闭本菜单</li>
       </ul>
     </div>

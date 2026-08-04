@@ -88,35 +88,15 @@
   settingsClose.addEventListener('click', closeSettings);
   settingsOverlay.addEventListener('click', closeSettings);
 
-  // 劳动力分配视图：切换后隐藏右侧物品栏 / 信息栏 / 合成器，主地图隐藏已揭示地貌与基地
+  // 劳动力菜单：点击「👥 劳动力」按钮展开 / 收起左侧面板（与合成列表一致），展示当前劳动力分配情况
   const laborToggle = document.getElementById('laborToggle');
-  Game.laborMode = false;
-  function setLaborMode(on) {
-    Game.laborMode = on;
-    document.getElementById('app').classList.toggle('labor-mode', on);
-    laborToggle.classList.toggle('active', on);
-    if (on) {
-      if (!recipePanel.classList.contains('hidden')) {
-        recipePanel.classList.add('hidden');
-        recipeToggle.classList.remove('open');
-      }
-      if (!expandPanel.classList.contains('hidden')) {
-        expandPanel.classList.add('hidden');
-        expandToggle.classList.remove('open');
-      }
-      Game.selectedItem = null;
-      Game.selectedBuilding = null;
-      Game.selectedBase = false;
-      Game.selectedTerrain = null;
-      Game.updateStatus();
-    }
-    renderLabor();
-    Game.drawWorld();
-  }
-  laborToggle.addEventListener('click', () => setLaborMode(!Game.laborMode));
+  const laborPanel = document.getElementById('laborPanel');
+  laborToggle.addEventListener('click', () => {
+    laborPanel.classList.toggle('hidden');
+    laborToggle.classList.toggle('open', !laborPanel.classList.contains('hidden'));
+    if (!laborPanel.classList.contains('hidden')) renderLabor();
+  });
 
-  // 劳动力分配面板：统计总人口 / 已分配 / 空闲，并按工种统计人数
-  // 具体分配：点击地图上的生产力建筑弹出分配窗口（openAssign）
   function laborBuildings() {
     return Game.state.buildings.filter(b => (Game.BUILDINGS[b.id].laborCap || 0) > 0);
   }
@@ -129,55 +109,74 @@
     const buildings = laborBuildings();
     const assigned = buildings.reduce((s, b) => s + (b.workers || 0), 0);
     const total = Game.state.villagers;
-    const idle = Math.max(0, total - assigned);
+    const explorers = Math.max(0, total - assigned);
     summaryEl.innerHTML = '';
     const line = document.createElement('div');
     line.className = 'labor-summary';
-    line.innerHTML = `总人口 <b>${total}</b>　已分配 <b>${assigned}</b>　空闲 <b>${idle}</b>`;
+    line.innerHTML = `总人口 <b>${total}</b>　已分配 <b>${assigned}</b>　探索者 <b>${explorers}</b>`;
     summaryEl.appendChild(line);
 
     listEl.innerHTML = '';
-    if (!buildings.length) {
+    if (!buildings.length && total === 0) {
       const empty = document.createElement('div');
       empty.className = 'labor-empty';
-      empty.textContent = '尚无生产力建筑\n先在地图上建造农田 / 伐木小屋等';
+      empty.textContent = '尚无人口与生产力建筑\n先在地图上建造茅草屋与农田 / 伐木小屋等';
       listEl.appendChild(empty);
       return;
     }
 
-    // 按工种汇总人数
+    // 劳动力类型一览：探索者（空闲劳动力）+ 各生产工种，进度条表示占总人口的比例
+    const rows = [];
+    if (explorers > 0) rows.push({ icon: Game.explorerIconSVG(), name: '探索者', count: explorers });
     Game.LABOR_JOBS.forEach(job => {
       const workers = buildings
         .filter(b => Game.BUILDINGS[b.id].job === job.name)
         .reduce((s, b) => s + (b.workers || 0), 0);
       if (!workers) return;
+      rows.push({ icon: Game.itemIconSVG(job.icon), name: job.name, count: workers });
+    });
+
+    rows.forEach(r => {
       const row = document.createElement('div');
       row.className = 'labor-row labor-job';
 
+      const head = document.createElement('div');
+      head.className = 'labor-row-head';
+
       const icon = document.createElement('span');
       icon.className = 'labor-icon';
-      icon.innerHTML = Game.itemIconSVG(job.icon);
+      icon.innerHTML = r.icon;
 
       const name = document.createElement('span');
       name.className = 'labor-name';
-      name.textContent = job.name;
+      name.textContent = r.name;
 
       const count = document.createElement('span');
       count.className = 'labor-count';
-      count.textContent = `${workers} 人`;
+      count.textContent = `${r.count} 人`;
 
-      row.append(icon, name, count);
+      head.append(icon, name, count);
+      row.appendChild(head);
+
+      const bar = document.createElement('div');
+      bar.className = 'labor-bar';
+      const fill = document.createElement('div');
+      fill.className = 'labor-bar-fill';
+      fill.style.width = Math.round((r.count / Math.max(1, total)) * 100) + '%';
+      bar.appendChild(fill);
+      row.appendChild(bar);
+
       listEl.appendChild(row);
     });
 
     const hint = document.createElement('div');
     hint.className = 'labor-hint';
-    hint.textContent = '点击地图上的生产力建筑分配劳动力';
+    hint.textContent = '空闲劳动力自动担任探索者，为基地采集资源\n点击地图上的生产力建筑，在信息面板中分配劳动力';
     listEl.appendChild(hint);
   }
   Game.renderLabor = renderLabor;
 
-  // 分配劳动力弹窗：点击地图上的生产力建筑打开，显示当前 / 最多劳动力并 +/− 调整
+  // 分配劳动力弹窗：信息面板中点击「劳动力分配」打开，显示当前 / 最多劳动力并 +/− 调整
   let assignBuilding = null;
 
   function totalAssigned() {
@@ -228,7 +227,7 @@
     stats.className = 'assign-stats';
     [
       ['已分配', `${workers} / ${laborCap}`],
-      ['当前空闲人口', `${idle} 人`]
+      ['当前空闲人口（探索者）', `${idle} 人`]
     ].forEach(([label, value]) => {
       const line = document.createElement('div');
       line.className = 'assign-line';
@@ -594,30 +593,41 @@
     }
   }
 
-  // 基地产出：每个阶段（1 个月 = 30 天）每块覆盖格只有一定概率完成一次产出
-  // （BASE_PRODUCE_CHANCE，默认 10%）；覆盖格所属未揭示团的 progress 每次正常累计
+  // 基地产出：空闲劳动力视为探索者，每月产出次数 = 探索者人数（基地每月最大生产值）
+  // 每次产出按基地覆盖地块的类型与数量加权平均决定内容（覆盖哪类地貌多，产出该类概率越高）
+  // 团的揭示进度：每格每月增速 = 探索者人数，即该团每月揭示进度 = 团内覆盖格数 × 探索者人数
+  // 揭示阈值 = 团格数 × 2
   let baseTimer = 0;
   function baseProduce() {
     const b = Game.base;
     if (!b || !Game.world) return;
-    const touched = new Set();
+    const cells = [];
     for (let y = b.y; y < b.y + b.h; y++) {
       for (let x = b.x; x < b.x + b.w; x++) {
         if (x < 0 || x >= Game.MAP_W || y < 0 || y >= Game.MAP_H) continue;
-        const raw = Game.world.terrain[y][x];
-        const t = raw == null ? Game.TERRAIN.SEA : raw;
-        if (raw != null) {
-          const ci = Game.world.clumpIndex[y][x];
-          if (ci >= 0) {
-            const c = Game.world.clumps[ci];
-            if (!c.revealed) { c.progress += 1; touched.add(ci); }
-          }
-        }
-        if (Math.random() >= Game.BASE_PRODUCE_CHANCE) continue;
-        Game.terrainOutput(t).forEach(([id, n]) => {
-          if (Game.addItemToInventory(id, n)) Game.state.civ += n;
-        });
+        cells.push([x, y]);
       }
+    }
+    if (!cells.length) return;
+    const explorers = Math.max(0, Game.state.villagers - totalAssigned());
+    const touched = new Set();
+    for (const [x, y] of cells) {
+      const raw = Game.world.terrain[y][x];
+      if (raw != null) {
+        const ci = Game.world.clumpIndex[y][x];
+        if (ci >= 0) {
+          const c = Game.world.clumps[ci];
+          if (!c.revealed) { c.progress += explorers; touched.add(ci); }
+        }
+      }
+    }
+    for (let i = 0; i < explorers; i++) {
+      const [x, y] = cells[Math.floor(Math.random() * cells.length)];
+      const raw = Game.world.terrain[y][x];
+      const t = raw == null ? Game.TERRAIN.SEA : raw;
+      Game.terrainOutput(t).forEach(([id, n]) => {
+        if (Game.addItemToInventory(id, n)) Game.state.civ += n;
+      });
     }
     touched.forEach(ci => {
       const c = Game.world.clumps[ci];
@@ -636,18 +646,17 @@
     if (popTimer >= Game.DAYS_PER_MONTH) {
       popTimer = 0;
       const cap = Game.hutCapacity();
-      if (Game.state.villagers < cap) {
-        // 增长速度随当前人口基数决定：每月增长 max(1, 当前人口×10%)，直到人口上限
-        const grow = Math.min(cap - Game.state.villagers, Math.max(1, Math.floor(Game.state.villagers * 0.1)));
-        for (let i = 0; i < grow; i++) {
-          const spot = Game.findVillagerSpot(Game.state.villagersCells);
-          if (!spot) break;
-          Game.state.villagersCells.push(spot);
-          Game.state.villagers++;
+        if (Game.state.villagers < cap) {
+          // 增长速度随当前人口基数决定：每月增长 max(1, 当前人口×10%)，直到人口上限
+          const grow = Math.min(cap - Game.state.villagers, Math.max(1, Math.floor(Game.state.villagers * 0.1)));
+          for (let i = 0; i < grow; i++) {
+            const spot = Game.findVillagerSpot(Game.state.villagersCells);
+            if (!spot) break;
+            Game.state.villagersCells.push(spot);
+            Game.state.villagers++;
+          }
+          Game.saveState();
         }
-        if (Game.laborMode) renderLabor();
-        Game.saveState();
-      }
     }
     Game.state.day += speed;
     Game.displayDay += 1;

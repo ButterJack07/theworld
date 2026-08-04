@@ -875,6 +875,22 @@
         ctx.strokeStyle = 'rgba(120, 100, 70, 0.4)';
         ctx.stroke();
         break;
+      case 'towncenter':
+        // 旗帜
+        ctx.strokeStyle = 'rgba(120, 100, 70, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, gy + 3);
+        ctx.lineTo(cx, gy + 12);
+        ctx.stroke();
+        ctx.fillStyle = '#b05a45';
+        ctx.beginPath();
+        ctx.moveTo(cx, gy + 3);
+        ctx.lineTo(cx + 8, gy + 5.5);
+        ctx.lineTo(cx, gy + 8.5);
+        ctx.closePath();
+        ctx.fill();
+        break;
       case 'lumber':
         // 原木堆
         ctx.fillStyle = def.accent;
@@ -1070,10 +1086,8 @@
         ctx.strokeRect(x * Game.CELL + 0.5, y * Game.CELL + 0.5, Game.CELL - 1, Game.CELL - 1);
       }
     }
-    if (!Game.laborMode) {
-      drawRevealedTerrain();
-      drawBase();
-    }
+    drawRevealedTerrain();
+    drawBase();
     Game.state.buildings.forEach(drawBuildingEntity);
     if (Game.dragBuildingId && Game.hoverCell && Game.hoverCell.x >= 0 && Game.hoverCell.x < Game.MAP_W && Game.hoverCell.y >= 0 && Game.hoverCell.y < Game.MAP_H) {
       const { w, h } = buildingSize(Game.dragBuildingId);
@@ -1108,11 +1122,11 @@
     } else {
       coordEl.textContent = '';
     }
-    if (baseResize && !Game.laborMode) {
+    if (baseResize) {
       applyBaseResize(px, py);
       return;
     }
-    const side = Game.laborMode ? null : baseHitTest(px, py);
+    const side = baseHitTest(px, py);
     const cursors = { nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize', n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize' };
     canvas.style.cursor = side ? cursors[side] : 'crosshair';
   });
@@ -1161,7 +1175,7 @@
     const r = canvas.getBoundingClientRect();
     const px = e.clientX - r.left;
     const py = e.clientY - r.top;
-    const side = Game.laborMode ? null : baseHitTest(px, py);
+    const side = baseHitTest(px, py);
     if (!side) return;
     baseResize = { side, startX: px, startY: py, startBase: { ...Game.base } };
     resizeMoved = false;
@@ -1182,11 +1196,10 @@
     const c = canvasCell(e);
     const b = Game.state.buildings.find(bd => buildingCells(bd).some(cell => cell.x === c.x && cell.y === c.y));
     Game.selectedBuilding = b || null;
-    Game.selectedBase = !b && !Game.laborMode && insideBase(c.x, c.y);
+    Game.selectedBase = !b && insideBase(c.x, c.y);
     Game.selectedTerrain = null;
     Game.selectedItem = null;
     Game.updateStatus();
-    if (Game.laborMode && b && (Game.BUILDINGS[b.id].laborCap || 0) > 0) Game.openAssign(b);
   });
 
   // 双击地块：信息栏持续显示该地块地貌的类型与产出内容
@@ -1253,20 +1266,20 @@
   }
   Game.canBuildAt = canBuildAt;
 
-  // 初始在基地内任意一个可建格刷一个茅草屋
-  function spawnStarterHut() {
+  // 初始在基地内任意一个可建格刷一个城镇中心
+  function spawnStarterTown() {
     if (!Game.base) return;
     const spots = [];
     for (let y = Game.base.y; y < Game.base.y + Game.base.h; y++) {
       for (let x = Game.base.x; x < Game.base.x + Game.base.w; x++) {
-        if (canBuildAt('hut', x, y)) spots.push({ x, y });
+        if (canBuildAt('towncenter', x, y)) spots.push({ x, y });
       }
     }
     if (!spots.length) return;
     const s = spots[Math.floor(Math.random() * spots.length)];
-    Game.state.buildings.push({ id: 'hut', x: s.x, y: s.y, workers: 0 });
+    Game.state.buildings.push({ id: 'towncenter', x: s.x, y: s.y, workers: 0 });
   }
-  Game.spawnStarterHut = spawnStarterHut;
+  Game.spawnStarterTown = spawnStarterTown;
 
   // 通用合并：地图上 4 个 srcId（1×1）摆成 2×2 → 合并为 1 个 outId（2×2，位于窗口左上角）
   // 返回最后一个合并出的建筑，无则 null。合并时已分配劳动力结转（不超过新建筑 laborCap）

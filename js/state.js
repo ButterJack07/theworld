@@ -29,7 +29,15 @@
     Game.craftingItems = [];
     Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1 };
     Game.base = { ...Game.BASE_DEFAULT };
-    Game.spawnStarterHut();
+    Game.spawnStarterTown();
+    // 初始人口 2：为每位人口分配一个站格（空闲劳动力 = 探索者）
+    Game.state.villagers = 2;
+    Game.state.villagersCells = [];
+    for (let i = 0; i < Game.state.villagers; i++) {
+      const spot = Game.findVillagerSpot(Game.state.villagersCells);
+      if (!spot) break;
+      Game.state.villagersCells.push(spot);
+    }
     Game.displayDay = Game.state.day;
     saveState();
   }
@@ -67,7 +75,7 @@
         civ: saved.civ || 0,
         day: saved.day || 1
       };
-      if (saved.hut) Game.state.buildings.push({ id: 'hut', x: saved.hut.x, y: saved.hut.y, workers: 0 });
+      if (saved.towncenter) Game.state.buildings.push({ id: 'towncenter', x: saved.towncenter.x, y: saved.towncenter.y, workers: 0 });
       Game.displayDay = Game.state.day;
       Game.base = saved.base && saved.base.x !== undefined
         ? { x: saved.base.x, y: saved.base.y, w: saved.base.w, h: saved.base.h }

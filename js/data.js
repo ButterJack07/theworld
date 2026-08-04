@@ -138,8 +138,6 @@
   Game.BASE_DEFAULT = { x: Math.floor((Game.MAP_W - 2) / 2), y: Math.floor((Game.MAP_H - 2) / 2), w: 2, h: 2 };
   Game.BASE_MIN_W = 2;
   Game.BASE_MIN_H = 2;
-  // 基地地貌产出概率：每月每块覆盖格只有 10% 概率完成一次产出
-  Game.BASE_PRODUCE_CHANCE = 0.10;
 
   // ---------- 物品 ----------
   Game.ITEMS = [
@@ -161,6 +159,7 @@
     { id: 'plank',  name: '木板', color: '#b7a678', w: 1, h: 1, desc: '加工木材，由 2 木头合成。建造建筑的常用材料' },
     { id: 'brick',  name: '砖块', color: '#c49a83', w: 1, h: 1, desc: '烧制的建材，由 2 石头 + 1 铁矿合成' },
     { id: 'hut',    name: '茅草屋', color: '#f0e2c0', w: 1, h: 1, desc: '一级住宅，可容纳 1 人。4 座摆成 2×2 可合并为砖瓦屋' },
+    { id: 'towncenter', name: '城镇中心', color: '#e8dcc0', w: 1, h: 1, desc: '城镇核心，可容纳 3 人。初始自带一座' },
     { id: 'brickhouse', name: '砖瓦屋', color: '#d9c1a6', w: 2, h: 2, desc: '二级住宅，可容纳 5 人。由 4 座茅草屋合并而成' },
     { id: 'courtyard', name: '四合院', color: '#7a7a72', w: 4, h: 4, desc: '三级住宅，可容纳 25 人。由 4 座砖瓦屋合并而成' },
     { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1, desc: '须建在森林上，每月生产 5 木头' },
@@ -237,6 +236,13 @@
          '<rect x="5" y="13" width="30" height="22" rx="5"/></g>' +
          '<rect x="17" y="24" width="7" height="11" rx="2.5" fill="#8a6a4f"/>' +
          '<rect x="26" y="16" width="6" height="6" rx="1.5" fill="#fffdf5" stroke="#8a6a4f" stroke-width="1"/>',
+    towncenter: '<rect x="5" y="15" width="30" height="20" rx="4" fill="#e8dcc0" stroke="#8a6a4f" stroke-width="1.3"/>' +
+                '<path d="M12 15 L20 7 L28 15 Z" fill="#b05a45" stroke="#7a3f2f" stroke-width="1.3"/>' +
+                '<path d="M12 7 L20 3 L28 7 Z" fill="#d6b078" stroke="#8a6a4f" stroke-width="1.2"/>' +
+                '<path d="M14 15 v5 M26 15 v5" stroke="#8a6a4f" stroke-width="1.2" opacity="0.5"/>' +
+                '<rect x="16" y="20" width="8" height="15" rx="2" fill="#8a6a4f"/>' +
+                '<rect x="25" y="18" width="6" height="6" rx="1.5" fill="#fffdf5" stroke="#8a6a4f" stroke-width="1"/>' +
+                '<path d="M12 35 v3 M20 35 v3 M28 35 v3" stroke="#8a6a4f" stroke-width="1.2" opacity="0.5"/>',
     brickhouse: '<path d="M11 10 L29 10 L34 22 L6 22 Z" fill="#b05a45" stroke="#7a3f2f" stroke-width="1.2"/>' +
                 '<path d="M12 14h16 M13 18h14" stroke="#8a4a3a" stroke-width="1" opacity="0.7"/>' +
                 '<path d="M17 10q2 6 2 12 M23 10q2 6 2 12" stroke="#8a4a3a" stroke-width="1" opacity="0.5"/>' +
@@ -408,12 +414,26 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" preserveAspectRatio="none">' + (Game.ITEM_ICONS[id] || '') + '</svg>';
   };
 
+  // 探索者图标：简单的行进小人
+  Game.explorerIconSVG = function () {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" preserveAspectRatio="none">' +
+      '<circle cx="20" cy="13" r="6.5" fill="#a8b89a" stroke="#5e6e55" stroke-width="1.4"/>' +
+      '<path d="M20 21 Q14 25 12 34 Q20 37 20 30 Q20 37 28 34 Q26 25 20 21 Z" fill="#a8b89a" stroke="#5e6e55" stroke-width="1.4"/>' +
+      '<path d="M14 30 Q17 33 20 30" stroke="#fff" stroke-width="1.2" fill="none" opacity="0.5"/>' +
+      '</svg>';
+  };
+
   // ---------- 建筑 ----------
   Game.BUILDINGS = {
     hut: {
       id: 'hut', name: '茅草屋',
       body: '#f0e2c0', roof: '#d6b078', accent: '#8a6a4f',
       produces: [], interval: 1, capacity: 1
+    },
+    towncenter: {
+      id: 'towncenter', name: '城镇中心',
+      body: '#e8dcc0', roof: '#b05a45', accent: '#8a6a4f',
+      produces: [], interval: 1, capacity: 3
     },
     brickhouse: {
       id: 'brickhouse', name: '砖瓦屋',
@@ -521,6 +541,7 @@
     { out: 'gold',  group: 'material', req: [{ id: 'iron', n: 2 }, { id: 'wood', n: 1 }] },
     { out: 'bread', group: 'material', req: [{ id: 'wheat', n: 2 }] },
     { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
+    { out: 'towncenter', group: 'building', req: [{ id: 'stone', n: 3 }, { id: 'plank', n: 2 }, { id: 'brick', n: 4 }] },
     { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'mine',   group: 'building', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 2 }] },
     { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] },
