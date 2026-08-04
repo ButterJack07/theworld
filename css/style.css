@@ -1035,9 +1035,11 @@ button:active { transform: translateY(1px); }
 .victory-overlay, .choice-overlay {
   position: fixed;
   inset: 0;
-  z-index: 35;
   background: rgba(0, 0, 0, 0.5);
 }
+/* 模式选择面板出现在开始菜单之上，胜利面板用于游戏进行中 */
+.victory-overlay { z-index: 35; }
+.choice-overlay { z-index: 55; }
 .victory-overlay.hidden, .choice-overlay.hidden { display: none; }
 .victory-panel, .choice-panel {
   position: fixed;
@@ -1045,7 +1047,6 @@ button:active { transform: translateY(1px); }
   left: 50%;
   transform: translate(-50%, -50%);
   width: 380px;
-  z-index: 40;
   padding: 22px 24px;
   border-radius: 16px;
   background: rgba(255, 253, 247, 0.96);
@@ -1058,6 +1059,8 @@ button:active { transform: translateY(1px); }
   user-select: none;
   text-align: center;
 }
+.victory-panel { z-index: 40; }
+.choice-panel { z-index: 60; }
 .victory-panel.hidden, .choice-panel.hidden { display: none; }
 .victory-mode {
   font-size: 18px;
