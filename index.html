@@ -117,6 +117,9 @@
     <div class="start-sub">· 文明经营 · 选择游戏模式</div>
     <div class="mode-list" id="modeList"></div>
     <div class="start-foot">选择模式后进入游戏 · 各模式独立记录历史最佳成绩</div>
+    <div class="guide-entry" id="guideEntry" title="新手上手指南">
+      <span>📖</span><b>新手指南</b>
+    </div>
     <div class="rank-entry" id="rankEntry" title="查看各模式历史成绩排行榜">
       <span>🏆</span><b>排行榜</b><span class="rank-entry-badge" id="rankCount"></span>
     </div>
@@ -154,6 +157,18 @@
     </div>
     <div class="rank-modes" id="rankModeTabs"></div>
     <div class="rank-body" id="rankBody"></div>
+  </div>
+  <div class="choice-overlay hidden" id="guideOverlay"></div>
+  <div class="choice-panel guide-panel hidden" id="guidePanel">
+    <button id="guideClose" class="settings-close" title="关闭新手指南">✕</button>
+    <h2 class="panel-title">新手指南</h2>
+    <div class="guide-stage" id="guideStage"></div>
+    <div class="guide-desc" id="guideDesc"></div>
+    <div class="guide-nav">
+      <button id="guidePrev" class="guide-nav-btn">◀ 上一页</button>
+      <div class="guide-dots" id="guideDots"></div>
+      <button id="guideNext" class="guide-nav-btn">下一页 ▶</button>
+    </div>
   </div>
 </div>
 
