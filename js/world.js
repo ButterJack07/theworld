@@ -915,6 +915,40 @@
         ctx.arc(cx + 2, gy + 7, 0.9, 0, Math.PI * 2);
         ctx.fill();
         break;
+      case 'farm':
+        // 田垄 + 麦穗
+        ctx.strokeStyle = 'rgba(122, 122, 63, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 8, gy + 8); ctx.lineTo(cx + 8, gy + 8);
+        ctx.moveTo(cx - 8, gy + 11); ctx.lineTo(cx + 8, gy + 11);
+        ctx.stroke();
+        ctx.fillStyle = '#e6cc6a';
+        ctx.beginPath();
+        ctx.ellipse(cx - 3, gy + 4, 2.4, 3.4, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx + 3, gy + 4, 2.4, 3.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#a3823f';
+        ctx.beginPath();
+        ctx.moveTo(cx - 3, gy + 7); ctx.lineTo(cx - 3, gy + 1);
+        ctx.moveTo(cx + 3, gy + 7); ctx.lineTo(cx + 3, gy + 1);
+        ctx.stroke();
+        break;
+      case 'pasture':
+        // 栅栏 + 牛羊
+        ctx.fillStyle = '#b0a878';
+        ctx.fillRect(cx - 9, gy + 4, 2, 8);
+        ctx.fillRect(cx + 7, gy + 4, 2, 8);
+        ctx.fillRect(cx - 9, gy + 5, 18, 2);
+        ctx.fillRect(cx - 9, gy + 9, 18, 2);
+        ctx.fillStyle = '#fffdf5';
+        ctx.strokeStyle = 'rgba(120, 110, 90, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(cx - 2, gy + 16, 6, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        break;
     }
   }
 
@@ -1168,6 +1202,7 @@
     Game.selectedBuilding = b || null;
     Game.selectedBase = !b && insideBase(c.x, c.y);
     Game.selectedTerrain = null;
+    Game.selectedItem = null;
     Game.updateStatus();
   });
 
@@ -1182,6 +1217,7 @@
     Game.selectedBuilding = null;
     Game.selectedBase = false;
     Game.selectedTerrain = { t, x: c.x, y: c.y };
+    Game.selectedItem = null;
     Game.updateStatus();
   });
 
@@ -1217,6 +1253,13 @@
     const t = Game.world.terrain[y][x];
     if (id === 'lumber' && t !== Game.TERRAIN.FOREST) return false;
     if (id === 'mine' && t !== Game.TERRAIN.MOUNTAIN && t !== Game.TERRAIN.MINE) return false;
+    if (id === 'pasture') {
+      for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
+          if (Game.world.terrain[y + dy][x + dx] !== Game.TERRAIN.GRASSLAND) return false;
+        }
+      }
+    }
     if (id === 'dock') {
       const nearWater = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
         const nx = x + dx, ny = y + dy;
@@ -1276,6 +1319,9 @@
   // 4 个采矿小屋 → 采矿工场
   function mergeMineFactories() { return mergeGrid('mine', 'minefactory'); }
   Game.mergeMineFactories = mergeMineFactories;
+  // 4 个农田 → 农庄
+  function mergeFarms() { return mergeGrid('farm', 'farmstead'); }
+  Game.mergeFarms = mergeFarms;
 
   // 地图上 3 个钓船小屋（1×1）排成横 / 竖直线 → 合并为 1 个钓船码头（3×1 / 1×3）。
   // 朝向由水在哪一端决定：木制浮台伸向水域，船坞小屋在岸端（rot: E/W 横、S/N 竖）
@@ -1360,6 +1406,7 @@
     Game.selectedBuilding = Game.state.buildings[Game.state.buildings.length - 1];
     Game.selectedBase = false;
     Game.selectedTerrain = null;
+    Game.selectedItem = null;
     Game.renderInventory();
     Game.renderCrafting();
     Game.updateStatus();
@@ -1373,6 +1420,8 @@
     const mergedMineFactory = mergeMineFactories();
     if (mergedLumbermill) merged = mergedLumbermill;
     if (mergedMineFactory) merged = mergedMineFactory;
+    const mergedFarmstead = mergeFarms();
+    if (mergedFarmstead) merged = mergedFarmstead;
     const mergedDockyard = mergeDockyards();
     if (mergedDockyard) merged = mergedDockyard;
     if (merged) {

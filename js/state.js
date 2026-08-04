@@ -82,9 +82,11 @@
       if (Array.isArray(saved.clumps)) {
         saved.clumps.forEach(s => {
           const c = Game.world.clumps.find(c => c.id === s.id);
-          if (c) { c.progress = s.progress || 0; c.revealed = !!s.revealed; }
+          if (c) {
+            c.progress = s.progress || 0;
+            if (s.revealed) Game.revealClump(c);
+          }
         });
-        Game.world.clumps.forEach(c => { if (c.revealed) Game.revealClump(c); });
       }
       // 恢复地图上的自动合并：2×2 茅草屋→砖瓦屋、2×2 砖瓦屋→四合院、
       // 2×2 伐木小屋→伐木工场、2×2 采矿小屋→采矿工场、横/竖 3 连钓船小屋→钓船码头
@@ -92,6 +94,7 @@
       if (Game.mergeBrickhouses) Game.mergeBrickhouses();
       if (Game.mergeLumbermills) Game.mergeLumbermills();
       if (Game.mergeMineFactories) Game.mergeMineFactories();
+      if (Game.mergeFarms) Game.mergeFarms();
       if (Game.mergeDockyards) Game.mergeDockyards();
       while (Game.state.villagersCells.length < Game.state.villagers) {
         const spot = Game.findVillagerSpot(Game.state.villagersCells);

@@ -189,6 +189,13 @@
         el.appendChild(b);
       }
       Game.bindDrag(el, p, 'crafting');
+      el.addEventListener('click', () => {
+        Game.selectedItem = p.item;
+        Game.selectedBuilding = null;
+        Game.selectedBase = false;
+        Game.selectedTerrain = null;
+        Game.updateStatus();
+      });
       craftingEl.appendChild(el);
     });
     renderCraftResult();

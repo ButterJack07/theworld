@@ -241,6 +241,13 @@
         el.appendChild(b);
       }
       bindDrag(el, p, 'inventory');
+      el.addEventListener('click', () => {
+        Game.selectedItem = p.item;
+        Game.selectedBuilding = null;
+        Game.selectedBase = false;
+        Game.selectedTerrain = null;
+        Game.updateStatus();
+      });
       inventoryEl.appendChild(el);
     });
   }

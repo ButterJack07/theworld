@@ -143,31 +143,35 @@
 
   // ---------- 物品 ----------
   Game.ITEMS = [
-    { id: 'wood',   name: '木头', color: '#c0b283', w: 1, h: 1 },
-    { id: 'stone',  name: '石头', color: '#aaa69b', w: 1, h: 1 },
-    { id: 'iron',   name: '铁矿', color: '#8a9a7b', w: 1, h: 1 },
-    { id: 'food',   name: '食物', color: '#d6c08f', w: 1, h: 1 },
-    { id: 'grain',  name: '粮食', color: '#d8c290', w: 1, h: 1 },
-    { id: 'cloth',  name: '布匹', color: '#c9b8b3', w: 1, h: 1 },
-    { id: 'gold',   name: '金矿', color: '#cfa86a', w: 1, h: 1 },
-    { id: 'clay',   name: '黏土', color: '#c9a98a', w: 1, h: 1 },
-    { id: 'berry',  name: '浆果', color: '#d08a7a', w: 1, h: 1 },
-    { id: 'copper', name: '铜矿', color: '#cf9a6a', w: 1, h: 1 },
-    { id: 'meat',   name: '生肉', color: '#d06a5a', w: 1, h: 1 },
-    { id: 'amber',  name: '琥珀', color: '#e0a64f', w: 1, h: 1 },
-    { id: 'diamond', name: '钻石', color: '#a8d8e8', w: 1, h: 1 },
-    { id: 'fish',   name: '鱼', color: '#a8c9cf', w: 1, h: 1 },
-    { id: 'plank',  name: '木板', color: '#b7a678', w: 1, h: 1 },
-    { id: 'brick',  name: '砖块', color: '#c49a83', w: 1, h: 1 },
-    { id: 'hut',    name: '茅草屋', color: '#f0e2c0', w: 1, h: 1 },
-    { id: 'brickhouse', name: '砖瓦屋', color: '#d9c1a6', w: 2, h: 2 },
-    { id: 'courtyard', name: '四合院', color: '#7a7a72', w: 4, h: 4 },
-    { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1 },
-    { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1 },
-    { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2 },
-    { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2 },
-    { id: 'dock',   name: '钓船小屋', color: '#cfe3e6', w: 1, h: 1 },
-    { id: 'dockyard', name: '钓船码头', color: '#c9b889', w: 3, h: 1 },
+    { id: 'wood',   name: '木头', color: '#c0b283', w: 1, h: 1, desc: '基础材料，基地产出。用于合成木板、建造与冶炼燃料' },
+    { id: 'stone',  name: '石头', color: '#aaa69b', w: 1, h: 1, desc: '基础材料，基地与山地产出。用于建造、合成砖块与玻璃' },
+    { id: 'iron',   name: '铁矿', color: '#8a9a7b', w: 1, h: 1, desc: '常见矿石，采矿产出。可冶炼铁锭，或合成砖块与金矿' },
+    { id: 'food',   name: '食物', color: '#d6c08f', w: 1, h: 1, desc: '日常食物，钓船小屋与钓船码头每月产出' },
+    { id: 'wheat',  name: '小麦', color: '#d8c290', w: 1, h: 1, desc: '农田与农庄产出的粮食，可合成面包' },
+    { id: 'bread',  name: '面包', color: '#e3b877', w: 1, h: 1, desc: '精制食物，由 2 小麦合成，价值高于原粮' },
+    { id: 'cloth',  name: '布匹', color: '#c9b8b3', w: 1, h: 1, desc: '布料，由木头与石头合成。造船与牧场的必需材料' },
+    { id: 'gold',   name: '金矿', color: '#cfa86a', w: 1, h: 1, desc: '贵金属矿，由铁矿与木头合成，经济之路的基础' },
+    { id: 'clay',   name: '黏土', color: '#c9a98a', w: 1, h: 1, desc: '黏土山产出，用于制砖、烧玻璃与建造农田' },
+    { id: 'berry',  name: '浆果', color: '#d08a7a', w: 1, h: 1, desc: '草原与湿地可采集的野果' },
+    { id: 'copper', name: '铜矿', color: '#cf9a6a', w: 1, h: 1, desc: '稀有矿石，矿洞产出。与铁锭合成青铜' },
+    { id: 'meat',   name: '生肉', color: '#d06a5a', w: 1, h: 1, desc: '湿地可猎得，牧场每月稳定产出' },
+    { id: 'amber',  name: '琥珀', color: '#e0a64f', w: 1, h: 1, desc: '矿洞的稀有矿物，珍贵收藏品' },
+    { id: 'diamond', name: '钻石', color: '#a8d8e8', w: 1, h: 1, desc: '矿洞的稀有矿物，最珍贵的存在' },
+    { id: 'fish',   name: '鱼', color: '#a8c9cf', w: 1, h: 1, desc: '基地覆盖海洋时每月产出' },
+    { id: 'plank',  name: '木板', color: '#b7a678', w: 1, h: 1, desc: '加工木材，由 2 木头合成。建造建筑的常用材料' },
+    { id: 'brick',  name: '砖块', color: '#c49a83', w: 1, h: 1, desc: '烧制的建材，由 2 石头 + 1 铁矿合成' },
+    { id: 'hut',    name: '茅草屋', color: '#f0e2c0', w: 1, h: 1, desc: '一级住宅，可容纳 1 人。4 座摆成 2×2 可合并为砖瓦屋' },
+    { id: 'brickhouse', name: '砖瓦屋', color: '#d9c1a6', w: 2, h: 2, desc: '二级住宅，可容纳 5 人。由 4 座茅草屋合并而成' },
+    { id: 'courtyard', name: '四合院', color: '#7a7a72', w: 4, h: 4, desc: '三级住宅，可容纳 25 人。由 4 座砖瓦屋合并而成' },
+    { id: 'lumber', name: '伐木小屋', color: '#e9dcba', w: 1, h: 1, desc: '须建在森林上，每月产出 5 木头' },
+    { id: 'mine',   name: '采矿小屋', color: '#dbd4c6', w: 1, h: 1, desc: '须建在山地或矿洞上，每月产出石头与矿物' },
+    { id: 'lumbermill', name: '伐木工场', color: '#c9b889', w: 2, h: 2, desc: '由 4 座伐木小屋合并而成，每月产出 25 木头' },
+    { id: 'minefactory', name: '采矿工场', color: '#8d8a80', w: 2, h: 2, desc: '由 4 座采矿小屋合并而成，每月产出大量石头与矿物' },
+    { id: 'dock',   name: '钓船小屋', color: '#cfe3e6', w: 1, h: 1, desc: '须临水建造，每月产出 2 食物' },
+    { id: 'dockyard', name: '钓船码头', color: '#c9b889', w: 3, h: 1, desc: '由 3 座钓船小屋排成一线合并而成，每月产出 10 食物' },
+    { id: 'farm',      name: '农田', color: '#d9cba0', w: 1, h: 1, desc: '可建在任意陆地，每月产出 5 小麦。4 座摆成 2×2 合并为农庄' },
+    { id: 'farmstead', name: '农庄', color: '#cdbf95', w: 2, h: 2, desc: '由 4 座农田合并而成，每月产出 25 小麦' },
+    { id: 'pasture',   name: '牧场', color: '#cfe0b0', w: 2, h: 2, desc: '须建在草原上（覆盖 4 格全为草原），每月产出 10 生肉' },
   ];
 
   // 卡通简约物品图标（统一 viewBox 40x40）
@@ -192,7 +196,12 @@
           '<path d="M7 20 L3 15 L3 25 Z" fill="#e0a078" stroke="#b57a50" stroke-width="1.2"/>' +
           '<circle cx="24" cy="18" r="1.4" fill="#b57a50"/>' +
           '<path d="M12 20 q3 -2 6 0" stroke="#b57a50" stroke-width="1" fill="none" opacity="0.5"/>',
-    grain: '<g fill="none" stroke="#b98f4f" stroke-width="1.3" stroke-linecap="round">' +
+    bread: '<ellipse cx="20" cy="27" rx="13" ry="7" fill="#e3b877"/>' +
+           '<ellipse cx="20" cy="27" rx="13" ry="7" fill="none" stroke="#a57a3f" stroke-width="1.2"/>' +
+           '<path d="M7 27 Q7 16 20 16 Q33 16 33 27 Q33 31 20 31 Q7 31 7 27 Z" fill="#e3b877" stroke="#a57a3f" stroke-width="1.2"/>' +
+           '<path d="M9 25 Q14 20 20 21 Q27 22 31 19" stroke="#a57a3f" stroke-width="1.1" fill="none" opacity="0.65"/>' +
+           '<path d="M12 28 q4 1 8 0 q4 -1 8 0" stroke="#a57a3f" stroke-width="1" fill="none" opacity="0.5"/>',
+    wheat: '<g fill="none" stroke="#b98f4f" stroke-width="1.3" stroke-linecap="round">' +
            '<path d="M20 31 L13 17 M20 31 L16 14 M20 31 L20 12 M20 31 L24 14 M20 31 L27 17"/></g>' +
            '<ellipse cx="13" cy="15.5" rx="2" ry="3.4" fill="#e6cc6a" stroke="#a3823f" stroke-width="1"/>' +
            '<ellipse cx="16" cy="12.5" rx="2" ry="3.4" fill="#e6cc6a" stroke="#a3823f" stroke-width="1"/>' +
@@ -332,6 +341,36 @@
               '<path d="M28 15 q-3 5 0 5 q3 0 0 -5" fill="#9a5a3a" stroke="#6a4028" stroke-width="1"/>' +
               '<rect x="29" y="11" width="1.5" height="5" fill="#5a4a32"/>' +
               '<path d="M30 12 L36 15 L30 16 Z" fill="#e8e2d2"/>',
+    farm: '<rect x="6" y="23" width="28" height="13" rx="3" fill="#d9cba0" stroke="#9a8a5a" stroke-width="1.2"/>' +
+          '<path d="M9 26h22 M9 30h22 M9 34h22" stroke="#8a7a4a" stroke-width="1" opacity="0.4"/>' +
+          '<g stroke="#a3823f" stroke-width="1.2" fill="none" stroke-linecap="round">' +
+          '<path d="M12 23 L12 17 M17 23 L17 16 M22 23 L22 17 M27 23 L27 16"/>' +
+          '<path d="M11 16 q2 -3 4 0 M16 15 q2 -3 4 0 M21 16 q2 -3 4 0 M26 15 q2 -3 4 0"/>' +
+          '</g>' +
+          '<ellipse cx="12" cy="15" rx="2" ry="3" fill="#e6cc6a"/>' +
+          '<ellipse cx="17" cy="14" rx="2" ry="3" fill="#e6cc6a"/>' +
+          '<ellipse cx="22" cy="15" rx="2" ry="3" fill="#e6cc6a"/>' +
+          '<ellipse cx="27" cy="14" rx="2" ry="3" fill="#e6cc6a"/>',
+    farmstead: '<rect x="4" y="20" width="32" height="16" rx="3" fill="#cdbf95" stroke="#8a7a4a" stroke-width="1.2"/>' +
+               '<path d="M7 23h26 M7 27h26 M7 31h26" stroke="#8a7a4a" stroke-width="1" opacity="0.4"/>' +
+               '<path d="M10 20 L14 11 L22 11 L26 20 Z" fill="#a06a45" stroke="#7a4f2f" stroke-width="1.2"/>' +
+               '<path d="M11 17h10 M12 14h8" stroke="#8a4a3a" stroke-width="1" opacity="0.6"/>' +
+               '<rect x="16.5" y="24" width="7" height="7" rx="1.5" fill="#7a4f2f"/>' +
+               '<g stroke="#a3823f" stroke-width="1.1" fill="none" stroke-linecap="round">' +
+               '<path d="M8 20 L8 15 M31 20 L31 15"/>' +
+               '</g>' +
+               '<ellipse cx="8" cy="14" rx="2" ry="3" fill="#e6cc6a"/>' +
+               '<ellipse cx="31" cy="14" rx="2" ry="3" fill="#e6cc6a"/>',
+    pasture: '<rect x="4" y="23" width="32" height="13" rx="3" fill="#cfe0b0" stroke="#8a9a5a" stroke-width="1.2"/>' +
+             '<path d="M6 31h28" stroke="#8a9a5a" stroke-width="1" opacity="0.5"/>' +
+             '<rect x="7" y="13" width="3" height="10" fill="#b0a878"/>' +
+             '<rect x="18" y="13" width="3" height="10" fill="#b0a878"/>' +
+             '<rect x="29" y="13" width="3" height="10" fill="#b0a878"/>' +
+             '<rect x="9.5" y="11.5" width="13" height="3" rx="1.5" fill="#b0a878"/>' +
+             '<rect x="20.5" y="11.5" width="13" height="3" rx="1.5" fill="#b0a878"/>' +
+             '<ellipse cx="20" cy="28" rx="7" ry="4.6" fill="#fffdf5" stroke="#9a8a6a" stroke-width="1"/>' +
+             '<circle cx="17.5" cy="26.8" r="1" fill="#6a5a3f"/>' +
+             '<path d="M20 31.5 q0 2.6 2.4 2.6 M13.4 31.5 q0 2.6 2.4 2.6" stroke="#9a8a6a" stroke-width="1" fill="none"/>',
     clay: '<ellipse cx="20" cy="24" rx="12" ry="9" fill="#c9a98a"/>' +
           '<ellipse cx="20" cy="24" rx="12" ry="9" fill="none" stroke="#9a6f4f" stroke-width="1.2"/>' +
           '<path d="M9 21q11 -5 22 0" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.5"/>' +
@@ -427,6 +466,23 @@
       produces: [{ item: 'food', amount: 10 }],
       desc: '10 食物（无直接配方：地图上 3 个钓船小屋排成横 / 竖直线自动合并，船坞在岸、木制浮台伸向水域）',
       interval: 1
+    },
+    farm: {
+      id: 'farm', name: '农田',
+      body: '#d9cba0', roof: '#b8c99e', accent: '#7a7a3f',
+      produces: [{ item: 'wheat', amount: 5 }], interval: 1
+    },
+    farmstead: {
+      id: 'farmstead', name: '农庄',
+      body: '#cdbf95', roof: '#8a9a5a', accent: '#5f6a3a',
+      produces: [{ item: 'wheat', amount: 25 }],
+      desc: '25 小麦（无直接配方：地图上 4 个农田摆成 2×2 自动合并）',
+      interval: 1
+    },
+    pasture: {
+      id: 'pasture', name: '牧场',
+      body: '#cfe0b0', roof: '#9aae6a', accent: '#6a7a45',
+      produces: [{ item: 'meat', amount: 10 }], interval: 1
     }
   };
 
@@ -447,10 +503,13 @@
     { out: 'cloth', group: 'material', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'brick', group: 'material', req: [{ id: 'stone', n: 2 }, { id: 'iron', n: 1 }] },
     { out: 'gold',  group: 'material', req: [{ id: 'iron', n: 2 }, { id: 'wood', n: 1 }] },
+    { out: 'bread', group: 'material', req: [{ id: 'wheat', n: 2 }] },
     { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'mine',   group: 'building', req: [{ id: 'wood', n: 1 }, { id: 'stone', n: 2 }] },
-    { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] }
+    { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] },
+    { out: 'farm',   group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
+    { out: 'pasture', group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] }
   ];
   Game.RECIPE_GROUPS = [
     { key: 'material', title: '材料合成' },
@@ -464,6 +523,7 @@
     { src: 'brickhouse', n: 4, out: 'courtyard', pattern: '2×2' },
     { src: 'lumber', n: 4, out: 'lumbermill', pattern: '2×2' },
     { src: 'mine', n: 4, out: 'minefactory', pattern: '2×2' },
+    { src: 'farm', n: 4, out: 'farmstead', pattern: '2×2' },
     { src: 'dock', n: 3, out: 'dockyard', pattern: '横 / 竖直线' }
   ];
 

@@ -75,6 +75,13 @@ h1 {
   font-weight: 600;
   font-size: 13px;
 }
+.bi-desc {
+  justify-content: flex-start;
+  font-weight: 400;
+  font-size: 12px;
+  color: #7a7b6e;
+  line-height: 1.7;
+}
 .bi-icon-sm {
   display: inline-block;
   width: 18px;

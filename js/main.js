@@ -113,6 +113,7 @@
     Game.selectedBuilding = null;
     Game.selectedBase = false;
     Game.selectedTerrain = null;
+    Game.selectedItem = null;
     Game.renderInventory();
     Game.renderCrafting();
     updateStatus();
@@ -125,6 +126,7 @@
   Game.selectedBuilding = null;
   Game.selectedBase = false;
   Game.selectedTerrain = null;   // 双击选择的地块地貌 { t, x, y }
+  Game.selectedItem = null;      // 单击物品栏 / 合成器中的物品
 
   // 统计基地覆盖区域各地貌的格子数
   function baseTerrainCounts() {
@@ -158,11 +160,38 @@
       showTerrainInfo(Game.selectedTerrain.t, Game.selectedTerrain.x, Game.selectedTerrain.y);
       return;
     }
-    const hint = document.createElement('div');
-    hint.className = 'info-hint';
-    hint.textContent = '单击建筑展示建筑信息\n\n双击地块展示地貌信息';
-    statusEl.appendChild(hint);
+    if (Game.selectedItem) { renderItemInfo(Game.selectedItem); return; }
   }
+
+  // 单击物品栏 / 合成器中的物品：展示图标、名称与简介
+  function renderItemInfo(item) {
+    const card = document.createElement('div');
+    card.className = 'build-info';
+
+    const head = document.createElement('div');
+    head.className = 'bi-head';
+    const icon = document.createElement('span');
+    icon.className = 'bi-icon';
+    icon.innerHTML = Game.itemIconSVG(item.id);
+    const title = document.createElement('div');
+    title.className = 'bi-title';
+    title.textContent = item.name;
+    head.append(icon, title);
+    card.appendChild(head);
+
+    if (item.desc) {
+      const line = document.createElement('div');
+      line.className = 'bi-line';
+      const val = document.createElement('span');
+      val.className = 'bi-val bi-desc';
+      val.textContent = item.desc;
+      line.append(val);
+      card.appendChild(line);
+    }
+
+    statusEl.appendChild(card);
+  }
+  Game.renderItemInfo = renderItemInfo;
 
   function renderBaseInfo() {
     const card = document.createElement('div');
