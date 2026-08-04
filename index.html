@@ -8,18 +8,18 @@
 
 </head>
 <body>
-<div id="app">
+<div id="app" class="intro">
   <header>
-    <h1>The World</h1>
+    <h1><span class="tl">T</span><span class="tl">h</span><span class="tl">e</span><span class="tl">&nbsp;</span><span class="tl">W</span><span class="tl">o</span><span class="tl">r</span><span class="tl">l</span><span class="tl">d</span></h1>
     <div class="subtitle" id="date">1 年 1 月</div>
   </header>
 
-  <div class="top-right">
+  <div class="top-right enter d1">
     <div class="pop-pill">人口 <b id="pop">1 / 5</b></div>
     <div class="pop-pill civ">文明程度 <b id="civ">0</b></div>
   </div>
 
-  <div class="stage">
+  <div class="stage enter d2">
     <div class="frame">
       <canvas id="map"></canvas>
       <div class="bar">
@@ -28,15 +28,15 @@
     </div>
     <div class="side">
       <div class="side-left">
-        <div class="frame info-card">
+        <div class="frame info-card enter d3">
           <div class="status" id="status"></div>
         </div>
-        <div class="frame">
+        <div class="frame enter d4">
           <h2 class="panel-title">物品栏</h2>
           <div class="inventory" id="inventory"></div>
         </div>
       </div>
-      <div class="frame">
+      <div class="frame enter d5">
         <h2 class="panel-title">合成器</h2>
         <div class="crafting" id="crafting"></div>
         <div class="craft-result" id="craftResult"></div>
@@ -92,7 +92,7 @@
     </div>
   </div>
   <div class="settings-overlay hidden" id="settingsOverlay"></div>
-  <div class="controls">
+  <div class="controls enter d6">
     <button id="settingsToggle" class="play-btn recipe-btn" title="展开 / 收起设置菜单"><span>⚙️</span><b>设置</b></button>
     <button id="recipeToggle" class="play-btn recipe-btn" title="展开 / 收起合成列表"><span id="recipeIcon">📜</span><b>合成</b></button>
     <button id="expandToggle" class="play-btn recipe-btn" title="展开 / 收起扩建规则"><span id="expandIcon">🏗️</span><b>扩建</b></button>

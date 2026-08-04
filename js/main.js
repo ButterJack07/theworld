@@ -96,6 +96,15 @@
 
   Game.world = Game.generateWorld(Game.seed);
 
+  // 重新播放开场动画：标题逐字浮现 + 组件错峰浮入
+  function playIntro() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    app.classList.remove('intro');
+    void app.offsetWidth;
+    app.classList.add('intro');
+  }
+
   document.getElementById('restart').addEventListener('click', () => {
     Game.seed = Math.floor(Math.random() * 1e9);
     Game.store.set(Game.SEED_KEY, String(Game.seed));
@@ -109,6 +118,7 @@
     updateStatus();
     Game.drawWorld();
     closeSettings();
+    playIntro();
   });
 
   // ---------- 状态栏：展示点选地图上建筑的信息 ----------

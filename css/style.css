@@ -677,3 +677,43 @@ button:active { transform: translateY(1px); }
 .recipe-row .rc-name { color: #5e6e55; letter-spacing: 1px; white-space: nowrap; }
 .recipe-row .rc-req { color: #909184; text-align: right; white-space: nowrap; }
 .info-card { overflow-y: auto; }
+
+/* ---------- 开场动画 ---------- */
+.tl {
+  display: inline-block;
+}
+#app.intro .tl {
+  opacity: 0;
+  animation: letterIn 0.5s ease forwards;
+}
+#app.intro .tl:nth-child(1) { animation-delay: 0.05s; }
+#app.intro .tl:nth-child(2) { animation-delay: 0.12s; }
+#app.intro .tl:nth-child(3) { animation-delay: 0.19s; }
+#app.intro .tl:nth-child(4) { animation-delay: 0.26s; }
+#app.intro .tl:nth-child(5) { animation-delay: 0.33s; }
+#app.intro .tl:nth-child(6) { animation-delay: 0.40s; }
+#app.intro .tl:nth-child(7) { animation-delay: 0.47s; }
+#app.intro .tl:nth-child(8) { animation-delay: 0.54s; }
+#app.intro .tl:nth-child(9) { animation-delay: 0.61s; }
+@keyframes letterIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+#app.intro .subtitle {
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.7s forwards;
+}
+#app.intro .enter {
+  opacity: 0;
+  animation: fadeUp 0.65s ease forwards;
+}
+#app.intro .enter.d1 { animation-delay: 0.30s; }
+#app.intro .enter.d2 { animation-delay: 0.50s; }
+#app.intro .enter.d3 { animation-delay: 0.70s; }
+#app.intro .enter.d4 { animation-delay: 0.90s; }
+#app.intro .enter.d5 { animation-delay: 1.10s; }
+#app.intro .enter.d6 { animation-delay: 1.30s; }
