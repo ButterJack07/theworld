@@ -931,6 +931,12 @@ button:active { transform: translateY(1px); }
 .pop-pill.mode b { color: #5e6e55; font-weight: 600; }
 
 /* ---------- 开始菜单 ---------- */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #f5efe2;
+}
 .start-menu {
   position: fixed;
   inset: 0;

@@ -305,6 +305,7 @@
   // ---------- 开始菜单与新模式 ----------
   function showStartMenu() {
     document.getElementById('startMenu').classList.remove('hidden');
+    Game.setScreen('menu');
     mode = 2;
     applyMode();
     updateControls();
@@ -386,6 +387,7 @@
 
   Game.startNewGame = function (modeId, skipIntro) {
     Game.mode = modeId;
+    Game.setScreen('game');
     Game.store.set(Game.LAST_MODE_KEY, modeId);
     Game.seed = Math.floor(Math.random() * 1e9);
     Game.store.set(Game.seedKey(modeId), String(Game.seed));
@@ -411,6 +413,7 @@
 
   Game.resumeGame = function (modeId, skipIntro) {
     Game.mode = modeId;
+    Game.setScreen('game');
     Game.store.set(Game.LAST_MODE_KEY, modeId);
     Game.seed = parseInt(Game.store.get(Game.seedKey(modeId)), 10);
     Game.world = Game.generateWorld(Game.seed);
@@ -1551,16 +1554,19 @@
   Game.tick = tick;
 
   // ---------- 启动 ----------
-  // 首次进入游戏经过开始菜单选择模式；之后若在游戏中刷新页面，则直接恢复到上次玩到的模式，不再退回主界面
+  // 刷新页面时保持当前所在界面不变：主菜单刷新仍停留在主菜单，游戏中刷新则直接恢复到上次玩到的模式，不播放开场动画；
+  // 仅从主菜单选择模式进入游戏时才播放开场动画
   renderModeList();
   updateRankEntry();
   const lastMode = Game.store.get(Game.LAST_MODE_KEY);
   const validModes = Game.GAME_MODES.map(m => m.id);
-  if (validModes.includes(lastMode) && Game.hasSave(lastMode)) {
-    Game.resumeGame(lastMode, true);
+  if (Game.getScreen() === 'game' && validModes.includes(lastMode) && Game.hasSave(lastMode)) {
+    Game.resumeGame(lastMode);
   } else {
     Game.mode = null;
     showStartMenu();
   }
+  const boot = document.getElementById('bootScreen');
+  if (boot) boot.remove();
   setInterval(tick, 500);
 })();

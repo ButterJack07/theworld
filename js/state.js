@@ -12,7 +12,10 @@
   const SEED_PREFIX = 'tw-seed-';
   const GAME_PREFIX = 'tw-game-';
   const LAST_MODE_KEY = 'tw-last';
+  const SCREEN_KEY = 'tw-screen';
   Game.LAST_MODE_KEY = LAST_MODE_KEY;
+  Game.setScreen = function (s) { store.set(SCREEN_KEY, s); };
+  Game.getScreen = function () { return store.get(SCREEN_KEY); };
   Game.mode = null;
   Game.seed = null;
   Game.seedKey = function (mode) { return SEED_PREFIX + mode; };
