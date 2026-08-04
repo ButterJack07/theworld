@@ -117,6 +117,9 @@
     <div class="start-sub">· 文明经营 · 选择游戏模式</div>
     <div class="mode-list" id="modeList"></div>
     <div class="start-foot">选择模式后进入游戏 · 各模式独立记录历史最佳成绩</div>
+    <div class="rank-entry" id="rankEntry" title="查看各模式历史成绩排行榜">
+      <span>🏆</span><b>排行榜</b><span class="rank-entry-badge" id="rankCount"></span>
+    </div>
   </div>
   <div class="victory-overlay hidden" id="victoryOverlay"></div>
   <div class="victory-panel hidden" id="victoryPanel">
@@ -140,6 +143,17 @@
       <button id="choiceResume" class="restart-btn">继续发展</button>
       <button id="choiceRestart" class="restart-btn">重新开始</button>
     </div>
+  </div>
+  <div class="choice-overlay hidden" id="rankOverlay"></div>
+  <div class="choice-panel leader-panel hidden" id="rankPanel">
+    <button id="rankClose" class="settings-close" title="关闭排行榜">✕</button>
+    <h2 class="panel-title">排行榜</h2>
+    <div class="rank-tabs">
+      <button class="rank-tab active" data-source="local">本地排行</button>
+      <button class="rank-tab locked" data-source="network" title="网络排行暂未开放">网络排行<span class="rank-soon">暂未开放</span></button>
+    </div>
+    <div class="rank-modes" id="rankModeTabs"></div>
+    <div class="rank-body" id="rankBody"></div>
   </div>
 </div>
 

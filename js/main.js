@@ -294,6 +294,10 @@
   }
 
   document.getElementById('restart').addEventListener('click', () => {
+    // 自由模式无胜利判定：返回主菜单时以当前文明指数记录一次成绩
+    if (Game.state && Game.state.mode === 'freedom' && Game.state.civ > 0) {
+      recordRanking('freedom', Game.state.day, Game.state.civ);
+    }
     closeSettings();
     showStartMenu();
   });
@@ -442,15 +446,64 @@
     try { return JSON.parse(Game.store.get(RANK_KEY) || '{}'); } catch (e) { return {}; }
   })();
 
+  // 归一化：兼容旧版纯天数（数字）记录 → 统一为 { d, c } 对象（d = 历时天数, c = 文明指数）
+  (function normalizeRanks() {
+    let changed = false;
+    Game.GAME_MODES.forEach(m => {
+      const list = Game.rankings[m.id];
+      if (!Array.isArray(list)) return;
+      Game.rankings[m.id] = list.map(e => {
+        if (typeof e === 'number') { changed = true; return { d: e, c: 0 }; }
+        return { d: Number(e.d) || 0, c: Number(e.c) || 0 };
+      });
+    });
+    if (changed) saveRankings();
+  })();
+
   function saveRankings() {
     Game.store.set(RANK_KEY, JSON.stringify(Game.rankings));
   }
+
+  // 取某模式的排名列表（已排序、截取前 10）：文明 / 科技按历时升序，自由按文明指数降序
+  function rankEntries(mode) {
+    const list = Game.rankings[mode];
+    if (!Array.isArray(list)) return [];
+    const entries = [];
+    list.forEach(e => {
+      if (typeof e === 'number') entries.push({ d: e, c: 0 });
+      else if (e && typeof e === 'object') entries.push({ d: Number(e.d) || 0, c: Number(e.c) || 0 });
+    });
+    if (mode === 'freedom') entries.sort((a, b) => b.c - a.c);
+    else entries.sort((a, b) => a.d - b.d);
+    return entries.slice(0, 10);
+  }
+  Game.rankEntries = rankEntries;
+
+  // 记录一条成绩并持久化，返回 { list, index }：index 为刚写入条目在榜单中的位置（-1 表示未进前 10）
+  function recordRanking(mode, day, civ) {
+    const list = Game.rankings[mode] || [];
+    const entry = { d: day, c: civ };
+    list.push(entry);
+    if (mode === 'freedom') list.sort((a, b) => b.c - a.c);
+    else list.sort((a, b) => a.d - b.d);
+    const trimmed = list.slice(0, 10);
+    Game.rankings[mode] = trimmed;
+    saveRankings();
+    updateRankEntry();
+    return { list: trimmed, index: trimmed.indexOf(entry) };
+  }
+  Game.recordRanking = recordRanking;
 
   function formatElapsed(days) {
     const y = Math.floor((days - 1) / Game.DAYS_PER_YEAR) + 1;
     const m = Math.floor(((days - 1) % Game.DAYS_PER_YEAR) / Game.DAYS_PER_MONTH) + 1;
     const d = ((days - 1) % Game.DAYS_PER_MONTH) + 1;
     return `${y} 年 ${m} 月 ${d} 天`;
+  }
+
+  // 榜单中一条成绩的展示文本：自由模式按文明指数，其余按历时
+  function rankScoreText(mode, e) {
+    return mode === 'freedom' ? String(e.c) : formatElapsed(e.d);
   }
 
   let victorySavedMode = 0;
@@ -460,15 +513,12 @@
     applyMode();
     updateControls();
 
-    const days = Game.state.day;
-    const arr = Game.rankings[Game.state.mode] || [];
-    arr.push(days);
-    arr.sort((a, b) => a - b);
-    Game.rankings[Game.state.mode] = arr.slice(0, 10);
-    saveRankings();
+    const rec = recordRanking(Game.state.mode, Game.state.day, Game.state.civ);
+    const list = rec.list;
+    const myRank = rec.index;
 
     document.getElementById('victoryMode').textContent = Game.modeName(Game.state.mode);
-    document.getElementById('victoryTime').textContent = `历时 ${formatElapsed(days)}`;
+    document.getElementById('victoryTime').textContent = `历时 ${formatElapsed(Game.state.day)}`;
     document.getElementById('victoryScore').textContent = `文明指数 ${Game.state.civ}`;
 
     const rankEl = document.getElementById('victoryRank');
@@ -478,15 +528,14 @@
     title.textContent = `${Game.modeName(Game.state.mode)} · 历史最佳成绩`;
     rankEl.appendChild(title);
 
-    const myRank = arr.indexOf(days);
-    arr.forEach((d, i) => {
+    list.forEach((e, i) => {
       const row = document.createElement('div');
       row.className = 'rank-row' + (i === myRank ? ' me' : '');
       const no = document.createElement('span');
       no.className = 'rank-no';
       no.textContent = String(i + 1);
       const time = document.createElement('span');
-      time.textContent = formatElapsed(d);
+      time.textContent = rankScoreText(Game.state.mode, e);
       row.append(no, time);
       rankEl.appendChild(row);
     });
@@ -512,6 +561,123 @@
     applyMode();
     updateControls();
     showStartMenu();
+  });
+
+  // ---------- 排行榜 ----------
+  let rankSource = 'local';
+  let rankMode = 'civilization';
+
+  function rankTotalCount() {
+    return Game.GAME_MODES.reduce((s, m) => s + (Array.isArray(Game.rankings[m.id]) ? Game.rankings[m.id].length : 0), 0);
+  }
+
+  function updateRankEntry() {
+    const el = document.getElementById('rankCount');
+    if (!el) return;
+    const n = rankTotalCount();
+    el.textContent = n ? String(n) : '';
+  }
+  Game.updateRankEntry = updateRankEntry;
+
+  function rankEmptyHint(mode) {
+    const def = Game.GAME_MODES.find(m => m.id === mode);
+    if (def && def.locked) return '该模式尚未开放 · 暂无成绩记录';
+    if (mode === 'freedom') return '返回主菜单时自动记录当前文明指数';
+    return '文明指数达到 9999 即获胜，自动收录成绩';
+  }
+
+  function renderRankModeTabs() {
+    const wrap = document.getElementById('rankModeTabs');
+    wrap.innerHTML = '';
+    Game.GAME_MODES.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'rank-mode-tab' + (rankMode === m.id ? ' active' : '') + (m.locked ? ' locked' : '');
+      const icon = document.createElement('span');
+      icon.className = 'rank-mode-icon';
+      icon.innerHTML = m.icon;
+      const name = document.createElement('span');
+      name.textContent = m.name.replace('模式', '');
+      btn.append(icon, name);
+      btn.addEventListener('click', () => {
+        rankMode = m.id;
+        renderRankModeTabs();
+        renderRankBody();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderRankBody() {
+    const body = document.getElementById('rankBody');
+    body.innerHTML = '';
+    if (rankSource === 'network') {
+      const note = document.createElement('div');
+      note.className = 'rank-empty';
+      note.textContent = '网络排行暂未开放 · 敬请期待';
+      body.appendChild(note);
+      return;
+    }
+    const list = rankEntries(rankMode);
+    if (!list.length) {
+      const empty = document.createElement('div');
+      empty.className = 'rank-empty';
+      empty.textContent = rankEmptyHint(rankMode);
+      body.appendChild(empty);
+      return;
+    }
+    const head = document.createElement('div');
+    head.className = 'rank-head';
+    const hl = document.createElement('span');
+    hl.textContent = '排名';
+    const hr = document.createElement('span');
+    hr.textContent = rankMode === 'freedom' ? '文明指数' : '历时';
+    head.append(hl, hr);
+    body.appendChild(head);
+
+    list.forEach((e, i) => {
+      const row = document.createElement('div');
+      row.className = 'rank-row' + (i === 0 ? ' top' : '');
+      const no = document.createElement('span');
+      no.className = 'rank-no';
+      no.textContent = String(i + 1);
+      const score = document.createElement('span');
+      score.textContent = rankScoreText(rankMode, e);
+      row.append(no, score);
+      body.appendChild(row);
+    });
+  }
+
+  function renderLeaderboard() {
+    document.querySelectorAll('.rank-tab').forEach(b => b.classList.toggle('active', b.dataset.source === rankSource));
+    renderRankModeTabs();
+    renderRankBody();
+    updateRankEntry();
+  }
+  Game.renderLeaderboard = renderLeaderboard;
+
+  function openLeaderboard() {
+    rankSource = 'local';
+    rankMode = 'civilization';
+    document.getElementById('rankOverlay').classList.remove('hidden');
+    document.getElementById('rankPanel').classList.remove('hidden');
+    renderLeaderboard();
+  }
+  Game.openLeaderboard = openLeaderboard;
+
+  function closeLeaderboard() {
+    document.getElementById('rankOverlay').classList.add('hidden');
+    document.getElementById('rankPanel').classList.add('hidden');
+  }
+  Game.closeLeaderboard = closeLeaderboard;
+
+  document.getElementById('rankEntry').addEventListener('click', openLeaderboard);
+  document.getElementById('rankOverlay').addEventListener('click', closeLeaderboard);
+  document.getElementById('rankClose').addEventListener('click', closeLeaderboard);
+  document.querySelectorAll('.rank-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      rankSource = btn.dataset.source;
+      renderLeaderboard();
+    });
   });
 
   // ---------- 状态栏：展示点选地图上建筑的信息 ----------
@@ -885,6 +1051,7 @@
   // ---------- 启动 ----------
   // 进入游戏一律经过开始菜单选择模式：各模式独立存档，点选模式后如有历史记录可选「继续发展 / 重新开始」
   renderModeList();
+  updateRankEntry();
   showStartMenu();
   setInterval(tick, 500);
 })();
