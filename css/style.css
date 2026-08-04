@@ -107,6 +107,8 @@ h1 {
   text-align: center;
   user-select: none;
   padding: 40px 0;
+  white-space: pre-line;
+  line-height: 1.9;
 }
 .frame {
   position: relative;
@@ -522,7 +524,7 @@ button:active { transform: translateY(1px); }
     left: 50%;
     transform: translate(-50%, -50%);
     width: 400px;
-    max-height: 82vh;
+    height: 480px;
     overflow-y: auto;
     z-index: 20;
     padding: 18px 22px;
@@ -537,6 +539,35 @@ button:active { transform: translateY(1px); }
     user-select: none;
   }
   .settings-panel.hidden { display: none; }
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .settings-overlay.hidden { display: none; }
+  .settings-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(170, 166, 146, 0.4);
+    color: #8a8c7c;
+  }
+  .settings-close:hover {
+    background: #e2d9c1;
+    color: #5e6e55;
+    box-shadow: 0 4px 14px rgba(150, 140, 110, 0.25);
+  }
   .settings-tabs {
     display: flex;
     gap: 8px;

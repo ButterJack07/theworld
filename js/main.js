@@ -58,9 +58,11 @@
   });
 
   // 设置菜单：点击圆形按钮展开 / 收起（选项卡：操作说明 / 游戏）
-  // 打开时默认暂停游戏，关闭时恢复打开前的速度设置
+  // 打开时默认暂停游戏，关闭时恢复打开前的速度设置；打开时盖上半透明遮罩
   const settingsToggle = document.getElementById('settingsToggle');
   const settingsPanel = document.getElementById('settingsPanel');
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  const settingsClose = document.getElementById('settingsClose');
   let savedMode = 0;
   function openSettings() {
     savedMode = mode;
@@ -68,6 +70,7 @@
     applyMode();
     updateControls();
     settingsPanel.classList.remove('hidden');
+    settingsOverlay.classList.remove('hidden');
     settingsToggle.classList.add('open');
   }
   function closeSettings() {
@@ -75,12 +78,15 @@
     applyMode();
     updateControls();
     settingsPanel.classList.add('hidden');
+    settingsOverlay.classList.add('hidden');
     settingsToggle.classList.remove('open');
   }
   settingsToggle.addEventListener('click', () => {
     if (settingsPanel.classList.contains('hidden')) openSettings();
     else closeSettings();
   });
+  settingsClose.addEventListener('click', closeSettings);
+  settingsOverlay.addEventListener('click', closeSettings);
   settingsPanel.querySelectorAll('.settings-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       settingsPanel.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b === btn));
@@ -144,7 +150,7 @@
     }
     const hint = document.createElement('div');
     hint.className = 'info-hint';
-    hint.textContent = '点击地图上的建筑查看信息';
+    hint.textContent = '单击建筑展示建筑信息\n\n双击地块展示地貌信息';
     statusEl.appendChild(hint);
   }
 
