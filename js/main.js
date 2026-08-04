@@ -57,6 +57,20 @@
     expandToggle.classList.toggle('open', !expandPanel.classList.contains('hidden'));
   });
 
+  // 设置菜单：点击圆形按钮展开 / 收起（选项卡：操作说明 / 游戏）
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsPanel = document.getElementById('settingsPanel');
+  settingsToggle.addEventListener('click', () => {
+    settingsPanel.classList.toggle('hidden');
+    settingsToggle.classList.toggle('open', !settingsPanel.classList.contains('hidden'));
+  });
+  settingsPanel.querySelectorAll('.settings-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      settingsPanel.querySelectorAll('.settings-tab').forEach(b => b.classList.toggle('active', b === btn));
+      settingsPanel.querySelectorAll('.settings-page').forEach(p => p.classList.toggle('active', p.id === 'page-' + btn.dataset.tab));
+    });
+  });
+
   Game.world = Game.generateWorld(Game.seed);
 
   document.getElementById('restart').addEventListener('click', () => {
@@ -71,6 +85,8 @@
     Game.renderCrafting();
     updateStatus();
     Game.drawWorld();
+    settingsPanel.classList.add('hidden');
+    settingsToggle.classList.remove('open');
   });
 
   // ---------- 状态栏：展示点选地图上建筑的信息 ----------

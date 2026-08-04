@@ -516,6 +516,101 @@ button:active { transform: translateY(1px); }
     color: #a8a99a;
     text-align: center;
   }
+  .settings-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    max-height: 82vh;
+    overflow-y: auto;
+    z-index: 20;
+    padding: 18px 22px;
+    border-radius: 16px;
+    background: rgba(255, 253, 247, 0.94);
+    border: 1px solid rgba(180, 176, 156, 0.4);
+    box-shadow:
+      0 24px 70px rgba(150, 140, 110, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    user-select: none;
+  }
+  .settings-panel.hidden { display: none; }
+  .settings-tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .settings-tab {
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 6px 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(170, 166, 146, 0.4);
+    background: rgba(255, 255, 255, 0.5);
+    color: #8a8c7c;
+    cursor: pointer;
+  }
+  .settings-tab.active {
+    background: #e2d9c1;
+    border-color: rgba(212, 178, 106, 0.65);
+    color: #5e6e55;
+    box-shadow: 0 0 10px rgba(212, 178, 106, 0.3);
+  }
+  .settings-page { display: none; }
+  .settings-page.active { display: block; }
+  .settings-section {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: #8a8c7c;
+    margin: 12px 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed rgba(170, 166, 146, 0.4);
+  }
+  .settings-section:first-child { margin-top: 0; }
+  .settings-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .settings-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11px;
+    line-height: 1.6;
+    letter-spacing: 1px;
+    color: #6b6f63;
+  }
+  .settings-list li::before { content: '·'; color: #a3823f; }
+  .settings-list li b { color: #5e6e55; font-weight: 600; }
+  .settings-game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 6px;
+  }
+  .restart-btn {
+    font-size: 15px;
+    padding: 10px 38px;
+    background: #d9b877;
+    border-color: rgba(163, 130, 63, 0.55);
+    color: #5e4a1e;
+  }
+  .restart-btn:hover {
+    background: #cdae6a;
+    border-color: rgba(163, 130, 63, 0.7);
+    box-shadow: 0 6px 20px rgba(163, 130, 63, 0.35);
+  }
+  .settings-note {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #a8a99a;
+    text-align: center;
+  }
   button.play-btn.recipe-btn.open {
     background: #e2d9c1;
     border-color: rgba(94, 183, 224, 0.65);
