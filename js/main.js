@@ -662,11 +662,31 @@
     return Game.GAME_MODES.reduce((s, m) => s + (Array.isArray(Game.rankings[m.id]) ? Game.rankings[m.id].length : 0), 0);
   }
 
+  let rankCountSeq = 0;
+  // 在线去重后各模式条目数（按存档 save_ts 去重）
+  function onlineEntryCount(rows) {
+    if (!Array.isArray(rows)) return 0;
+    const seen = new Set();
+    rows.forEach(r => seen.add(String(r.save_ts == null ? '' : r.save_ts)));
+    return seen.size;
+  }
+  // 排行榜按钮角标：配置了在线排行时显示在线总条数（各模式去重后合计），否则显示本地条数
   function updateRankEntry() {
     const el = document.getElementById('rankCount');
     if (!el) return;
-    const n = rankTotalCount();
-    el.textContent = n ? String(n) : '';
+    if (!Game.ONLINE_ENABLED()) {
+      const n = rankTotalCount();
+      el.textContent = n ? String(n) : '';
+      return;
+    }
+    const seq = ++rankCountSeq;
+    Promise.all(Game.GAME_MODES.map(m =>
+      loadOnlineRanking(m.id).then(rows => onlineEntryCount(rows)).catch(function () { return 0; })
+    )).then(counts => {
+      if (seq !== rankCountSeq) return;
+      const total = counts.reduce((s, n) => s + n, 0);
+      el.textContent = total ? String(total) : '';
+    });
   }
   Game.updateRankEntry = updateRankEntry;
 
