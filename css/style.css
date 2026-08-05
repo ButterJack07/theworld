@@ -1327,6 +1327,19 @@ button:active { transform: translateY(1px); }
   text-align: left;
   color: #5e6e55;
   overflow: hidden;
+}
+.rank-name > span:first-child {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-name-sub {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #a8a99a;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
