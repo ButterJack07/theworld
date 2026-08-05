@@ -213,7 +213,7 @@ python -m http.server 8080
 
 - 地图种子保存在 `localStorage`，**按模式区分**（key: `tw-seed-{模式}`），刷新页面不换地图
 - 游戏状态保存在 `localStorage`，**按模式区分**（key: `tw-game-{模式}`，如 `tw-game-civilization`），每 5 个 tick 自动保存，含人口、小人位置、已建建筑位置（含茅草屋 / 砖瓦屋 / 四合院 / 伐木工场 / 采矿工场）、文明程度、日期、**游戏模式**、物品栏与合成器内容
-- 各模式历史最佳成绩保存在 `localStorage`（key: `tw-rank`），文明 / 科技模式记录「历时天数」，自由模式记录「文明指数」，各模式保留前 10 名；每条成绩带**玩家名、存档名与时间戳**，**每条记录独立（以时间戳区分）**，同一玩家多次记录会各占一条
+- 各模式历史最佳成绩保存在 `localStorage`（key: `tw-rank`），文明 / 科技模式记录「历时天数」，自由模式记录「文明指数」，各模式保留前 10 名；每条成绩带**玩家名、存档名、存档创建时间戳与提交时间**——**每个存档只显示最新一条成绩**（存档以建立时的创建时间戳标识，创建后不随保存改变）
 - 存档带版本号（`version: 2`）；**旧版存档（天制）不兼容，加载时自动重新开始**；旧版单一存档（`tw-game`）会在首次运行时自动迁移到文明模式
 - 界面状态保存在 `localStorage`：`tw-screen`（当前所在界面：菜单 / 游戏）与 `tw-last`（最近游玩的模式），用于刷新页面时保持界面不变；页面加载时以不透明开机遮罩覆盖，待确定界面后再移除，避免刷新瞬间闪现其他页面
 
@@ -230,6 +230,7 @@ create table public.scores (
   mode text not null,
   player_name text not null default '',
   save_name text,
+  save_ts bigint not null default 0,
   days int not null default 0,
   civ int not null default 0
 );
@@ -243,6 +244,11 @@ create policy "anon select" on public.scores
   for select to anon using (true);
 ```
 
+> 已按旧版建过表的项目，仅需补一条：
+> ```sql
+> alter table public.scores add column save_ts bigint not null default 0;
+> ```
+
 **2. 填入凭据**：在 `js/data.js` 末尾的配置区填入项目 URL 与 anon key（anon key 公开安全，仅暴露该表的插入与查询权限）：
 
 ```js
@@ -251,7 +257,7 @@ Game.SUPABASE_ANON_KEY = 'eyJhbGci...';
 ```
 
 **3. 说明与限制**：
-- 每条成绩记录自带时间戳（`created_at`），**每条记录独立**——同一玩家多次存档会各占一条，榜单同时显示**玩家名与存档名**
+- 每条成绩记录带**提交时间**（`created_at`）与**存档创建时间戳**（`save_ts`）；**每个存档（以 `save_ts` 标识）只显示最新一条成绩**，同一玩家不同存档会各占一条，榜单同时显示**玩家名与存档名**
 - 文明 / 科技模式按「历时天数」升序、自由模式按「文明指数」降序，各取前 10 名
 - 成绩在获胜（文明模式）或返回主菜单（自由模式）时自动上传，玩家名留空则不上传；上传失败静默忽略，不影响本地榜单
 - 纯客户端方案**无法真正防作弊**——懂行的人可直接调接口伪造分数；休闲场景可接受，不建议用于严肃竞技

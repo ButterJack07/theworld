@@ -499,20 +499,21 @@
     try { return JSON.parse(Game.store.get(RANK_KEY) || '{}'); } catch (e) { return {}; }
   })();
 
-  // 归一化：兼容旧版纯天数（数字）记录 → 统一为 { d, c, t, name, save } 对象
-  //（d = 历时天数, c = 文明指数, t = 时间戳, name = 玩家名, save = 存档名）
+  // 归一化：兼容旧版记录 → 统一为 { d, c, t, ts, name, save } 对象
+  //（d = 历时天数, c = 文明指数, t = 存档创建时间戳[存档独一性], ts = 本次成绩提交时间, name = 玩家名, save = 存档名）
   (function normalizeRanks() {
     let changed = false;
     Game.GAME_MODES.forEach(m => {
       const list = Game.rankings[m.id];
       if (!Array.isArray(list)) return;
       Game.rankings[m.id] = list.map(e => {
-        if (typeof e === 'number') { changed = true; return { d: e, c: 0, t: 0, name: '', save: '' }; }
+        if (typeof e === 'number') { changed = true; return { d: e, c: 0, t: 0, ts: 0, name: '', save: '' }; }
         const en = {
-          d: Number(e.d) || 0, c: Number(e.c) || 0, t: Number(e.t) || 0,
+          d: Number(e.d) || 0, c: Number(e.c) || 0,
+          t: Number(e.t) || 0, ts: Number(e.ts) || Number(e.t) || 0,
           name: String(e.name || ''), save: String(e.save || e.saveName || '')
         };
-        if (en.t !== (e.t || 0) || en.name !== (e.name || '') || en.save !== (e.save || e.saveName || '')) changed = true;
+        if (en.ts !== (Number(e.ts) || Number(e.t) || 0) || en.name !== (e.name || '') || en.save !== (e.save || e.saveName || '')) changed = true;
         return en;
       });
     });
@@ -523,36 +524,54 @@
     Game.store.set(RANK_KEY, JSON.stringify(Game.rankings));
   }
 
-  // 取某模式的排名列表（每条记录按时间戳独立，同玩家可有多条，已排序、截取前 10）：文明 / 科技按历时升序，自由按文明指数降序
+  // 取某模式的排名列表：每个存档（以存档创建时间戳 t 标识）只保留最新一条成绩，再排序、截取前 10
   function rankEntries(mode) {
     const list = Game.rankings[mode];
     if (!Array.isArray(list)) return [];
     const entries = [];
     list.forEach(e => {
-      if (typeof e === 'number') entries.push({ d: e, c: 0, t: 0, name: '', save: '' });
+      if (typeof e === 'number') entries.push({ d: e, c: 0, t: 0, ts: 0, name: '', save: '' });
       else if (e && typeof e === 'object') entries.push({
-        d: Number(e.d) || 0, c: Number(e.c) || 0, t: Number(e.t) || 0,
+        d: Number(e.d) || 0, c: Number(e.c) || 0,
+        t: Number(e.t) || 0, ts: Number(e.ts) || Number(e.t) || 0,
         name: String(e.name || ''), save: String(e.save || e.saveName || '')
       });
     });
-    if (mode === 'freedom') entries.sort((a, b) => b.c - a.c);
-    else entries.sort((a, b) => a.d - b.d);
-    return entries.slice(0, 10);
+    const best = new Map();
+    entries.forEach(en => {
+      const cur = best.get(en.t);
+      if (!cur || en.ts > cur.ts) best.set(en.t, en);
+    });
+    const deduped = Array.from(best.values());
+    if (mode === 'freedom') deduped.sort((a, b) => b.c - a.c);
+    else deduped.sort((a, b) => a.d - b.d);
+    return deduped.slice(0, 10);
   }
   Game.rankEntries = rankEntries;
 
   // 记录一条成绩并持久化，返回 { list, index }：index 为刚写入条目在榜单中的位置（-1 表示未进前 10）
-  // 每条记录独立（以时间戳区分），同一玩家多次记录会各占一条
+  // 以存档创建时间戳（Game.state.createdAt）作为存档独一性：同一存档再次记录时覆盖旧成绩，只保留最新一条
   function recordRanking(mode, day, civ) {
     const list = Game.rankings[mode] || [];
-    const entry = {
-      d: day,
-      c: civ,
-      t: Date.now(),
-      name: (Game.state && Game.state.playerName) || '',
-      save: (Game.state && Game.state.saveName) || ''
-    };
-    list.push(entry);
+    const saveTs = (Game.state && Game.state.createdAt) || 0;
+    let entry = saveTs ? list.find(e => e && e.t === saveTs) : null;
+    if (entry) {
+      entry.d = day;
+      entry.c = civ;
+      entry.ts = Date.now();
+      entry.name = (Game.state && Game.state.playerName) || entry.name || '';
+      entry.save = (Game.state && Game.state.saveName) || entry.save || '';
+    } else {
+      entry = {
+        d: day,
+        c: civ,
+        t: saveTs,
+        ts: Date.now(),
+        name: (Game.state && Game.state.playerName) || '',
+        save: (Game.state && Game.state.saveName) || ''
+      };
+      list.push(entry);
+    }
     if (mode === 'freedom') list.sort((a, b) => b.c - a.c);
     else list.sort((a, b) => a.d - b.d);
     const trimmed = list.slice(0, 10);
@@ -699,6 +718,7 @@
         mode,
         player_name: Game.state.playerName,
         save_name: Game.state.saveName || '',
+        save_ts: Game.state.createdAt || 0,
         days: Math.max(1, day),
         civ: Math.max(0, civ),
         created_at: new Date().toISOString()
@@ -707,10 +727,10 @@
   }
   Game.submitOnlineRanking = submitOnlineRanking;
 
-  // 拉取某模式在线成绩（按时间戳倒序，前端再按玩家去重保留最新记录）
+  // 拉取某模式在线成绩（按提交时间倒序，前端再按存档创建时间戳去重保留每存档最新一条）
   function loadOnlineRanking(mode) {
     const url = Game.SUPABASE_URL + '/rest/v1/' + Game.ONLINE_TABLE +
-      '?select=player_name,save_name,days,civ,created_at' +
+      '?select=player_name,save_name,save_ts,days,civ,created_at' +
       '&mode=eq.' + encodeURIComponent(mode) +
       '&order=created_at.desc';
     return fetch(url, {
@@ -719,15 +739,21 @@
   }
   Game.loadOnlineRanking = loadOnlineRanking;
 
-  // 在线成绩：每条记录按时间戳独立（同玩家可有多条），按模式规则排序取前 10
+  // 在线成绩：每个存档（以 save_ts 标识）只保留提交时间最新的一条，再按模式规则排序取前 10
   function onlineEntries(rows) {
     if (!Array.isArray(rows)) return [];
-    const list = rows.map(r => ({
-      d: Number(r.days) || 0,
-      c: Number(r.civ) || 0,
-      name: String(r.player_name || ''),
-      save: String(r.save_name || '')
-    }));
+    const best = new Map();
+    rows.forEach(r => {
+      const key = String(r.save_ts == null ? '' : r.save_ts);
+      if (best.has(key)) return;
+      best.set(key, {
+        d: Number(r.days) || 0,
+        c: Number(r.civ) || 0,
+        name: String(r.player_name || ''),
+        save: String(r.save_name || '')
+      });
+    });
+    const list = Array.from(best.values());
     if (rankMode === 'freedom') list.sort((a, b) => b.c - a.c);
     else list.sort((a, b) => a.d - b.d);
     return list.slice(0, 10);
