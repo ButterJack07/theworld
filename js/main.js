@@ -499,15 +499,17 @@
     try { return JSON.parse(Game.store.get(RANK_KEY) || '{}'); } catch (e) { return {}; }
   })();
 
-  // 归一化：兼容旧版纯天数（数字）记录 → 统一为 { d, c } 对象（d = 历时天数, c = 文明指数）
+  // 归一化：兼容旧版纯天数（数字）记录 → 统一为 { d, c, t, name } 对象（d = 历时天数, c = 文明指数, t = 时间戳, name = 玩家名）
   (function normalizeRanks() {
     let changed = false;
     Game.GAME_MODES.forEach(m => {
       const list = Game.rankings[m.id];
       if (!Array.isArray(list)) return;
       Game.rankings[m.id] = list.map(e => {
-        if (typeof e === 'number') { changed = true; return { d: e, c: 0 }; }
-        return { d: Number(e.d) || 0, c: Number(e.c) || 0 };
+        if (typeof e === 'number') { changed = true; return { d: e, c: 0, t: 0, name: '' }; }
+        const en = { d: Number(e.d) || 0, c: Number(e.c) || 0, t: Number(e.t) || 0, name: String(e.name || '') };
+        if (en.t !== (e.t || 0) || en.name !== (e.name || '')) changed = true;
+        return en;
       });
     });
     if (changed) saveRankings();
@@ -517,26 +519,42 @@
     Game.store.set(RANK_KEY, JSON.stringify(Game.rankings));
   }
 
-  // 取某模式的排名列表（已排序、截取前 10）：文明 / 科技按历时升序，自由按文明指数降序
+  // 取某模式的排名列表（同一玩家多次存档只保留最新一条，已排序、截取前 10）：文明 / 科技按历时升序，自由按文明指数降序
   function rankEntries(mode) {
     const list = Game.rankings[mode];
     if (!Array.isArray(list)) return [];
     const entries = [];
     list.forEach(e => {
-      if (typeof e === 'number') entries.push({ d: e, c: 0 });
-      else if (e && typeof e === 'object') entries.push({ d: Number(e.d) || 0, c: Number(e.c) || 0 });
+      if (typeof e === 'number') entries.push({ d: e, c: 0, t: 0, name: '' });
+      else if (e && typeof e === 'object') entries.push({ d: Number(e.d) || 0, c: Number(e.c) || 0, t: Number(e.t) || 0, name: String(e.name || '') });
     });
-    if (mode === 'freedom') entries.sort((a, b) => b.c - a.c);
-    else entries.sort((a, b) => a.d - b.d);
-    return entries.slice(0, 10);
+    const best = new Map();
+    entries.forEach(en => {
+      if (!en.name) return;
+      const cur = best.get(en.name);
+      if (!cur || en.t > cur.t) best.set(en.name, en);
+    });
+    const deduped = entries.filter(en => !en.name || best.get(en.name) === en);
+    if (mode === 'freedom') deduped.sort((a, b) => b.c - a.c);
+    else deduped.sort((a, b) => a.d - b.d);
+    return deduped.slice(0, 10);
   }
   Game.rankEntries = rankEntries;
 
   // 记录一条成绩并持久化，返回 { list, index }：index 为刚写入条目在榜单中的位置（-1 表示未进前 10）
+  // 同一玩家名再次记录时，覆盖旧记录（只保留最新一条），与在线榜单去重规则一致
   function recordRanking(mode, day, civ) {
     const list = Game.rankings[mode] || [];
-    const entry = { d: day, c: civ };
-    list.push(entry);
+    const name = (Game.state && Game.state.playerName) || '';
+    let entry = name ? list.find(e => e && e.name === name) : null;
+    if (entry) {
+      entry.d = day;
+      entry.c = civ;
+      entry.t = Date.now();
+    } else {
+      entry = { d: day, c: civ, t: Date.now(), name };
+      list.push(entry);
+    }
     if (mode === 'freedom') list.sort((a, b) => b.c - a.c);
     else list.sort((a, b) => a.d - b.d);
     const trimmed = list.slice(0, 10);
