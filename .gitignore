@@ -1,0 +1,6 @@
+# Local credentials and secrets
+superbasepassword.txt
+superbase password.txt
+*.env
+*.env.*
+!.env.example
