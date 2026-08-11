@@ -67,71 +67,61 @@
     return Game.TERRAIN_MINE_RARE[Math.floor(Math.random() * Game.TERRAIN_MINE_RARE.length)];
   };
 
-  // 各地貌产出（一个阶段 = 1 个月；每个单位 1 份，基地覆盖该地貌多格则叠加）
+  // 各地貌探索资源：每种资源独立按概率判定，基地覆盖的地貌数量决定概率加权平均。
   Game.TERRAIN_TABLE = {
     [Game.TERRAIN.PLAIN]: {
-      desc: '2 木头 或 2 石头 或 1 铁矿 或 1 黏土 或 1 浆果',
-      output(rand) {
-        const opt = [['wood', 2], ['stone', 2], ['iron', 1], ['clay', 1], ['berry', 1]][Math.floor(rand() * 5)];
-        return [opt];
-      }
+      desc: '木头 35%×2 · 石头 35%×2 · 铁矿 15%×1 · 黏土 15%×1 · 浆果 25%×1',
+      resources: [{ id: 'wood', chance: 0.35, min: 2, max: 2 }, { id: 'stone', chance: 0.35, min: 2, max: 2 }, { id: 'iron', chance: 0.15, min: 1, max: 1 }, { id: 'clay', chance: 0.15, min: 1, max: 1 }, { id: 'berry', chance: 0.25, min: 1, max: 1 }]
     },
     [Game.TERRAIN.GRASSLAND]: {
-      desc: '3 木头 或 1 浆果 或 1 石头',
-      output(rand) {
-        const opt = [['wood', 3], ['berry', 1], ['stone', 1]][Math.floor(rand() * 3)];
-        return [opt];
-      }
+      desc: '木头 65%×3 · 石头 20%×1 · 浆果 40%×1',
+      resources: [{ id: 'wood', chance: 0.65, min: 3, max: 3 }, { id: 'stone', chance: 0.20, min: 1, max: 1 }, { id: 'berry', chance: 0.40, min: 1, max: 1 }]
     },
     [Game.TERRAIN.FOREST]: {
-      desc: '3~6 木头',
-      output(rand) { return [['wood', 3 + Math.floor(rand() * 4)]]; }
+      desc: '木头 100%×3~6 · 石头 10%×1 · 浆果 30%×1',
+      resources: [{ id: 'wood', chance: 1, min: 3, max: 6 }, { id: 'stone', chance: 0.10, min: 1, max: 1 }, { id: 'berry', chance: 0.30, min: 1, max: 1 }]
     },
     [Game.TERRAIN.CLAY_MOUNTAIN]: {
-      desc: '2~4 黏土',
-      output(rand) { return [['clay', 2 + Math.floor(rand() * 3)]]; }
+      desc: '木头 10%×1 · 石头 35%×1~2 · 铁矿 15%×1 · 黏土 100%×2~4',
+      resources: [{ id: 'wood', chance: 0.10, min: 1, max: 1 }, { id: 'stone', chance: 0.35, min: 1, max: 2 }, { id: 'iron', chance: 0.15, min: 1, max: 1 }, { id: 'clay', chance: 1, min: 2, max: 4 }]
     },
     [Game.TERRAIN.WETLAND]: {
-      desc: '2~3 木头 + 1~2 浆果 + 1~2 生肉 + 0~1 黏土 + 0~1 石头',
-      output(rand) {
-        return [
-          ['wood', 2 + (rand() < 0.5 ? 1 : 0)],
-          ['berry', 1 + (rand() < 0.5 ? 1 : 0)],
-          ['meat', 1 + (rand() < 0.5 ? 1 : 0)],
-          ['clay', rand() < 0.5 ? 1 : 0],
-          ['stone', rand() < 0.5 ? 1 : 0]
-        ].filter(q => q[1] > 0);
-      }
+      desc: '木头 100%×2~3 · 石头 50%×1 · 黏土 50%×1 · 浆果 100%×1~2 · 生肉 100%×1~2',
+      resources: [{ id: 'wood', chance: 1, min: 2, max: 3 }, { id: 'stone', chance: 0.50, min: 1, max: 1 }, { id: 'clay', chance: 0.50, min: 1, max: 1 }, { id: 'berry', chance: 1, min: 1, max: 2 }, { id: 'meat', chance: 1, min: 1, max: 2 }]
     },
     [Game.TERRAIN.MOUNTAIN]: {
-      desc: '3~5 石头 + 0~2 铁矿',
-      output(rand) {
-        const out = [['stone', 3 + Math.floor(rand() * 3)]];
-        const iron = Math.floor(rand() * 3);
-        if (iron > 0) out.push(['iron', iron]);
-        return out;
-      }
+      desc: '石头 100%×3~5 · 铁矿 65%×1~2 · 黏土 15%×1',
+      resources: [{ id: 'stone', chance: 1, min: 3, max: 5 }, { id: 'iron', chance: 0.65, min: 1, max: 2 }, { id: 'clay', chance: 0.15, min: 1, max: 1 }]
     },
     [Game.TERRAIN.MINE]: {
-      desc: '2~3 石头 + 2~4 铁矿(70%) 或 金(10%) 或 铜(15%) 或 琥珀·钻石(5%)',
-      output(rand) {
-        const out = [['stone', 2 + Math.floor(rand() * 2)]];
-        const r = rand();
-        if (r < 0.70) out.push(['iron', 2 + Math.floor(rand() * 3)]);
-        else if (r < 0.80) out.push(['gold', 1]);
-        else if (r < 0.95) out.push(['copper', 1]);
-        else out.push([Game.TERRAIN_MINE_RARE[Math.floor(rand() * Game.TERRAIN_MINE_RARE.length)], 1]);
-        return out;
-      }
+      desc: '石头 100%×2~3 · 铁矿 70%×2~4 · 金矿 10%×1 · 铜矿 15%×1 · 琥珀/钻石 5%×1',
+      resources: [{ id: 'stone', chance: 1, min: 2, max: 3 }, { id: 'iron', chance: 0.70, min: 2, max: 4 }, { id: 'gold', chance: 0.10, min: 1, max: 1 }, { id: 'copper', chance: 0.15, min: 1, max: 1 }, { id: 'rareMine', chance: 0.05, min: 1, max: 1 }]
     },
     [Game.TERRAIN.SEA]: {
-      desc: '1 条鱼',
-      output() { return [['fish', 1]]; }
+      desc: '鱼 100%×1',
+      resources: [{ id: 'fish', chance: 1, min: 1, max: 1 }]
     }
   };
-  Game.terrainOutput = function (type) {
-    const def = Game.TERRAIN_TABLE[type];
-    return def ? def.output(Math.random) : [];
+  Game.rollExploration = function (terrainCounts) {
+    const total = Object.values(terrainCounts).reduce((sum, count) => sum + count, 0);
+    if (!total) return [];
+    const weighted = {};
+    Object.entries(terrainCounts).forEach(([type, count]) => {
+      const def = Game.TERRAIN_TABLE[type];
+      if (!def) return;
+      def.resources.forEach(resource => {
+        const id = resource.id === 'rareMine' ? Game.TERRAIN_MINE_RARE[Math.floor(Math.random() * Game.TERRAIN_MINE_RARE.length)] : resource.id;
+        const entry = weighted[id] || (weighted[id] = { chance: 0, amount: 0 });
+        entry.chance += resource.chance * count;
+        entry.amount += ((resource.min + resource.max) / 2) * resource.chance * count;
+      });
+    });
+    return Object.entries(weighted).flatMap(([id, value]) => {
+      const chance = value.chance / total;
+      if (Math.random() >= chance) return [];
+      const amount = Math.max(1, Math.round(value.amount / Math.max(value.chance, 0.0001)));
+      return [[id, amount]];
+    });
   };
 
   // ---------- 基地：地图上的可拖动边角缩放的灰色窗口 ----------
@@ -144,7 +134,6 @@
     { id: 'wood',   name: '木头', color: '#c0b283', w: 1, h: 1, desc: '基础材料，基地产出。用于合成木板、建造与冶炼燃料' },
     { id: 'stone',  name: '石头', color: '#aaa69b', w: 1, h: 1, desc: '基础材料，基地与山地产出。用于建造、合成砖块与玻璃' },
     { id: 'iron',   name: '铁矿', color: '#8a9a7b', w: 1, h: 1, desc: '常见矿石，采矿产出。可冶炼铁锭，或合成砖块与金矿' },
-    { id: 'food',   name: '食物', color: '#d6c08f', w: 1, h: 1, desc: '日常食物，钓船小屋与钓船码头每月产出' },
     { id: 'wheat',  name: '小麦', color: '#d8c290', w: 1, h: 1, desc: '农田与农庄产出的粮食，可合成面包' },
     { id: 'bread',  name: '面包', color: '#e3b877', w: 1, h: 1, desc: '精制食物，由 2 小麦合成，价值高于原粮' },
     { id: 'cloth',  name: '布匹', color: '#c9b8b3', w: 1, h: 1, desc: '布料，由木头与石头合成。造船与牧场的必需材料' },
@@ -153,6 +142,8 @@
     { id: 'berry',  name: '浆果', color: '#d08a7a', w: 1, h: 1, desc: '草原与湿地可采集的野果' },
     { id: 'copper', name: '铜矿', color: '#cf9a6a', w: 1, h: 1, desc: '稀有矿石，矿洞产出。与铁锭合成青铜' },
     { id: 'meat',   name: '生肉', color: '#d06a5a', w: 1, h: 1, desc: '湿地可猎得，牧场每月稳定产出' },
+    { id: 'cookedMeat', name: '烤肉', color: '#bb704e', w: 1, h: 1, desc: '由生肉和木头烹制而成，可加入 3 点食物' },
+    { id: 'cookedFish', name: '烤鱼', color: '#7faeb4', w: 1, h: 1, desc: '由鱼和木头烹制而成，可加入 3 点食物' },
     { id: 'amber',  name: '琥珀', color: '#e0a64f', w: 1, h: 1, desc: '矿洞的稀有矿物，珍贵收藏品' },
     { id: 'diamond', name: '钻石', color: '#a8d8e8', w: 1, h: 1, desc: '矿洞的稀有矿物，最珍贵的存在' },
     { id: 'fish',   name: '鱼', color: '#a8c9cf', w: 1, h: 1, desc: '基地覆盖海洋时每月产出' },
@@ -171,6 +162,8 @@
     { id: 'farm',      name: '农田', color: '#d9cba0', w: 1, h: 1, desc: '可建在任意陆地，每月生产 5 小麦。4 座摆成 2×2 合并为农庄' },
     { id: 'farmstead', name: '农庄', color: '#cdbf95', w: 2, h: 2, desc: '由 4 座农田合并而成，至多 5 劳动力，满员每月生产 25 小麦' },
     { id: 'pasture',   name: '牧场', color: '#cfe0b0', w: 2, h: 2, desc: '须建在草原上（覆盖 4 格全为草原），至多 5 劳动力，满员每月生产 10 生肉' },
+    { id: 'institute', name: '研究所', color: '#b8c4c8', w: 1, h: 1, desc: '建立时选择研究方向。当前开放经济研究所，可安排 1 名科学家进行研究' },
+    { id: 'tradepost', name: '贸易站', color: '#d4b676', w: 1, h: 1, desc: '完成商业契约后可建造。安排 1 名贸易员以接取并结算贸易委托' },
   ];
 
   // 卡通简约物品图标（统一 viewBox 40x40）
@@ -377,6 +370,19 @@
              '<ellipse cx="20" cy="28" rx="7" ry="4.6" fill="#fffdf5" stroke="#9a8a6a" stroke-width="1"/>' +
              '<circle cx="17.5" cy="26.8" r="1" fill="#6a5a3f"/>' +
              '<path d="M20 31.5 q0 2.6 2.4 2.6 M13.4 31.5 q0 2.6 2.4 2.6" stroke="#9a8a6a" stroke-width="1" fill="none"/>',
+    institute: '<rect x="5" y="16" width="30" height="19" fill="#c9d4d2" stroke="#526e71" stroke-width="1.2"/>' +
+               '<rect x="8" y="11" width="24" height="5" fill="#718d90" stroke="#526e71" stroke-width="1.2"/>' +
+               '<rect x="11" y="7" width="18" height="4" fill="#dbe5e0" stroke="#526e71" stroke-width="1.1"/>' +
+               '<rect x="9" y="20" width="5" height="6" fill="#e9f0e9" stroke="#60777a" stroke-width="0.9"/>' +
+               '<rect x="26" y="20" width="5" height="6" fill="#e9f0e9" stroke="#60777a" stroke-width="0.9"/>' +
+               '<rect x="17" y="24" width="6" height="11" fill="#536b6c"/>' +
+               '<path d="M5 30h30 M20 16v8" stroke="#526e71" stroke-width="1" opacity="0.55"/>',
+    tradepost: '<rect x="5" y="17" width="30" height="18" fill="#e6d4a4" stroke="#927444" stroke-width="1.2"/>' +
+               '<path d="M4 18 L20 8 L36 18 Z" fill="#a87945" stroke="#795831" stroke-width="1.2"/>' +
+               '<rect x="8" y="12" width="24" height="4" fill="#c79d5e" stroke="#927444" stroke-width="1"/>' +
+               '<rect x="17" y="24" width="6" height="11" fill="#795831"/>' +
+               '<path d="M8 23h6 M26 23h6" stroke="#fff5d8" stroke-width="2"/>' +
+               '<circle cx="29" cy="28" r="3" fill="#e0bd68" stroke="#9a743b" stroke-width="1"/>',
     clay: '<ellipse cx="20" cy="24" rx="12" ry="9" fill="#c9a98a"/>' +
           '<ellipse cx="20" cy="24" rx="12" ry="9" fill="none" stroke="#9a6f4f" stroke-width="1.2"/>' +
           '<path d="M9 21q11 -5 22 0" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.5"/>' +
@@ -393,7 +399,14 @@
     meat: '<path d="M11 26 Q8 20 12 16 Q16 12 22 14 Q30 17 29 24 Q28 30 20 30 Q14 30 11 26 Z" fill="#d06a5a"/>' +
           '<path d="M11 26 Q8 20 12 16 Q16 12 22 14 Q30 17 29 24 Q28 30 20 30 Q14 30 11 26 Z" fill="none" stroke="#9a3f3f" stroke-width="1.2"/>' +
           '<path d="M15 16 q2 -2 5 -1 M21 19 q4 -1 6 2" stroke="#9a3f3f" stroke-width="1.2" fill="none" opacity="0.7"/>' +
-          '<path d="M14 26 q6 3 12 0" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.5"/>',
+           '<path d="M14 26 q6 3 12 0" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.5"/>',
+    cookedMeat: '<path d="M11 26 Q8 20 12 16 Q16 12 22 14 Q30 17 29 24 Q28 30 20 30 Q14 30 11 26 Z" fill="#bb704e" stroke="#7d3f2f" stroke-width="1.2"/>' +
+                '<path d="M14 18 l2 3 l2 -4 l2 4 l2 -3" stroke="#f4c17e" stroke-width="1.2" fill="none"/>' +
+                '<path d="M14 26 q6 3 12 0" stroke="#fff3d5" stroke-width="1.4" fill="none" opacity="0.65"/>',
+    cookedFish: '<ellipse cx="20" cy="20" rx="14" ry="8" fill="#7faeb4" stroke="#4e7780" stroke-width="1.2"/>' +
+                '<path d="M34 20 L40 14 L40 26 Z" fill="#7faeb4" stroke="#4e7780" stroke-width="1.2"/>' +
+                '<path d="M13 17 q3 3 6 0 q3 -3 6 0" stroke="#f3c47c" stroke-width="1.3" fill="none"/>' +
+                '<circle cx="14" cy="18" r="1.5" fill="#3f5f6a"/>',
     amber: '<path d="M20 9 Q27 16 27 22 A7 7 0 1 1 13 22 Q13 16 20 9 Z" fill="#e0a64f"/>' +
            '<path d="M20 9 Q27 16 27 22 A7 7 0 1 1 13 22 Q13 16 20 9 Z" fill="none" stroke="#a86f2f" stroke-width="1.2"/>' +
            '<path d="M18 18 q2 -3 5 -2 q-1 3 -4 3" fill="#c88a35" opacity="0.8"/>' +
@@ -480,12 +493,12 @@
     dock: {
       id: 'dock', name: '钓船小屋', job: '渔夫',
       body: '#cfe3e6', roof: '#a9ccd4', accent: '#6f98a3',
-      produces: [{ item: 'food', amount: 2 }], interval: 1, laborCap: 1
+      produces: [{ item: 'fish', amount: 2 }], interval: 1, laborCap: 1
     },
     dockyard: {
       id: 'dockyard', name: '钓船码头', job: '渔夫',
       body: '#c9b889', roof: '#8a7a4f', accent: '#6a5a3a',
-      produces: [{ item: 'food', amount: 2 }],
+      produces: [{ item: 'fish', amount: 2 }],
       desc: '至多 5 劳动力，满员每月生产 10 食物。无直接配方：地图上 3 个钓船小屋排成横 / 竖直线自动合并，船坞在岸、木制浮台伸向水域',
       interval: 1, laborCap: 5
     },
@@ -507,6 +520,16 @@
       produces: [{ item: 'meat', amount: 2 }],
       desc: '至多 5 劳动力，满员每月生产 10 生肉',
       interval: 1, laborCap: 5
+    },
+    institute: {
+      id: 'institute', name: '研究所', job: '科学家',
+      body: '#c9d4d2', roof: '#718d90', accent: '#526e71',
+      produces: [], interval: 1, laborCap: 1
+    },
+    tradepost: {
+      id: 'tradepost', name: '贸易站', job: '贸易员',
+      body: '#e6d4a4', roof: '#a87945', accent: '#795831',
+      produces: [], interval: 1, laborCap: 1
     }
   };
 
@@ -517,6 +540,8 @@
     { name: '渔夫',   icon: 'dock' },
     { name: '农民',   icon: 'farm' },
     { name: '牧民',   icon: 'pasture' }
+    , { name: '科学家', icon: 'institute' }
+    , { name: '贸易员', icon: 'tradepost' }
   ];
   Game.jobName = function (id) {
     const def = Game.BUILDINGS[id];
@@ -540,6 +565,8 @@
     { out: 'brick', group: 'material', req: [{ id: 'stone', n: 2 }, { id: 'iron', n: 1 }] },
     { out: 'gold',  group: 'material', req: [{ id: 'iron', n: 2 }, { id: 'wood', n: 1 }] },
     { out: 'bread', group: 'material', req: [{ id: 'wheat', n: 2 }] },
+    { out: 'cookedMeat', group: 'food', requires: ['foodProcessing'], req: [{ id: 'meat', n: 1 }, { id: 'wood', n: 1 }] },
+    { out: 'cookedFish', group: 'food', requires: ['foodProcessing'], req: [{ id: 'fish', n: 1 }, { id: 'wood', n: 1 }] },
     { out: 'hut',    group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'towncenter', group: 'building', req: [{ id: 'stone', n: 3 }, { id: 'plank', n: 2 }, { id: 'brick', n: 4 }] },
     { out: 'lumber', group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
@@ -547,11 +574,82 @@
     { out: 'dock',   group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] },
     { out: 'farm',   group: 'building', req: [{ id: 'plank', n: 1 }, { id: 'stone', n: 1 }] },
     { out: 'pasture', group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] }
+    , { out: 'institute', group: 'building', req: [{ id: 'plank', n: 3 }, { id: 'stone', n: 3 }, { id: 'brick', n: 1 }] }
+    , { out: 'tradepost', group: 'building', requires: ['commerce'], req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'gold', n: 1 }] }
   ];
   Game.RECIPE_GROUPS = [
     { key: 'material', title: '材料合成' },
+    { key: 'food', title: '食物加工' },
     { key: 'building', title: '建筑合成' }
   ];
+  Game.FOOD_VALUES = {
+    berry: 1,
+    fish: 1,
+    meat: 1,
+    bread: 1,
+    cookedMeat: 3,
+    cookedFish: 3
+  };
+
+  Game.TECHNOLOGIES = {
+    currency: {
+      id: 'currency', category: 'economy', name: '货币制度', days: 30,
+      req: [{ id: 'plank', n: 2 }, { id: 'stone', n: 2 }, { id: 'copper', n: 1 }],
+      desc: '确立统一货币。解锁金币，获得 1 金币时文明指数 +1。'
+    },
+    commerce: {
+      id: 'commerce', category: 'economy', name: '商业契约', days: 60,
+      req: [{ id: 'cloth', n: 2 }, { id: 'gold', n: 1 }, { id: 'bread', n: 2 }],
+      requires: ['currency'],
+      desc: '建立规范的商业契约，解锁贸易站建造配方。'
+    },
+    foodProcessing: {
+      id: 'foodProcessing', category: 'production', name: '食品加工', days: 30,
+      req: [{ id: 'plank', n: 2 }, { id: 'meat', n: 2 }, { id: 'fish', n: 2 }],
+      desc: '掌握烹制技术，解锁烤肉与烤鱼配方。'
+    },
+    forestry: {
+      id: 'forestry', category: 'building', buildingId: 'lumbermill', name: '林业机械', days: 60,
+      req: [{ id: 'plank', n: 4 }, { id: 'iron', n: 2 }, { id: 'stone', n: 2 }],
+      desc: '伐木小屋与伐木工场的木头产出翻倍。'
+    },
+    extraction: {
+      id: 'extraction', category: 'building', buildingId: 'minefactory', name: '采掘工艺', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'iron', n: 3 }, { id: 'stone', n: 4 }],
+      desc: '采矿小屋与采矿工场的石头、矿物产出翻倍。'
+    },
+    fishery: {
+      id: 'fishery', category: 'building', buildingId: 'dockyard', name: '远洋渔业', days: 60,
+      req: [{ id: 'plank', n: 4 }, { id: 'cloth', n: 2 }, { id: 'iron', n: 2 }],
+      desc: '钓船小屋与钓船码头的鱼产出翻倍。'
+    },
+    agriculture: {
+      id: 'agriculture', category: 'building', buildingId: 'farmstead', name: '精耕农业', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'brick', n: 2 }, { id: 'wheat', n: 6 }],
+      desc: '农田与农庄的小麦产出翻倍。'
+    },
+    fieldSurvey: {
+      id: 'fieldSurvey', category: 'science', name: '野外勘察', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'copper', n: 1 }],
+      desc: '研发野外勘察科技，使得探索者能够获得的资源量翻倍。'
+    }
+  };
+  Game.hasTech = function (id) {
+    return !!(Game.state && Game.state.techs && Game.state.techs.includes(id));
+  };
+  Game.productionMultiplier = function (buildingId) {
+    const techByBuilding = {
+      lumber: 'forestry', lumbermill: 'forestry',
+      mine: 'extraction', minefactory: 'extraction',
+      dock: 'fishery', dockyard: 'fishery',
+      farm: 'agriculture', farmstead: 'agriculture'
+    };
+    return Game.hasTech(techByBuilding[buildingId]) ? 2 : 1;
+  };
+  Game.explorationDraws = function (explorers) {
+    const perUnit = Game.hasTech('fieldSurvey') ? 4 : 2;
+    return perUnit * (Math.max(0, explorers) + 1);
+  };
 
   // ---------- 扩建（建筑自动升级规则） ----------
   // 地图上按指定形状摆放多个低级建筑，自动合并升级为高级建筑（无直接合成配方）
@@ -583,7 +681,10 @@
     freedom: '<rect x="8" y="25" width="24" height="5" rx="2" fill="#c9b889" stroke="#8a7a4f" stroke-width="1"/>' +
              '<path d="M16 25 L16 11 L27 25 Z" fill="#fffdf5" stroke="#8a7a4f" stroke-width="1.2"/>' +
              '<path d="M16 25 L20 13 L25 25" stroke="#e0b876" stroke-width="1.2" fill="none"/>' +
-             '<path d="M18 25 L16 31 M24 25 L26 31 M12 31 h16" stroke="#8a7a4f" stroke-width="1.2" fill="none"/>'
+              '<path d="M18 25 L16 31 M24 25 L26 31 M12 31 h16" stroke="#8a7a4f" stroke-width="1.2" fill="none"/>',
+    creative: '<rect x="9" y="9" width="22" height="22" fill="none" stroke="#718d90" stroke-width="2"/>' +
+              '<path d="M20 4 v7 M20 29 v7 M4 20 h7 M29 20 h7" stroke="#718d90" stroke-width="2" stroke-linecap="round"/>' +
+              '<path d="M14 20 h12 M20 14 v12" stroke="#d2a85b" stroke-width="2.2" stroke-linecap="round"/>'
   };
 
   Game.GAME_MODES = [
@@ -600,6 +701,11 @@
     {
       id: 'freedom', name: '自由模式', icon: Game.MODE_ICONS.freedom,
       desc: '没有胜利标准\n自由发展你的文明',
+      locked: false
+    },
+    {
+      id: 'creative', name: '创造模式', icon: Game.MODE_ICONS.creative,
+      desc: '无限资源与食物\n自由建造、研究与规划',
       locked: false
     }
   ];

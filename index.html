@@ -16,10 +16,12 @@
   </header>
 
   <div class="top-right enter d1">
-    <button id="laborToggle" class="play-btn recipe-btn" title="查看劳动力分配情况"><span>👥</span><b>劳动力</b></button>
-    <div class="pop-pill">人口 <b id="pop">1 / 5</b></div>
-    <div class="pop-pill civ">文明程度 <b id="civ">0</b></div>
-    <div class="pop-pill mode">模式 <b id="modeLabel"></b></div>
+    <button id="laborToggle" class="play-btn recipe-btn status-labor" title="查看劳动力分配情况"><span>👥</span><b>劳动力</b></button>
+    <div class="pop-pill status-population">人口 <b id="pop">1 / 5</b></div>
+    <div class="pop-pill civ status-civilization">文明程度 <b id="civ">0</b></div>
+    <div class="pop-pill food status-food">食物储备 <b id="food">10</b></div>
+    <div class="pop-pill coin hidden status-coins" id="coinPill">金币 <b id="coins">0</b></div>
+    <div class="pop-pill mode status-mode">模式 <b id="modeLabel"></b></div>
   </div>
 
   <div class="stage enter d2">
@@ -113,6 +115,38 @@
     <button id="assignClose" class="settings-close" title="关闭">✕</button>
     <h2 class="panel-title">劳动力分配</h2>
     <div id="assignBody"></div>
+  </div>
+  <div class="event-overlay hidden" id="eventOverlay"></div>
+  <div class="event-panel hidden" id="eventPanel" role="dialog" aria-modal="true" aria-labelledby="eventTitle">
+    <div class="event-mark">!</div>
+    <div class="event-kicker">紧急事件</div>
+    <h2 id="eventTitle">食物紧缺</h2>
+    <p id="eventText">食物仓已经耗尽。尽快将可食用物品加入食物仓，为聚落补充储备。</p>
+    <button id="eventClose" class="restart-btn">我知道了</button>
+  </div>
+  <div class="choice-overlay hidden" id="instituteOverlay"></div>
+  <div class="choice-panel institute-panel hidden" id="institutePanel">
+    <h2 class="panel-title">设立研究所</h2>
+    <div class="institute-intro">选择研究方向。每座研究所只能研究其所属领域的科技。</div>
+    <div class="institute-choices" id="instituteChoices"></div>
+  </div>
+  <div class="choice-overlay hidden" id="researchOverlay"></div>
+  <div class="choice-panel research-panel hidden" id="researchPanel">
+    <button id="researchClose" class="settings-close" title="关闭研究面板">✕</button>
+    <h2 class="panel-title">经济研究所</h2>
+    <div class="research-summary" id="researchSummary"></div>
+    <div class="research-list" id="researchList"></div>
+  </div>
+  <div class="choice-overlay hidden" id="tradeOverlay"></div>
+  <div class="choice-panel trade-panel hidden" id="tradePanel">
+    <button id="tradeClose" class="settings-close" title="关闭贸易站">✕</button>
+    <div class="trade-banner">
+      <div class="trade-seal">◎</div>
+      <div><div class="trade-kicker">商路公报</div><h2>贸易站</h2></div>
+      <button id="tradeRefresh" class="trade-refresh">刷新委托 <b id="tradeRefreshCount">0</b></button>
+    </div>
+    <div class="trade-status" id="tradeStatus"></div>
+    <div class="trade-orders" id="tradeOrders"></div>
   </div>
   <div class="controls enter d6">
     <button id="settingsToggle" class="play-btn recipe-btn" title="展开 / 收起设置菜单"><span>⚙️</span><b>设置</b></button>

@@ -45,7 +45,7 @@
     Game.mode = mode;
     Game.placed = Game.initInventory();
     Game.craftingItems = [];
-    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '', createdAt: Date.now() };
+    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, coins: 0, food: 10, foodShortageActive: false, techs: [], tradeOrders: [], tradeRefreshes: 0, tradeSettledMonth: -1, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '', createdAt: Date.now() };
     Game.base = { ...Game.BASE_DEFAULT };
     Game.spawnStarterTown();
     // 初始人口 2：为每位人口分配一个站格（空闲劳动力 = 探索者）
@@ -63,12 +63,19 @@
 
   function saveState() {
     store.set(Game.gameKey(Game.mode), JSON.stringify({
-      version: 2,
+       version: 3,
       seed: Game.seed,
       villagers: Game.state.villagers,
       villagersCells: Game.state.villagersCells,
-      buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot, workers: b.workers || 0 })),
-      civ: Game.state.civ,
+       buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot, workers: b.workers || 0, category: b.category || null, researchId: b.researchId || null, researchDays: b.researchDays || 0 })),
+       civ: Game.state.civ,
+       coins: Game.state.coins,
+       food: Game.state.food,
+       foodShortageActive: !!Game.state.foodShortageActive,
+       techs: Array.isArray(Game.state.techs) ? Game.state.techs : [],
+       tradeOrders: Array.isArray(Game.state.tradeOrders) ? Game.state.tradeOrders : [],
+       tradeRefreshes: Game.state.tradeRefreshes || 0,
+       tradeSettledMonth: Number.isInteger(Game.state.tradeSettledMonth) ? Game.state.tradeSettledMonth : -1,
       day: Game.state.day,
       mode: Game.state.mode,
       won: Game.state.won,
@@ -86,18 +93,25 @@
   function loadState() {
     let saved = null;
     try { saved = JSON.parse(store.get(Game.gameKey(Game.mode))); } catch (e) { saved = null; }
-    // 旧版存档（无 version）不兼容：改月制后直接重新开始
-    if (saved && saved.version !== 2) saved = null;
+    // 旧版存档（无 version 或月制前版本）不兼容：改月制后直接重新开始
+    if (saved && saved.version !== 2 && saved.version !== 3) saved = null;
     if (saved && saved.seed === Game.seed) {
       Game.state = {
         villagers: saved.villagers || 0,
         villagersCells: Array.isArray(saved.villagersCells) ? saved.villagersCells : [],
         buildings: (saved.buildings || []).filter(b => Game.BUILDINGS[b.id]).map(b => ({
-          id: b.id, x: b.x, y: b.y, rot: b.rot, workers: Math.min(b.workers || 0, Game.BUILDINGS[b.id].laborCap || 0)
+          id: b.id, x: b.x, y: b.y, rot: b.rot, workers: Math.min(b.workers || 0, Game.BUILDINGS[b.id].laborCap || 0), category: b.category || null, researchId: b.researchId || null, researchDays: b.researchDays || 0
         })),
         civ: saved.civ || 0,
+        coins: Math.max(0, Number(saved.coins) || 0),
+        food: Math.max(0, Number.isFinite(saved.food) ? saved.food : 10),
+        foodShortageActive: !!saved.foodShortageActive,
+        techs: Array.isArray(saved.techs) ? saved.techs.filter(id => Game.TECHNOLOGIES[id]) : [],
+        tradeOrders: Array.isArray(saved.tradeOrders) ? saved.tradeOrders : [],
+        tradeRefreshes: Math.min(1, Math.max(0, saved.tradeRefreshes || 0)),
+        tradeSettledMonth: Number.isInteger(saved.tradeSettledMonth) ? saved.tradeSettledMonth : -1,
         day: saved.day || 1,
-        mode: ['civilization', 'technology', 'freedom'].includes(saved.mode) ? saved.mode : 'civilization',
+        mode: ['civilization', 'technology', 'freedom', 'creative'].includes(saved.mode) ? saved.mode : 'civilization',
         won: !!saved.won,
         playerName: String(saved.playerName || ''),
         saveName: String(saved.saveName || ''),
@@ -109,11 +123,11 @@
         ? { x: saved.base.x, y: saved.base.y, w: saved.base.w, h: saved.base.h }
         : { ...Game.BASE_DEFAULT };
       Game.placed = (saved.placed || []).map(p => {
-        const item = Game.ITEMS.find(i => i.id === p.id);
+        const item = Game.ITEMS.find(i => i.id === (p.id === 'food' ? 'fish' : p.id));
         return item ? { item, col: p.col, row: p.row, count: p.count || 1 } : null;
       }).filter(Boolean);
       Game.craftingItems = (saved.crafting || []).map(p => {
-        const item = Game.ITEMS.find(i => i.id === p.id);
+        const item = Game.ITEMS.find(i => i.id === (p.id === 'food' ? 'fish' : p.id));
         return item ? { item, col: p.col, row: p.row, count: p.count || 1 } : null;
       }).filter(Boolean);
       // 恢复特殊地貌团的进度与揭示状态（世界由 seed 确定性重建，id 一一对应）
@@ -147,7 +161,7 @@
   Game.hasSave = function (mode) {
     let saved = null;
     try { saved = JSON.parse(store.get(Game.gameKey(mode))); } catch (e) { saved = null; }
-    if (!saved || saved.version !== 2) return false;
+    if (!saved || (saved.version !== 2 && saved.version !== 3)) return false;
     const savedSeed = parseInt(store.get(Game.seedKey(mode)), 10);
     return Number.isInteger(savedSeed) && saved.seed === savedSeed;
   };
@@ -156,7 +170,7 @@
   Game.readSave = function (mode) {
     let saved = null;
     try { saved = JSON.parse(store.get(Game.gameKey(mode))); } catch (e) { saved = null; }
-    if (!saved || saved.version !== 2) return null;
+    if (!saved || (saved.version !== 2 && saved.version !== 3)) return null;
     return saved;
   };
 })();

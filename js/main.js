@@ -6,6 +6,9 @@
   const dateEl = document.getElementById('date');
   const popEl = document.getElementById('pop');
   const civEl = document.getElementById('civ');
+  const foodEl = document.getElementById('food');
+  const coinsEl = document.getElementById('coins');
+  const coinPill = document.getElementById('coinPill');
   const statusEl = document.getElementById('status');
   const playBtn = document.getElementById('playBtn');
   const playIcon = document.getElementById('playIcon');
@@ -17,6 +20,280 @@
   let mode = 0;
   let paused = false;
   let speed = 1;
+
+  const eventOverlay = document.getElementById('eventOverlay');
+  const eventPanel = document.getElementById('eventPanel');
+  const eventTitle = document.getElementById('eventTitle');
+  const eventText = document.getElementById('eventText');
+  function showEmergencyEvent(title, text) {
+    if (eventTitle) eventTitle.textContent = title;
+    if (eventText) eventText.textContent = text;
+    eventOverlay.classList.remove('hidden');
+    eventPanel.classList.remove('hidden');
+  }
+  function closeEmergencyEvent() {
+    eventOverlay.classList.add('hidden');
+    eventPanel.classList.add('hidden');
+  }
+  Game.showEmergencyEvent = showEmergencyEvent;
+  document.getElementById('eventClose').addEventListener('click', closeEmergencyEvent);
+
+  Game.addCoins = function (amount) {
+    if (!Game.hasTech('currency') || amount <= 0) return false;
+    Game.state.coins += amount;
+    Game.state.civ += amount;
+    Game.saveState();
+    Game.updateStatus();
+    return true;
+  };
+
+  const TRADE_POOLS = {
+    common: ['wood', 'stone', 'wheat', 'fish', 'meat', 'berry'],
+    crafted: ['plank', 'cloth', 'brick', 'bread'],
+    rare: ['iron', 'clay', 'copper', 'gold'],
+    treasure: ['amber', 'diamond']
+  };
+  const TRADE_TITLES = {
+    easy: ['沿岸聚落补给', '市集原料收购', '村镇民生急件', '工棚日常采购'],
+    medium: ['砖窑扩建采购', '远行商队筹备', '工坊联合货单', '山道补给委托'],
+    hard: ['跨境商队总单', '城邦建造合约', '大型工坊急件', '远航船队筹备']
+  };
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  const pickMany = (list, count) => {
+    const pool = list.slice();
+    const result = [];
+    while (pool.length && result.length < count) result.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    return result;
+  };
+  function makeTradeOrder(level) {
+    let req = [], coins = 0, bonus = [];
+    if (level === 'easy') {
+      const id = pick([...TRADE_POOLS.common, ...TRADE_POOLS.crafted]);
+      const n = 3 + Math.floor(Math.random() * 4);
+      req = [{ id, n }];
+      coins = n;
+    } else if (level === 'medium') {
+      if (Math.random() < 0.35) {
+        req = [{ id: pick(TRADE_POOLS.rare), n: 2 + Math.floor(Math.random() * 3) }];
+      } else {
+        req = pickMany([...TRADE_POOLS.common, ...TRADE_POOLS.crafted], 2).map(id => ({ id, n: 3 + Math.floor(Math.random() * 4) }));
+      }
+      coins = 9 + req.reduce((sum, item) => sum + item.n, 0);
+      bonus = [{ id: pick(TRADE_POOLS.common), n: 2 + Math.floor(Math.random() * 2) }];
+    } else {
+      const choices = [...TRADE_POOLS.common, ...TRADE_POOLS.crafted, ...TRADE_POOLS.rare];
+      req = pickMany(choices, 3).map(id => ({ id, n: 5 + Math.floor(Math.random() * 5) }));
+      if (!req.some(item => TRADE_POOLS.rare.includes(item.id))) req[2] = { id: pick(TRADE_POOLS.rare), n: 2 + Math.floor(Math.random() * 3) };
+      coins = 22 + req.reduce((sum, item) => sum + item.n, 0);
+      bonus = pickMany([...TRADE_POOLS.rare, ...TRADE_POOLS.treasure], 1 + Math.floor(Math.random() * 3)).map(id => ({ id, n: 1 + Math.floor(Math.random() * 2) }));
+    }
+    return { id: `${level}-${Date.now()}-${Math.random().toString(16).slice(2)}`, level, title: pick(TRADE_TITLES[level]), req, coins, bonus };
+  }
+  function tradeMonthIndex() { return Math.floor((Game.state.day - 1) / Game.DAYS_PER_MONTH); }
+  function generateTradeOrders(force) {
+    if (!Game.hasTech('commerce') || (!force && Game.state.tradeOrders.length)) return;
+    Game.state.tradeOrders = ['easy', 'medium', 'hard'].map(makeTradeOrder);
+  }
+  function hasActiveTrader() {
+    return Game.state.buildings.some(building => building.id === 'tradepost' && building.workers > 0);
+  }
+  function canFulfillOrder(order) { return Game.state.mode === 'creative' || Game.hasInventoryItems(order.req); }
+  function refreshTradeOrders() {
+    if (!Game.state.tradeRefreshes || !hasActiveTrader()) return;
+    Game.state.tradeRefreshes = 0;
+    generateTradeOrders(true);
+    Game.saveState();
+    renderTradePanel();
+  }
+  function settleTradeOrder(order) {
+    if (!canFulfillOrder(order) || !hasActiveTrader()) return;
+    if (Game.state.mode !== 'creative') Game.takeInventoryItems(order.req);
+    Game.addCoins(order.coins);
+    order.bonus.forEach(item => Game.addItemToInventory(item.id, item.n));
+    Game.state.tradeOrders = [];
+    Game.state.tradeRefreshes = 0;
+    Game.state.tradeSettledMonth = tradeMonthIndex();
+    Game.saveState();
+    Game.renderInventory();
+    Game.updateStatus();
+    renderTradePanel();
+    showEmergencyEvent('贸易完成', `“${order.title}”已结算，获得 ${order.coins} 金币。`);
+  }
+  let tradeBuilding = null;
+  const tradeOverlay = document.getElementById('tradeOverlay');
+  const tradePanel = document.getElementById('tradePanel');
+  function closeTradePanel() {
+    tradeBuilding = null;
+    tradeOverlay.classList.add('hidden');
+    tradePanel.classList.add('hidden');
+  }
+  function openTradePanel(building) {
+    tradeBuilding = building;
+    renderTradePanel();
+    tradeOverlay.classList.remove('hidden');
+    tradePanel.classList.remove('hidden');
+  }
+  Game.openTradePanel = openTradePanel;
+  document.getElementById('tradeClose').addEventListener('click', closeTradePanel);
+  tradeOverlay.addEventListener('click', closeTradePanel);
+  document.getElementById('tradeRefresh').addEventListener('click', refreshTradeOrders);
+  function renderTradeItemList(items) {
+    return items.map(entry => {
+      const item = Game.ITEMS.find(candidate => candidate.id === entry.id);
+      return `<span>${item ? item.name : entry.id}×${entry.n}</span>`;
+    }).join('　');
+  }
+  function renderTradePanel() {
+    const status = document.getElementById('tradeStatus');
+    const orders = document.getElementById('tradeOrders');
+    const refreshCount = document.getElementById('tradeRefreshCount');
+    const active = hasActiveTrader();
+    refreshCount.textContent = Game.state.tradeRefreshes;
+    document.getElementById('tradeRefresh').disabled = !active || !Game.state.tradeRefreshes;
+    status.textContent = active
+      ? (Game.state.tradeOrders.length ? '选择一项达成的委托提交；完成一项后，本轮其余委托失效。' : '本月已完成贸易委托；下月将送达新的商路公报。')
+      : '请先为贸易站分配 1 名贸易员，商队才会送来委托。';
+    orders.innerHTML = '';
+    if (!Game.state.tradeOrders.length) return;
+    Game.state.tradeOrders.forEach(order => {
+      const ready = active && canFulfillOrder(order);
+      const card = document.createElement('article');
+      card.className = `trade-order ${order.level}` + (ready ? ' ready' : '');
+      card.innerHTML = `<div class="trade-order-top"><span class="trade-level">${order.level === 'easy' ? '简单' : order.level === 'medium' ? '中等' : '困难'}</span><h3>${order.title}</h3></div><div class="trade-need"><b>交付</b>${renderTradeItemList(order.req)}</div><div class="trade-reward"><b>报酬</b><span>金币 +${order.coins}</span>${order.bonus.length ? `<em>附赠：${renderTradeItemList(order.bonus)}</em>` : ''}</div>`;
+      const submit = document.createElement('button');
+      submit.className = 'trade-submit';
+      submit.textContent = ready ? '提交委托' : (active ? '货物不足' : '等待贸易员');
+      submit.disabled = !ready;
+      submit.addEventListener('click', () => settleTradeOrder(order));
+      card.appendChild(submit);
+      orders.appendChild(card);
+    });
+  }
+
+  let setupInstitute = null;
+  const instituteOverlay = document.getElementById('instituteOverlay');
+  const institutePanel = document.getElementById('institutePanel');
+  function openInstituteSetup(building) {
+    setupInstitute = building;
+    const choices = document.getElementById('instituteChoices');
+    choices.innerHTML = '';
+    [
+      { id: 'economy', name: '经济', note: '货币、贸易与商路', available: true },
+      { id: 'production', name: '生产', note: '食品加工与生产工艺', available: true },
+      { id: 'science', name: '科学', note: '知识与探索效率', available: true },
+      { id: 'military', name: '军事', note: '防御与应急处置', available: false }
+    ].forEach(option => {
+      const button = document.createElement('button');
+      button.className = 'institute-choice' + (option.available ? '' : ' locked');
+      button.disabled = !option.available;
+      button.innerHTML = `<b>${option.name}研究所</b><span>${option.available ? option.note : '规划中'}</span>`;
+      if (option.available) button.addEventListener('click', () => {
+        if (!setupInstitute) return;
+        setupInstitute.category = option.id;
+        setupInstitute = null;
+        instituteOverlay.classList.add('hidden');
+        institutePanel.classList.add('hidden');
+        Game.saveState();
+        Game.updateStatus();
+      });
+      choices.appendChild(button);
+    });
+    instituteOverlay.classList.remove('hidden');
+    institutePanel.classList.remove('hidden');
+  }
+  Game.openInstituteSetup = openInstituteSetup;
+
+  let researchInstitute = null;
+  const researchOverlay = document.getElementById('researchOverlay');
+  const researchPanel = document.getElementById('researchPanel');
+  function closeResearchPanel() {
+    researchInstitute = null;
+    researchOverlay.classList.add('hidden');
+    researchPanel.classList.add('hidden');
+  }
+  function openResearchPanel(building) {
+    researchInstitute = building;
+    const title = building.id === 'institute'
+      ? (building.category === 'production' ? '生产研究所' : '经济研究所')
+      : `${Game.BUILDINGS[building.id].name}研究`;
+    document.querySelector('#researchPanel .panel-title').textContent = title;
+    renderResearchPanel();
+    researchOverlay.classList.remove('hidden');
+    researchPanel.classList.remove('hidden');
+  }
+  Game.openResearchPanel = openResearchPanel;
+  document.getElementById('researchClose').addEventListener('click', closeResearchPanel);
+  researchOverlay.addEventListener('click', closeResearchPanel);
+
+  function startResearch(tech) {
+    const creative = Game.state && Game.state.mode === 'creative';
+    if (!researchInstitute || researchInstitute.researchId || Game.hasTech(tech.id) || (!creative && !Game.hasInventoryItems(tech.req))) return;
+    if (!creative) Game.takeInventoryItems(tech.req);
+    researchInstitute.researchId = tech.id;
+    researchInstitute.researchDays = 0;
+    Game.saveState();
+    Game.renderCrafting();
+    renderResearchPanel();
+    Game.updateStatus();
+  }
+  function renderResearchPanel() {
+    if (!researchInstitute) return;
+    const summary = document.getElementById('researchSummary');
+    const list = document.getElementById('researchList');
+    const creative = Game.state && Game.state.mode === 'creative';
+    const workerReady = creative || (researchInstitute.workers || 0) > 0;
+    const researcher = researchInstitute.id === 'institute' ? '科学家' : Game.BUILDINGS[researchInstitute.id].job;
+    summary.textContent = researchInstitute.researchId
+      ? (workerReady ? `${researcher}正在推进研究` : `研究已暂停：请分配 1 名${researcher}`)
+      : (workerReady ? '选择一项可研究的科技' : `请先在信息面板分配 1 名${researcher}`);
+    list.innerHTML = '';
+    const techs = researchInstitute.id === 'institute'
+      ? Object.values(Game.TECHNOLOGIES).filter(tech => tech.category === researchInstitute.category)
+      : Object.values(Game.TECHNOLOGIES).filter(tech => tech.buildingId === researchInstitute.id);
+    techs.forEach(tech => {
+      const done = Game.hasTech(tech.id);
+      const locked = tech.requires && !tech.requires.every(Game.hasTech);
+      const active = researchInstitute.researchId === tech.id;
+      const row = document.createElement('div');
+      row.className = 'research-tech' + (done ? ' complete' : '') + (active ? ' active' : '');
+      const title = document.createElement('div');
+      title.className = 'research-tech-title';
+      title.textContent = tech.name;
+      const desc = document.createElement('div');
+      desc.className = 'research-tech-desc';
+      desc.textContent = tech.desc;
+      const meta = document.createElement('div');
+      meta.className = 'research-tech-meta';
+      const progress = active ? Math.min(tech.days, researchInstitute.researchDays || 0) : 0;
+      meta.textContent = done ? '已完成' : (locked ? '需先完成前置科技' : (active ? `研究中 ${progress} / ${tech.days} 天` : `耗时 ${tech.days / Game.DAYS_PER_MONTH} 个月 · ${Game.reqText(tech.req)}`));
+      row.append(title, desc, meta);
+      if (!done && !locked && !active) {
+        const button = document.createElement('button');
+        button.className = 'research-start';
+        button.textContent = creative || Game.hasInventoryItems(tech.req) ? '开始研究' : '资源不足';
+        button.disabled = (!creative && !Game.hasInventoryItems(tech.req)) || !!researchInstitute.researchId;
+        button.addEventListener('click', () => startResearch(tech));
+        row.appendChild(button);
+      }
+      list.appendChild(row);
+    });
+  }
+  function tickResearch(building) {
+    const canResearch = (building.id === 'institute' && ['economy', 'production', 'science'].includes(building.category)) || !!Game.TECHNOLOGIES[building.researchId] && Game.TECHNOLOGIES[building.researchId].buildingId === building.id;
+    if (!canResearch || !building.researchId || (!building.workers && Game.state.mode !== 'creative')) return;
+    const tech = Game.TECHNOLOGIES[building.researchId];
+    if (!tech) return;
+    building.researchDays = (building.researchDays || 0) + speed;
+    if (building.researchDays < tech.days) return;
+    if (!Game.state.techs.includes(tech.id)) Game.state.techs.push(tech.id);
+    building.researchId = null;
+    building.researchDays = 0;
+    Game.renderRecipeList();
+    Game.renderCrafting();
+    Game.saveState();
+    showEmergencyEvent('研究完成', `“${tech.name}”已完成。${tech.desc}`);
+    if (researchInstitute === building) renderResearchPanel();
+  }
 
   function applyMode() {
     if (mode === 0) { paused = false; speed = 1; }
@@ -195,6 +472,7 @@
   let assignBuilding = null;
 
   function totalAssigned() {
+    if (Game.state && Game.state.mode === 'creative') return 0;
     return laborBuildings().reduce((s, b) => s + (b.workers || 0), 0);
   }
   Game.totalAssigned = totalAssigned;
@@ -436,6 +714,10 @@
     Game.store.set(Game.seedKey(modeId), String(Game.seed));
     Game.world = Game.generateWorld(Game.seed);
     Game.resetState(modeId);
+    if (modeId === 'creative') {
+      Game.state.buildings.forEach(b => { b.workers = Game.BUILDINGS[b.id].laborCap || 0; });
+      Game.saveState();
+    }
     if (meta && (meta.playerName || meta.saveName)) {
       Game.state.playerName = meta.playerName || '';
       Game.state.saveName = meta.saveName || '';
@@ -466,6 +748,7 @@
     Game.seed = parseInt(Game.store.get(Game.seedKey(modeId)), 10);
     Game.world = Game.generateWorld(Game.seed);
     Game.loadState();
+    if (modeId === 'creative') Game.state.buildings.forEach(b => { b.workers = Game.BUILDINGS[b.id].laborCap || 0; });
     Game.selectedBuilding = null;
     Game.selectedBase = false;
     Game.selectedTerrain = null;
@@ -1453,6 +1736,10 @@
   function updateStatus() {
     popEl.textContent = Game.state.villagers + ' / ' + Game.hutCapacity();
     civEl.textContent = Game.state.civ;
+    foodEl.textContent = Game.state.mode === 'creative' ? '无限' : Game.state.food;
+    const currencyUnlocked = Game.hasTech('currency');
+    coinPill.classList.toggle('hidden', !currencyUnlocked);
+    coinsEl.textContent = Game.state.coins;
     const year = Math.floor((Game.displayDay - 1) / Game.DAYS_PER_YEAR) + 1;
     const month = Math.floor(((Game.displayDay - 1) % Game.DAYS_PER_YEAR) / Game.DAYS_PER_MONTH) + 1;
     dateEl.textContent = `${year} 年 ${month} 月`;
@@ -1633,7 +1920,7 @@
       } else {
         def.produces.forEach(p => {
           const base = typeof p.amount === 'function' ? 1 : p.amount;
-          const amount = base * workers;
+          const amount = base * workers * Game.productionMultiplier(b.id);
           const itemId = typeof p.item === 'function' ? null : p.item;
           const line = document.createElement('div');
           line.className = 'bi-line';
@@ -1678,6 +1965,54 @@
       card.appendChild(btn);
     }
 
+    if (b.id === 'institute') {
+      const researchBtn = document.createElement('button');
+      researchBtn.type = 'button';
+      researchBtn.className = 'bi-labor-btn research-open-btn';
+      if (!b.category) {
+        researchBtn.textContent = '选择研究方向';
+        researchBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          Game.openInstituteSetup(b);
+        });
+      } else {
+        const active = b.researchId ? Game.TECHNOLOGIES[b.researchId] : null;
+        researchBtn.textContent = active ? `研究中：${active.name}` : `查看${b.category === 'production' ? '生产' : '经济'}研究`;
+        researchBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          Game.openResearchPanel(b);
+        });
+      }
+      card.appendChild(researchBtn);
+    }
+
+    const buildingTech = Object.values(Game.TECHNOLOGIES).find(tech => tech.buildingId === b.id);
+    if (buildingTech) {
+      const researchBtn = document.createElement('button');
+      researchBtn.type = 'button';
+      researchBtn.className = 'bi-labor-btn research-open-btn';
+      researchBtn.textContent = Game.hasTech(buildingTech.id)
+        ? `${buildingTech.name}：已完成`
+        : (b.researchId ? `研究中：${buildingTech.name}` : `研发：${buildingTech.name}`);
+      researchBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Game.openResearchPanel(b);
+      });
+      card.appendChild(researchBtn);
+    }
+
+    if (b.id === 'tradepost') {
+      const tradeBtn = document.createElement('button');
+      tradeBtn.type = 'button';
+      tradeBtn.className = 'bi-labor-btn trade-open-btn';
+      tradeBtn.textContent = '查看贸易委托';
+      tradeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Game.openTradePanel(b);
+      });
+      card.appendChild(tradeBtn);
+    }
+
     statusEl.appendChild(card);
   }
   Game.updateStatus = updateStatus;
@@ -1698,7 +2033,7 @@
       for (let i = 0; i < b.workers; i++) {
         def.produces.forEach(p => {
           const itemId = typeof p.item === 'function' ? p.item() : p.item;
-          const amount = typeof p.amount === 'function' ? p.amount() : p.amount;
+          const amount = (typeof p.amount === 'function' ? p.amount() : p.amount) * Game.productionMultiplier(b.id);
           if (Game.addItemToInventory(itemId, amount)) {
             Game.state.civ += amount;
             produced = true;
@@ -1709,23 +2044,28 @@
     }
   }
 
-  // 基地产出：空闲劳动力视为探索者，每月产出次数 = 探索者人数（基地每月最大生产值）
-  // 每次产出按基地覆盖地块的类型与数量加权平均决定内容（覆盖哪类地貌多，产出该类概率越高）
-  // 团的揭示进度：每格每月增速 = 探索者人数，即该团每月揭示进度 = 团内覆盖格数 × 探索者人数
+  // 基地产出：每月基础 2 次抽取，每名探索者额外提供 2 次；野外勘察科技使总次数翻倍。
+  // 每种资源独立按基地覆盖地貌的概率加权平均判定。
+  // 团的揭示进度：每格每月增速 = 抽取次数。
   // 揭示阈值 = 团格数 × 2
   let baseTimer = 0;
   function baseProduce() {
     const b = Game.base;
     if (!b || !Game.world) return;
     const cells = [];
+    const terrainCounts = {};
     for (let y = b.y; y < b.y + b.h; y++) {
       for (let x = b.x; x < b.x + b.w; x++) {
         if (x < 0 || x >= Game.MAP_W || y < 0 || y >= Game.MAP_H) continue;
         cells.push([x, y]);
+        const raw = Game.world.terrain[y][x];
+        const terrain = raw == null ? Game.TERRAIN.SEA : raw;
+        terrainCounts[terrain] = (terrainCounts[terrain] || 0) + 1;
       }
     }
     if (!cells.length) return;
     const explorers = Math.max(0, Game.state.villagers - totalAssigned());
+    const draws = Game.explorationDraws(explorers);
     const touched = new Set();
     for (const [x, y] of cells) {
       const raw = Game.world.terrain[y][x];
@@ -1733,15 +2073,12 @@
         const ci = Game.world.clumpIndex[y][x];
         if (ci >= 0) {
           const c = Game.world.clumps[ci];
-          if (!c.revealed) { c.progress += explorers; touched.add(ci); }
+          if (!c.revealed) { c.progress += draws; touched.add(ci); }
         }
       }
     }
-    for (let i = 0; i < explorers; i++) {
-      const [x, y] = cells[Math.floor(Math.random() * cells.length)];
-      const raw = Game.world.terrain[y][x];
-      const t = raw == null ? Game.TERRAIN.SEA : raw;
-      Game.terrainOutput(t).forEach(([id, n]) => {
+    for (let i = 0; i < draws; i++) {
+      Game.rollExploration(terrainCounts).forEach(([id, n]) => {
         if (Game.addItemToInventory(id, n)) Game.state.civ += n;
       });
     }
@@ -1756,12 +2093,22 @@
   function tick() {
     if (!Game.state) return;
     if (paused) { Game.drawWorld(); return; }
-    Game.state.buildings.forEach(b => tickBuilding(b, Game.BUILDINGS[b.id]));
+    Game.state.buildings.forEach(b => {
+      tickBuilding(b, Game.BUILDINGS[b.id]);
+      tickResearch(b);
+    });
     baseTimer += speed;
     if (baseTimer >= Game.DAYS_PER_MONTH) { baseTimer = 0; baseProduce(); }
     popTimer += speed;
     if (popTimer >= Game.DAYS_PER_MONTH) {
       popTimer = 0;
+      const requiredFood = Game.state.villagers;
+      const previousFood = Game.state.food;
+      if (Game.state.mode !== 'creative') Game.state.food = Math.max(0, Game.state.food - requiredFood);
+      if (Game.state.mode !== 'creative' && previousFood > 0 && Game.state.food === 0 && !Game.state.foodShortageActive) {
+        Game.state.foodShortageActive = true;
+        showEmergencyEvent('食物紧缺', '食物仓已经耗尽。尽快将可食用物品加入食物仓，为聚落补充储备。');
+      }
       const cap = Game.hutCapacity();
         if (Game.state.villagers < cap) {
           // 增长速度随当前人口基数决定：每月增长 max(1, 当前人口×10%)，直到人口上限
@@ -1773,7 +2120,15 @@
             Game.state.villagers++;
           }
           Game.saveState();
-        }
+      }
+      Game.saveState();
+    }
+    const currentTradeMonth = tradeMonthIndex();
+    if (hasActiveTrader() && Game.state.tradeSettledMonth !== currentTradeMonth) {
+      if (!Game.state.tradeOrders.length) generateTradeOrders();
+      Game.state.tradeRefreshes = 1;
+      Game.saveState();
+      if (tradeBuilding) renderTradePanel();
     }
     Game.state.day += speed;
     Game.displayDay += 1;

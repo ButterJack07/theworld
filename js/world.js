@@ -822,6 +822,7 @@
     if (b.id === 'lumbermill') { drawLumbermillEntity(b, px, py, pw, ph); return; }
     if (b.id === 'minefactory') { drawMineFactoryEntity(b, px, py, pw, ph); return; }
     if (b.id === 'dockyard') { drawDockyardEntity(b, px, py, pw, ph); return; }
+    if (b.id === 'institute') { drawInstituteEntity(b, px, py, pw, ph); return; }
     const cx = px + pw / 2;
     const bx = px + 4, by = py + 5, bw = pw - 8, bh = ph - 10, br = 10;
     const roofH = Math.round(bh * 0.42);
@@ -966,6 +967,43 @@
         ctx.stroke();
         break;
     }
+  }
+
+  function drawInstituteEntity(b, px, py, pw, ph) {
+    const cx = px + pw / 2;
+    const baseY = py + ph - 4;
+    const x = px + 4;
+    const width = pw - 8;
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.fillStyle = 'rgba(82, 110, 113, 0.17)';
+    ctx.fillRect(x + 2, py + 8, width, ph - 5);
+    ctx.fillStyle = '#c9d4d2';
+    ctx.fillRect(x, py + 11, width, ph - 15);
+    ctx.strokeStyle = '#536e70';
+    ctx.strokeRect(x + 0.5, py + 11.5, width - 1, ph - 16);
+    ctx.fillStyle = '#718d90';
+    ctx.fillRect(x - 2, py + 7, width + 4, 5);
+    ctx.strokeRect(x - 1.5, py + 7.5, width + 3, 4);
+    ctx.fillStyle = '#dce5df';
+    ctx.fillRect(x + 4, py + 3, width - 8, 4);
+    ctx.strokeRect(x + 4.5, py + 3.5, width - 9, 3);
+    ctx.fillStyle = '#eaf0e9';
+    ctx.fillRect(x + 4, py + 15, 5, 6);
+    ctx.fillRect(x + width - 9, py + 15, 5, 6);
+    ctx.strokeStyle = '#6c8787';
+    ctx.strokeRect(x + 4.5, py + 15.5, 4, 5);
+    ctx.strokeRect(x + width - 8.5, py + 15.5, 4, 5);
+    ctx.fillStyle = '#536b6c';
+    ctx.fillRect(cx - 3, baseY - 10, 6, 10);
+    ctx.fillStyle = '#e0bd68';
+    ctx.fillRect(cx - 1.5, baseY - 6, 1.5, 1.5);
+    ctx.strokeStyle = 'rgba(82, 110, 113, 0.6)';
+    ctx.beginPath();
+    ctx.moveTo(cx, py + 12); ctx.lineTo(cx, py + 24);
+    ctx.moveTo(x, py + 25); ctx.lineTo(x + width, py + 25);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // 劳动力不在地图上实体显示（仅作为数量统计），不再绘制小人
@@ -1410,10 +1448,11 @@
     const from = Game.dragContext ? Game.dragContext.from : null;
     const grid = from === 'crafting' ? Game.craftingItems : Game.placed;
     if (!takeOneFrom(grid, Game.dragContext.entry)) return;
-    Game.state.buildings.push({ id: itemId, x, y, workers: 0 });
+    const building = { id: itemId, x, y, workers: Game.state.mode === 'creative' ? (Game.BUILDINGS[itemId].laborCap || 0) : 0 };
+    Game.state.buildings.push(building);
     Game.dragContext = null;
     Game.dragBuildingId = null;
-    Game.selectedBuilding = Game.state.buildings[Game.state.buildings.length - 1];
+    Game.selectedBuilding = building;
     Game.selectedBase = false;
     Game.selectedTerrain = null;
     Game.selectedItem = null;
@@ -1422,6 +1461,7 @@
     Game.updateStatus();
     Game.saveState();
     drawWorld();
+    if (itemId === 'institute') Game.openInstituteSetup(building);
     // 放下的低级建筑若拼成 2×2（钓船小屋为横 / 竖 3 连），自动合并升级为工场/砖瓦屋/四合院/钓船码头
     let merged = mergeHuts();
     const mergedCourtyard = mergeBrickhouses();

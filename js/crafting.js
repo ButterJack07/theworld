@@ -19,7 +19,7 @@
     return list.filter(p => p.item.id === id).reduce((s, p) => s + p.count, 0);
   }
   function matchingRecipes() {
-    return Game.RECIPES.filter(r => r.req.every(q => countInGrid(Game.craftingItems, q.id) >= q.n));
+    return Game.RECIPES.filter(r => (!r.requires || r.requires.every(Game.hasTech)) && r.req.every(q => countInGrid(Game.craftingItems, q.id) >= q.n));
   }
   Game.matchingRecipes = matchingRecipes;
 
@@ -43,10 +43,27 @@
   }
   Game.craftRecipe = craftRecipe;
 
+  function foodInCrafting() {
+    return Game.craftingItems.reduce((total, p) => total + (Game.FOOD_VALUES[p.item.id] || 0) * p.count, 0);
+  }
+
+  function addFoodToWarehouse() {
+    const food = foodInCrafting();
+    if (!food) return;
+    Game.craftingItems = Game.craftingItems.filter(p => !Game.FOOD_VALUES[p.item.id]);
+    Game.state.food += food;
+    Game.state.foodShortageActive = false;
+    renderCrafting();
+    Game.updateStatus();
+    Game.saveState();
+  }
+  Game.addFoodToWarehouse = addFoodToWarehouse;
+
   function renderCraftResult() {
     craftResultEl.innerHTML = '';
     const list = matchingRecipes();
-    if (!list.length) {
+    const food = foodInCrafting();
+    if (!list.length && !food) {
       const hint = document.createElement('span');
       hint.className = 'craft-hint';
       hint.textContent = '未组合出配方';
@@ -68,6 +85,20 @@
       row.addEventListener('click', () => craftRecipe(r));
       craftResultEl.appendChild(row);
     });
+    if (food) {
+      const row = document.createElement('div');
+      row.className = 'craft-option food-store-option';
+      row.title = '将合成器中的全部食物加入食物仓';
+      const icon = document.createElement('span');
+      icon.className = 'food-store-icon';
+      icon.textContent = '✦';
+      const name = document.createElement('span');
+      name.className = 'co-name';
+      name.textContent = `加入食物仓  +${food}`;
+      row.append(icon, name);
+      row.addEventListener('click', addFoodToWarehouse);
+      craftResultEl.appendChild(row);
+    }
   }
   Game.renderCraftResult = renderCraftResult;
 
@@ -80,7 +111,7 @@
       title.className = 'recipe-group-title';
       title.textContent = g.title;
       listEl.appendChild(title);
-      Game.RECIPES.filter(r => r.group === g.key).forEach(r => {
+      Game.RECIPES.filter(r => r.group === g.key && (Game.state && Game.state.mode === 'creative' || !r.requires || r.requires.every(Game.hasTech))).forEach(r => {
         const out = Game.ITEMS.find(i => i.id === r.out);
         const row = document.createElement('div');
         row.className = 'recipe-row';
@@ -95,8 +126,16 @@
         left.append(icon, name);
         const req = document.createElement('span');
         req.className = 'rc-req';
-        req.textContent = Game.reqText(r.req);
+        const creative = Game.state && Game.state.mode === 'creative';
+        req.textContent = creative ? '点击直接创造' : Game.reqText(r.req);
         row.append(left, req);
+        if (creative) {
+          row.classList.add('creative-recipe');
+          row.title = `创造 ${out.name}`;
+          row.addEventListener('click', () => {
+            if (Game.addItemToInventory(r.out, 1)) Game.saveState();
+          });
+        }
         listEl.appendChild(row);
       });
     });

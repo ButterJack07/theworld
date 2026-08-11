@@ -89,6 +89,29 @@
   }
   Game.addItemToInventory = addItemToInventory;
 
+  Game.countInventoryItem = function (id) {
+    return Game.placed.filter(p => p.item.id === id).reduce((total, p) => total + p.count, 0);
+  };
+  Game.hasInventoryItems = function (requirements) {
+    return requirements.every(req => Game.countInventoryItem(req.id) >= req.n);
+  };
+  Game.takeInventoryItems = function (requirements) {
+    if (!Game.hasInventoryItems(requirements)) return false;
+    requirements.forEach(req => {
+      let left = req.n;
+      for (let i = 0; i < Game.placed.length && left > 0; i++) {
+        const stack = Game.placed[i];
+        if (stack.item.id !== req.id) continue;
+        const take = Math.min(left, stack.count);
+        stack.count -= take;
+        left -= take;
+        if (!stack.count) { Game.placed.splice(i, 1); i--; }
+      }
+    });
+    renderInventory();
+    return true;
+  };
+
   // 双击：把同种物品的所有堆合并到当前堆上（每堆上限 MAX_STACK）
   function mergeStacks(target, from) {
     const grid = from === 'inventory' ? Game.placed : Game.craftingItems;
