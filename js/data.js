@@ -128,6 +128,21 @@
   Game.BASE_DEFAULT = { x: Math.floor((Game.MAP_W - 2) / 2), y: Math.floor((Game.MAP_H - 2) / 2), w: 2, h: 2 };
   Game.BASE_MIN_W = 2;
   Game.BASE_MIN_H = 2;
+  Game.BASE_MAX_AREA = 300;
+  Game.baseAreaLimit = function () {
+    const civ = Game.state ? Game.state.civ : 0;
+    return Math.min(Game.BASE_MAX_AREA, 15 * (Math.floor(Math.max(0, civ) / 1000) + 1));
+  };
+  Game.fitBaseToAreaLimit = function (base) {
+    const result = { ...base };
+    const limit = Game.baseAreaLimit();
+    while (result.w * result.h > limit) {
+      if (result.w >= result.h && result.w > Game.BASE_MIN_W) result.w--;
+      else if (result.h > Game.BASE_MIN_H) result.h--;
+      else break;
+    }
+    return result;
+  };
 
   // ---------- 物品 ----------
   Game.ITEMS = [
@@ -736,9 +751,9 @@
     };
     return Game.hasTech(techByBuilding[buildingId]) ? 2 : 1;
   };
-  Game.explorationDraws = function (explorers) {
-    const perUnit = Game.hasTech('fieldSurvey') ? 4 : 2;
-    return perUnit * (Math.max(0, explorers) + 1);
+  Game.explorationDraws = function (area, explorers) {
+    const draws = Math.floor(Math.max(0, area) / 20) + Math.max(0, explorers);
+    return draws * (Game.hasTech('fieldSurvey') ? 2 : 1);
   };
 
   // ---------- 扩建（建筑自动升级规则） ----------

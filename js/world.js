@@ -1203,7 +1203,12 @@
     if (side.includes('s')) {
       h = Math.max(Game.BASE_MIN_H, Math.min(h + dy, Game.MAP_H - y));
     }
-    Game.base = { x, y, w, h };
+    const areaLimit = Game.baseAreaLimit();
+    if (w * h > areaLimit) {
+      if (side.includes('e') || side.includes('w')) w = Math.max(Game.BASE_MIN_W, Math.floor(areaLimit / h));
+      if (w * h > areaLimit && (side.includes('n') || side.includes('s'))) h = Math.max(Game.BASE_MIN_H, Math.floor(areaLimit / w));
+    }
+    Game.base = Game.fitBaseToAreaLimit({ x, y, w, h });
     drawWorld();
   }
 

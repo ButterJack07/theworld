@@ -1547,7 +1547,7 @@
           <span class="gs-g-flow gs-g-fw">${Game.itemIconSVG('wood')}</span>
           <span class="gs-g-flow gs-g-fs">${Game.itemIconSVG('stone')}</span>
           <span class="gs-g-flow gs-g-fi">${Game.itemIconSVG('iron')}</span>
-           <div class="gs-g-count">基础 2 次 + 探索者 ×2 · 每月 6 次</div>
+           <div class="gs-g-count">基地 4 格 + 探索者 ×2 · 每月 2 次</div>
           <div class="gs-g-inv">
             ${inv.map(id => id
               ? `<span class="gs-inv-cell"><span class="gs-inv-ico">${Game.itemIconSVG(id)}</span></span>`
@@ -1558,7 +1558,7 @@
       text: `<div class="guide-page-title">基地采集</div>
 <p><b>基地</b>（地图上的虚线窗口）是自动探索引擎：</p>
 <ul>
-  <li>每月固定抽取 <b>2 次</b>，每名探索者额外增加 <b>2 次</b>。初始 2 名探索者 = 每月 6 次。</li>
+  <li>基地每有 <b>20 格</b>提供 1 次抽取，每名探索者额外提供 1 次。初始 2 名探索者 = 每月 2 次。</li>
   <li>各资源独立按基地覆盖地貌的<b>概率加权</b>判定：森林格多→木头概率更高，山地格多→石头与铁矿概率更高，海洋格→有鱼的概率。</li>
   <li>把基地扩到更富的地貌上，产出更丰富、地貌揭示更快。</li>
   <li>科学研究所的「野外勘察」可让每月抽取次数翻倍。</li>
@@ -1766,6 +1766,7 @@
       text: `<div class="guide-page-title">扩张基地</div>
 <ul>
   <li>基地默认 <b>2×2</b>，拖动<b>基地窗口的边框</b>可向外扩张。</li>
+  <li>初始最多覆盖 <b>15 格</b>；每满 1000 文明增加 15 格，最高可覆盖 300 格。</li>
   <li>覆盖更多、更富的地貌 → 探索概率更丰富、产出更多样。</li>
   <li>扩到<b>海洋</b>可产出鱼，扩到<b>湿地</b>可获生肉 / 浆果。</li>
   <li>特殊地貌需要探索抽取来<b>揭示</b>；双击地块可查看具体产出概率。</li>
@@ -1973,7 +1974,7 @@
     totalLine.className = 'bi-line bi-base-center';
     const totalVal = document.createElement('span');
     totalVal.className = 'bi-val bi-total';
-    totalVal.textContent = `共 ${total} 格`;
+    totalVal.textContent = `共 ${total} / ${Game.baseAreaLimit()} 格`;
     totalLine.append(totalVal);
     main.appendChild(totalLine);
 
@@ -2213,7 +2214,7 @@
     }
   }
 
-  // 基地产出：每月基础 2 次抽取，每名探索者额外提供 2 次；野外勘察科技使总次数翻倍。
+  // 基地产出：每 20 格基地提供 1 次抽取，每名探索者额外提供 1 次；野外勘察科技使总次数翻倍。
   // 每种资源独立按基地覆盖地貌的概率加权平均判定。
   // 团的揭示进度：每格每月增速 = 抽取次数。
   // 揭示阈值 = 团格数 × 2
@@ -2234,7 +2235,7 @@
     }
     if (!cells.length) return;
     const explorers = Math.max(0, Game.state.villagers - totalAssigned());
-    const draws = Game.explorationDraws(explorers);
+    const draws = Game.explorationDraws(cells.length, explorers);
     const touched = new Set();
     for (const [x, y] of cells) {
       const raw = Game.world.terrain[y][x];

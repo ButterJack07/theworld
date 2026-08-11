@@ -130,6 +130,7 @@
       Game.base = saved.base && saved.base.x !== undefined
         ? { x: saved.base.x, y: saved.base.y, w: saved.base.w, h: saved.base.h }
         : { ...Game.BASE_DEFAULT };
+      Game.base = Game.fitBaseToAreaLimit(Game.base);
       Game.placed = (saved.placed || []).map(p => {
         const item = Game.ITEMS.find(i => i.id === (p.id === 'food' ? 'fish' : p.id));
         return item ? { item, col: p.col, row: p.row, count: p.count || 1 } : null;
