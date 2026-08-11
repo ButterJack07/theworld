@@ -45,7 +45,7 @@
     Game.mode = mode;
     Game.placed = Game.initInventory();
     Game.craftingItems = [];
-    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, coins: 0, food: 10, foodShortageActive: false, techs: [], tradeOrders: [], tradeRefreshes: 0, tradeSettledMonth: -1, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '', createdAt: Date.now() };
+    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, coins: 0, marketRevenue: 0, food: 10, foodShortageActive: false, techs: [], techCivRewarded: [], military: {}, tradeOrders: [], tradeRefreshes: 0, tradeSettledMonth: -1, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '', createdAt: Date.now() };
     Game.base = { ...Game.BASE_DEFAULT };
     Game.spawnStarterTown();
     // 初始人口 2：为每位人口分配一个站格（空闲劳动力 = 探索者）
@@ -70,9 +70,12 @@
        buildings: Game.state.buildings.map(b => ({ id: b.id, x: b.x, y: b.y, rot: b.rot, workers: b.workers || 0, category: b.category || null, researchId: b.researchId || null, researchDays: b.researchDays || 0 })),
        civ: Game.state.civ,
        coins: Game.state.coins,
+       marketRevenue: Game.state.marketRevenue || 0,
        food: Game.state.food,
        foodShortageActive: !!Game.state.foodShortageActive,
        techs: Array.isArray(Game.state.techs) ? Game.state.techs : [],
+       techCivRewarded: Array.isArray(Game.state.techCivRewarded) ? Game.state.techCivRewarded : [],
+       military: Game.state.military || {},
        tradeOrders: Array.isArray(Game.state.tradeOrders) ? Game.state.tradeOrders : [],
        tradeRefreshes: Game.state.tradeRefreshes || 0,
        tradeSettledMonth: Number.isInteger(Game.state.tradeSettledMonth) ? Game.state.tradeSettledMonth : -1,
@@ -96,6 +99,8 @@
     // 旧版存档（无 version 或月制前版本）不兼容：改月制后直接重新开始
     if (saved && saved.version !== 2 && saved.version !== 3) saved = null;
     if (saved && saved.seed === Game.seed) {
+      const techs = Array.isArray(saved.techs) ? saved.techs.filter(id => Game.TECHNOLOGIES[id]) : [];
+      const rewarded = Array.isArray(saved.techCivRewarded) ? saved.techCivRewarded.filter(id => techs.includes(id)) : [];
       Game.state = {
         villagers: saved.villagers || 0,
         villagersCells: Array.isArray(saved.villagersCells) ? saved.villagersCells : [],
@@ -104,9 +109,12 @@
         })),
         civ: saved.civ || 0,
         coins: Math.max(0, Number(saved.coins) || 0),
+        marketRevenue: Math.max(0, Number(saved.marketRevenue) || 0),
         food: Math.max(0, Number.isFinite(saved.food) ? saved.food : 10),
         foodShortageActive: !!saved.foodShortageActive,
-        techs: Array.isArray(saved.techs) ? saved.techs.filter(id => Game.TECHNOLOGIES[id]) : [],
+        techs,
+        techCivRewarded: rewarded,
+        military: saved.military && typeof saved.military === 'object' ? saved.military : {},
         tradeOrders: Array.isArray(saved.tradeOrders) ? saved.tradeOrders : [],
         tradeRefreshes: Math.min(1, Math.max(0, saved.tradeRefreshes || 0)),
         tradeSettledMonth: Number.isInteger(saved.tradeSettledMonth) ? saved.tradeSettledMonth : -1,

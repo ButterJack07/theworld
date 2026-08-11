@@ -59,6 +59,10 @@
   }
   Game.initInventory = initInventory;
 
+  Game.inventoryRows = function () {
+    return Game.hasTech && Game.hasTech('warehousing') ? Game.INV_EXPANDED_ROWS : Game.INV_ROWS;
+  };
+
   function addItemToInventory(id, amount) {
     const item = Game.ITEMS.find(i => i.id === id);
     let remaining = amount;
@@ -73,7 +77,7 @@
       }
     }
     if (remaining > 0) {
-      const spot = findFreeSpot(item, Game.placed, Game.INV_COLS, Game.INV_ROWS);
+       const spot = findFreeSpot(item, Game.placed, Game.INV_COLS, Game.inventoryRows());
       if (!spot) {
         added.forEach(a => { a.p.count -= a.n; });
         return false;
@@ -222,10 +226,10 @@
       if (idx < 0) return false;
       const srcCount = Game.placed[idx].count;
       if (Game.dragContext.whole || srcCount === 1)
-        return canPlace(item, col, row, Game.placed, Game.INV_COLS, Game.INV_ROWS, idx);
-      return canPlace(item, col, row, Game.placed, Game.INV_COLS, Game.INV_ROWS);
+        return canPlace(item, col, row, Game.placed, Game.INV_COLS, Game.inventoryRows(), idx);
+      return canPlace(item, col, row, Game.placed, Game.INV_COLS, Game.inventoryRows());
     }
-    return canPlace(item, col, row, Game.placed, Game.INV_COLS, Game.INV_ROWS);
+    return canPlace(item, col, row, Game.placed, Game.INV_COLS, Game.inventoryRows());
   }
   Game.canDropInventory = canDropInventory;
 
@@ -246,6 +250,7 @@
   Game.canDropCrafting = canDropCrafting;
 
   function renderInventory() {
+    inventoryEl.classList.toggle('expanded', Game.inventoryRows() > Game.INV_ROWS);
     inventoryEl.querySelectorAll('.inv-item').forEach(n => n.remove());
     Game.placed.forEach(p => {
       const el = document.createElement('div');

@@ -11,7 +11,7 @@
   function canAddToInventory(id, amount) {
     if (Game.placed.find(p => p.item.id === id)) return true;
     const item = Game.ITEMS.find(i => i.id === id);
-    return !!Game.findFreeSpot(item, Game.placed, Game.INV_COLS, Game.INV_ROWS);
+    return !!Game.findFreeSpot(item, Game.placed, Game.INV_COLS, Game.inventoryRows());
   }
   Game.canAddToInventory = canAddToInventory;
 

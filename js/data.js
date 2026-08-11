@@ -164,6 +164,10 @@
     { id: 'pasture',   name: '牧场', color: '#cfe0b0', w: 2, h: 2, desc: '须建在草原上（覆盖 4 格全为草原），至多 5 劳动力，满员每月生产 10 生肉' },
     { id: 'institute', name: '研究所', color: '#b8c4c8', w: 1, h: 1, desc: '建立时选择研究方向。当前开放经济研究所，可安排 1 名科学家进行研究' },
     { id: 'tradepost', name: '贸易站', color: '#d4b676', w: 1, h: 1, desc: '完成商业契约后可建造。安排 1 名贸易员以接取并结算贸易委托' },
+    { id: 'market', name: '市场', color: '#dcb877', w: 1, h: 1, desc: '完成市场制度后可建造。用于出售物品栏中的货物，获得金币' },
+    { id: 'barracks', name: '兵营', color: '#a8b2a0', w: 1, h: 1, desc: '基础军事建筑，可训练步兵' },
+    { id: 'stable', name: '马厩', color: '#c6a273', w: 1, h: 1, desc: '完成军制改革后可建造，可训练轻骑兵与重骑兵' },
+    { id: 'range', name: '靶场', color: '#b4a478', w: 1, h: 1, desc: '完成军制改革后可建造，可训练弓箭手；火药科技后解锁火枪兵' },
   ];
 
   // 卡通简约物品图标（统一 viewBox 40x40）
@@ -383,6 +387,24 @@
                '<rect x="17" y="24" width="6" height="11" fill="#795831"/>' +
                '<path d="M8 23h6 M26 23h6" stroke="#fff5d8" stroke-width="2"/>' +
                '<circle cx="29" cy="28" r="3" fill="#e0bd68" stroke="#9a743b" stroke-width="1"/>',
+    market: '<rect x="5" y="18" width="30" height="17" fill="#eddaa3" stroke="#9b713b" stroke-width="1.2"/>' +
+            '<path d="M4 18 L10 10 L16 18 L22 10 L28 18 L34 10 L38 18 Z" fill="#c56e4e" stroke="#91503c" stroke-width="1.1"/>' +
+            '<rect x="17" y="25" width="6" height="10" fill="#845933"/>' +
+            '<path d="M8 24h6 M26 24h6" stroke="#fff5d8" stroke-width="2"/>' +
+            '<circle cx="11" cy="29" r="2.5" fill="#e0bd68" stroke="#9a743b" stroke-width="0.8"/>',
+    barracks: '<rect x="5" y="16" width="30" height="19" fill="#b9c1b0" stroke="#687262" stroke-width="1.2"/>' +
+              '<path d="M4 16 L20 7 L36 16 Z" fill="#727d6c" stroke="#596350" stroke-width="1.2"/>' +
+              '<rect x="17" y="24" width="6" height="11" fill="#596350"/>' +
+              '<path d="M12 28 h16 M20 17 v10" stroke="#d9c995" stroke-width="1.4"/>',
+    stable: '<rect x="5" y="18" width="30" height="17" fill="#d9bf8a" stroke="#8c7042" stroke-width="1.2"/>' +
+            '<path d="M4 18 L20 8 L36 18 Z" fill="#9b7145" stroke="#704d2d" stroke-width="1.2"/>' +
+            '<rect x="17" y="25" width="6" height="10" fill="#704d2d"/>' +
+            '<path d="M10 29 q4 -7 8 0 q4 -7 8 0" stroke="#6e5033" stroke-width="1.4" fill="none"/>',
+    range: '<rect x="5" y="17" width="30" height="18" fill="#cdbf91" stroke="#80734d" stroke-width="1.2"/>' +
+           '<path d="M4 17 L20 8 L36 17 Z" fill="#8e8259" stroke="#6d613e" stroke-width="1.2"/>' +
+           '<rect x="17" y="25" width="6" height="10" fill="#6d613e"/>' +
+           '<circle cx="28" cy="25" r="4" fill="none" stroke="#d85e49" stroke-width="1.5"/>' +
+           '<circle cx="28" cy="25" r="1.2" fill="#d85e49"/>',
     clay: '<ellipse cx="20" cy="24" rx="12" ry="9" fill="#c9a98a"/>' +
           '<ellipse cx="20" cy="24" rx="12" ry="9" fill="none" stroke="#9a6f4f" stroke-width="1.2"/>' +
           '<path d="M9 21q11 -5 22 0" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.5"/>' +
@@ -530,6 +552,26 @@
       id: 'tradepost', name: '贸易站', job: '贸易员',
       body: '#e6d4a4', roof: '#a87945', accent: '#795831',
       produces: [], interval: 1, laborCap: 1
+    },
+    market: {
+      id: 'market', name: '市场',
+      body: '#eddaa3', roof: '#c56e4e', accent: '#845933',
+      produces: [], interval: 1, laborCap: 0
+    },
+    barracks: {
+      id: 'barracks', name: '兵营', job: '教官',
+      body: '#b9c1b0', roof: '#727d6c', accent: '#596350',
+      produces: [], interval: 1, laborCap: 1
+    },
+    stable: {
+      id: 'stable', name: '马厩', job: '骑兵教官',
+      body: '#d9bf8a', roof: '#9b7145', accent: '#704d2d',
+      produces: [], interval: 1, laborCap: 1
+    },
+    range: {
+      id: 'range', name: '靶场', job: '射击教官',
+      body: '#cdbf91', roof: '#8e8259', accent: '#6d613e',
+      produces: [], interval: 1, laborCap: 1
     }
   };
 
@@ -542,6 +584,9 @@
     { name: '牧民',   icon: 'pasture' }
     , { name: '科学家', icon: 'institute' }
     , { name: '贸易员', icon: 'tradepost' }
+    , { name: '教官', icon: 'barracks' }
+    , { name: '骑兵教官', icon: 'stable' }
+    , { name: '射击教官', icon: 'range' }
   ];
   Game.jobName = function (id) {
     const def = Game.BUILDINGS[id];
@@ -551,6 +596,7 @@
   // ---------- 物品栏 ----------
   Game.INV_COLS = 8;
   Game.INV_ROWS = 4;
+  Game.INV_EXPANDED_ROWS = 8;
   Game.INV_CELL = 42;
   Game.MAX_STACK = 100;    // 每组物品堆叠上限
   // ---------- 合成器 ----------
@@ -576,6 +622,10 @@
     { out: 'pasture', group: 'building', req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 1 }] }
     , { out: 'institute', group: 'building', req: [{ id: 'plank', n: 3 }, { id: 'stone', n: 3 }, { id: 'brick', n: 1 }] }
     , { out: 'tradepost', group: 'building', requires: ['commerce'], req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'gold', n: 1 }] }
+    , { out: 'market', group: 'building', requires: ['marketSystem'], req: [{ id: 'plank', n: 3 }, { id: 'stone', n: 2 }, { id: 'cloth', n: 2 }] }
+    , { out: 'barracks', group: 'building', req: [{ id: 'plank', n: 3 }, { id: 'stone', n: 3 }, { id: 'iron', n: 1 }] }
+    , { out: 'stable', group: 'building', requires: ['militaryReform'], req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'iron', n: 1 }] }
+    , { out: 'range', group: 'building', requires: ['militaryReform'], req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'iron', n: 1 }] }
   ];
   Game.RECIPE_GROUPS = [
     { key: 'material', title: '材料合成' },
@@ -597,16 +647,27 @@
       req: [{ id: 'plank', n: 2 }, { id: 'stone', n: 2 }, { id: 'copper', n: 1 }],
       desc: '确立统一货币。解锁金币，获得 1 金币时文明指数 +1。'
     },
+    marketSystem: {
+      id: 'marketSystem', category: 'economy', name: '市场制度', days: 30,
+      req: [{ id: 'plank', n: 2 }, { id: 'cloth', n: 2 }, { id: 'gold', n: 1 }],
+      requires: ['currency'],
+      desc: '建立市场制度，解锁市场建筑与商品售卖。'
+    },
     commerce: {
       id: 'commerce', category: 'economy', name: '商业契约', days: 60,
       req: [{ id: 'cloth', n: 2 }, { id: 'gold', n: 1 }, { id: 'bread', n: 2 }],
-      requires: ['currency'],
+      requires: ['marketSystem'],
       desc: '建立规范的商业契约，解锁贸易站建造配方。'
     },
     foodProcessing: {
       id: 'foodProcessing', category: 'production', name: '食品加工', days: 30,
       req: [{ id: 'plank', n: 2 }, { id: 'meat', n: 2 }, { id: 'fish', n: 2 }],
       desc: '掌握烹制技术，解锁烤肉与烤鱼配方。'
+    },
+    warehousing: {
+      id: 'warehousing', category: 'production', name: '仓储管理', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'stone', n: 3 }, { id: 'cloth', n: 2 }],
+      desc: '建立规范仓储体系，物品栏行数翻倍。'
     },
     forestry: {
       id: 'forestry', category: 'building', buildingId: 'lumbermill', name: '林业机械', days: 60,
@@ -632,8 +693,37 @@
       id: 'fieldSurvey', category: 'science', name: '野外勘察', days: 60,
       req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'copper', n: 1 }],
       desc: '研发野外勘察科技，使得探索者能够获得的资源量翻倍。'
+    },
+    literacy: {
+      id: 'literacy', category: 'culture', name: '文字与度量', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 3 }, { id: 'copper', n: 2 }],
+      desc: '建立文字记录与统一度量体系，开启科技文明奖励。'
+    },
+    education: {
+      id: 'education', category: 'culture', name: '教育制度', days: 60,
+      req: [{ id: 'plank', n: 4 }, { id: 'cloth', n: 3 }, { id: 'stone', n: 3 }],
+      requires: ['literacy'],
+      desc: '建立系统教育制度，解锁大学建筑。'
+    },
+    militaryReform: {
+      id: 'militaryReform', category: 'military', name: '军制改革', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'cloth', n: 2 }, { id: 'iron', n: 2 }],
+      desc: '确立军队编制与训练制度，解锁马厩与靶场。'
+    },
+    gunpowder: {
+      id: 'gunpowder', category: 'military', name: '火药技术', days: 60,
+      req: [{ id: 'plank', n: 3 }, { id: 'iron', n: 3 }, { id: 'copper', n: 2 }],
+      requires: ['militaryReform'],
+      desc: '掌握火药技术，解锁靶场中的火枪兵。'
     }
   };
+  Game.MILITARY_UNITS = [
+    { id: 'infantry', name: '步兵', building: 'barracks', unlock: null },
+    { id: 'lightCavalry', name: '轻骑兵', building: 'stable', unlock: 'militaryReform' },
+    { id: 'heavyCavalry', name: '重骑兵', building: 'stable', unlock: 'militaryReform' },
+    { id: 'archer', name: '弓箭手', building: 'range', unlock: 'militaryReform' },
+    { id: 'musketeer', name: '火枪兵', building: 'range', unlock: 'gunpowder' }
+  ];
   Game.hasTech = function (id) {
     return !!(Game.state && Game.state.techs && Game.state.techs.includes(id));
   };

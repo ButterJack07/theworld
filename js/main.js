@@ -25,7 +25,9 @@
   const eventPanel = document.getElementById('eventPanel');
   const eventTitle = document.getElementById('eventTitle');
   const eventText = document.getElementById('eventText');
+  const eventKicker = document.getElementById('eventKicker');
   function showEmergencyEvent(title, text) {
+    if (eventKicker) eventKicker.textContent = '紧急事件';
     if (eventTitle) eventTitle.textContent = title;
     if (eventText) eventText.textContent = text;
     eventOverlay.classList.remove('hidden');
@@ -36,6 +38,13 @@
     eventPanel.classList.add('hidden');
   }
   Game.showEmergencyEvent = showEmergencyEvent;
+  Game.showAchievementEvent = function (title, text) {
+    if (eventKicker) eventKicker.textContent = '成就达成';
+    if (eventTitle) eventTitle.textContent = title;
+    if (eventText) eventText.textContent = text;
+    eventOverlay.classList.remove('hidden');
+    eventPanel.classList.remove('hidden');
+  };
   document.getElementById('eventClose').addEventListener('click', closeEmergencyEvent);
 
   Game.addCoins = function (amount) {
@@ -46,6 +55,73 @@
     Game.updateStatus();
     return true;
   };
+
+  const MARKET_GOODS = [
+    { group: '基础原料', batch: 10, goods: [{ id: 'wood', coins: 2 }, { id: 'stone', coins: 2 }, { id: 'berry', coins: 3 }, { id: 'fish', coins: 3 }, { id: 'meat', coins: 4 }, { id: 'wheat', coins: 3 }] },
+    { group: '加工材料', batch: 5, goods: [{ id: 'plank', coins: 4 }, { id: 'cloth', coins: 5 }, { id: 'brick', coins: 5 }, { id: 'bread', coins: 5 }, { id: 'clay', coins: 3 }] },
+    { group: '矿物与珍品', batch: 1, goods: [{ id: 'iron', coins: 3 }, { id: 'copper', coins: 7 }, { id: 'gold', coins: 9 }, { id: 'amber', coins: 12 }, { id: 'diamond', coins: 18 }] }
+  ];
+  let marketBuilding = null;
+  const marketOverlay = document.getElementById('marketOverlay');
+  const marketPanel = document.getElementById('marketPanel');
+  function closeMarketPanel() {
+    marketBuilding = null;
+    marketOverlay.classList.add('hidden');
+    marketPanel.classList.add('hidden');
+  }
+  function openMarketPanel(building) {
+    marketBuilding = building;
+    renderMarketPanel();
+    marketOverlay.classList.remove('hidden');
+    marketPanel.classList.remove('hidden');
+  }
+  Game.openMarketPanel = openMarketPanel;
+  document.getElementById('marketClose').addEventListener('click', closeMarketPanel);
+  marketOverlay.addEventListener('click', closeMarketPanel);
+  function sellMarketGood(good, batch) {
+    if (Game.state.mode !== 'creative' && Game.countInventoryItem(good.id) < batch) return;
+    if (Game.state.mode !== 'creative') Game.takeInventoryItems([{ id: good.id, n: batch }]);
+    Game.addCoins(good.coins);
+    Game.state.marketRevenue += good.coins;
+    Game.saveState();
+    Game.renderInventory();
+    Game.updateStatus();
+    renderMarketPanel();
+  }
+  function renderMarketPanel() {
+    const status = document.getElementById('marketStatus');
+    const groups = document.getElementById('marketGroups');
+    const revenue = `累计市场收入 ${Game.state.marketRevenue} 金币。`;
+    status.textContent = Game.state.mode === 'creative'
+      ? `创造模式：物品可自由售卖，金币仍按市场标价获得。${revenue}`
+      : `选择一批库存货物出售。市场即时结算金币，文明程度会随金币同步提升。${revenue}`;
+    groups.innerHTML = '';
+    MARKET_GOODS.forEach(group => {
+      const section = document.createElement('section');
+      section.className = 'market-group';
+      const title = document.createElement('h3');
+      title.textContent = `${group.group} · 每批 ${group.batch} 个`;
+      const goods = document.createElement('div');
+      goods.className = 'market-good-list';
+      group.goods.forEach(good => {
+        const item = Game.ITEMS.find(candidate => candidate.id === good.id);
+        const stock = Game.countInventoryItem(good.id);
+        const ready = Game.state.mode === 'creative' || stock >= group.batch;
+        const row = document.createElement('div');
+        row.className = 'market-good' + (ready ? ' ready' : '');
+        row.innerHTML = `<span class="market-good-icon">${Game.itemIconSVG(good.id)}</span><span class="market-good-name">${item.name}<small>库存 ${stock}</small></span><span class="market-good-price">+${good.coins} 金币</span>`;
+        const sell = document.createElement('button');
+        sell.className = 'market-sell';
+        sell.textContent = `出售 ${group.batch}`;
+        sell.disabled = !ready;
+        sell.addEventListener('click', () => sellMarketGood(good, group.batch));
+        row.appendChild(sell);
+        goods.appendChild(row);
+      });
+      section.append(title, goods);
+      groups.appendChild(section);
+    });
+  }
 
   const TRADE_POOLS = {
     common: ['wood', 'stone', 'wheat', 'fish', 'meat', 'berry'],
@@ -181,7 +257,8 @@
       { id: 'economy', name: '经济', note: '货币、贸易与商路', available: true },
       { id: 'production', name: '生产', note: '食品加工与生产工艺', available: true },
       { id: 'science', name: '科学', note: '知识与探索效率', available: true },
-      { id: 'military', name: '军事', note: '防御与应急处置', available: false }
+      { id: 'military', name: '军事', note: '军队编制与战备训练', available: true },
+      { id: 'culture', name: '文化', note: '文字、教育与大学', available: true }
     ].forEach(option => {
       const button = document.createElement('button');
       button.className = 'institute-choice' + (option.available ? '' : ' locked');
@@ -214,7 +291,7 @@
   function openResearchPanel(building) {
     researchInstitute = building;
     const title = building.id === 'institute'
-      ? (building.category === 'production' ? '生产研究所' : '经济研究所')
+      ? ({ production: '生产研究所', economy: '经济研究所', science: '科学研究所', culture: '文化研究所', military: '军事研究所' }[building.category] || '研究所')
       : `${Game.BUILDINGS[building.id].name}研究`;
     document.querySelector('#researchPanel .panel-title').textContent = title;
     renderResearchPanel();
@@ -279,19 +356,29 @@
     });
   }
   function tickResearch(building) {
-    const canResearch = (building.id === 'institute' && ['economy', 'production', 'science'].includes(building.category)) || !!Game.TECHNOLOGIES[building.researchId] && Game.TECHNOLOGIES[building.researchId].buildingId === building.id;
+    const canResearch = (building.id === 'institute' && ['economy', 'production', 'science', 'culture', 'military'].includes(building.category)) || !!Game.TECHNOLOGIES[building.researchId] && Game.TECHNOLOGIES[building.researchId].buildingId === building.id;
     if (!canResearch || !building.researchId || (!building.workers && Game.state.mode !== 'creative')) return;
     const tech = Game.TECHNOLOGIES[building.researchId];
     if (!tech) return;
     building.researchDays = (building.researchDays || 0) + speed;
     if (building.researchDays < tech.days) return;
     if (!Game.state.techs.includes(tech.id)) Game.state.techs.push(tech.id);
+    if (tech.id === 'literacy') {
+      const priorTechs = Game.state.techs.filter(id => id !== 'literacy');
+      Game.state.civ += 200 + priorTechs.length * 50;
+      Game.state.techCivRewarded = Game.state.techs.slice();
+      Game.showAchievementEvent('文字与度量', `文字与度量体系建立，文明程度 +200；此前已完成科技按每项 +50 补发。`);
+    } else if (Game.hasTech('literacy') && !Game.state.techCivRewarded.includes(tech.id)) {
+      Game.state.techCivRewarded.push(tech.id);
+      Game.state.civ += 100;
+    }
     building.researchId = null;
     building.researchDays = 0;
+    Game.renderInventory();
     Game.renderRecipeList();
     Game.renderCrafting();
     Game.saveState();
-    showEmergencyEvent('研究完成', `“${tech.name}”已完成。${tech.desc}`);
+    if (tech.id !== 'literacy') showEmergencyEvent('研究完成', `“${tech.name}”已完成。${tech.desc}`);
     if (researchInstitute === building) renderResearchPanel();
   }
 
@@ -388,6 +475,41 @@
     laborToggle.classList.toggle('open', !laborPanel.classList.contains('hidden'));
     if (!laborPanel.classList.contains('hidden')) renderLabor();
   });
+
+  const militaryToggle = document.getElementById('militaryToggle');
+  const militaryPanel = document.getElementById('militaryPanel');
+  militaryToggle.addEventListener('click', () => {
+    militaryPanel.classList.toggle('hidden');
+    militaryToggle.classList.toggle('open', !militaryPanel.classList.contains('hidden'));
+    if (!militaryPanel.classList.contains('hidden')) renderMilitary();
+  });
+
+  function renderMilitary() {
+    const summary = document.getElementById('militarySummary');
+    const list = document.getElementById('militaryList');
+    if (!summary || !list) return;
+    const total = Object.values(Game.state.military || {}).reduce((sum, count) => sum + (Number(count) || 0), 0);
+    summary.textContent = `现有军力 ${total} 人 · 军队生产与作战系统暂未开放`;
+    list.innerHTML = '';
+    Game.MILITARY_UNITS.forEach(unit => {
+      const unlocked = !unit.unlock || Game.hasTech(unit.unlock);
+      const building = Game.BUILDINGS[unit.building];
+      const row = document.createElement('div');
+      row.className = 'military-row' + (unlocked ? '' : ' locked');
+      const icon = document.createElement('span');
+      icon.className = 'military-icon';
+      icon.innerHTML = Game.itemIconSVG(unit.building);
+      const info = document.createElement('span');
+      info.className = 'military-unit';
+      info.innerHTML = `<b>${unit.name}</b><small>${building.name}${unlocked ? '' : ' · 尚未解锁'}</small>`;
+      const count = document.createElement('span');
+      count.className = 'military-count';
+      count.textContent = `${unlocked ? (Game.state.military[unit.id] || 0) : '—'} 人`;
+      row.append(icon, info, count);
+      list.appendChild(row);
+    });
+  }
+  Game.renderMilitary = renderMilitary;
 
   function laborBuildings() {
     return Game.state.buildings.filter(b => (Game.BUILDINGS[b.id].laborCap || 0) > 0);
@@ -1977,7 +2099,8 @@
         });
       } else {
         const active = b.researchId ? Game.TECHNOLOGIES[b.researchId] : null;
-        researchBtn.textContent = active ? `研究中：${active.name}` : `查看${b.category === 'production' ? '生产' : '经济'}研究`;
+        const categoryName = { production: '生产', economy: '经济', science: '科学', culture: '文化', military: '军事' }[b.category] || '研究';
+        researchBtn.textContent = active ? `研究中：${active.name}` : `查看${categoryName}研究`;
         researchBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           Game.openResearchPanel(b);
@@ -2011,6 +2134,18 @@
         Game.openTradePanel(b);
       });
       card.appendChild(tradeBtn);
+    }
+
+    if (b.id === 'market') {
+      const marketBtn = document.createElement('button');
+      marketBtn.type = 'button';
+      marketBtn.className = 'bi-labor-btn market-open-btn';
+      marketBtn.textContent = '进入市场';
+      marketBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        Game.openMarketPanel(b);
+      });
+      card.appendChild(marketBtn);
     }
 
     statusEl.appendChild(card);

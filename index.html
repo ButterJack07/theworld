@@ -17,6 +17,7 @@
 
   <div class="top-right enter d1">
     <button id="laborToggle" class="play-btn recipe-btn status-labor" title="查看劳动力分配情况"><span>👥</span><b>劳动力</b></button>
+    <button id="militaryToggle" class="play-btn recipe-btn status-military" title="查看军队数据"><span>⚔</span><b>军事</b></button>
     <div class="pop-pill status-population">人口 <b id="pop">1 / 5</b></div>
     <div class="pop-pill civ status-civilization">文明程度 <b id="civ">0</b></div>
     <div class="pop-pill food status-food">食物储备 <b id="food">10</b></div>
@@ -61,6 +62,11 @@
     <h2 class="panel-title">劳动力分配</h2>
     <div class="labor-summary" id="laborSummary"></div>
     <div class="labor-list" id="laborList"></div>
+  </div>
+  <div class="recipe-panel military-panel hidden" id="militaryPanel">
+    <h2 class="panel-title">军事面板</h2>
+    <div class="military-summary" id="militarySummary"></div>
+    <div class="military-list" id="militaryList"></div>
   </div>
   <div class="settings-panel hidden" id="settingsPanel">
     <button id="settingsClose" class="settings-close" title="关闭设置">✕</button>
@@ -119,7 +125,7 @@
   <div class="event-overlay hidden" id="eventOverlay"></div>
   <div class="event-panel hidden" id="eventPanel" role="dialog" aria-modal="true" aria-labelledby="eventTitle">
     <div class="event-mark">!</div>
-    <div class="event-kicker">紧急事件</div>
+    <div class="event-kicker" id="eventKicker">紧急事件</div>
     <h2 id="eventTitle">食物紧缺</h2>
     <p id="eventText">食物仓已经耗尽。尽快将可食用物品加入食物仓，为聚落补充储备。</p>
     <button id="eventClose" class="restart-btn">我知道了</button>
@@ -147,6 +153,17 @@
     </div>
     <div class="trade-status" id="tradeStatus"></div>
     <div class="trade-orders" id="tradeOrders"></div>
+  </div>
+  <div class="choice-overlay hidden" id="marketOverlay"></div>
+  <div class="choice-panel market-panel hidden" id="marketPanel">
+    <button id="marketClose" class="settings-close" title="关闭市场">✕</button>
+    <div class="market-header">
+      <div class="market-emblem">$</div>
+      <div><div class="market-kicker">公开交易</div><h2>市场</h2></div>
+      <div class="market-note">市场价格稳定，但低于贸易站委托收益</div>
+    </div>
+    <div class="market-status" id="marketStatus"></div>
+    <div class="market-groups" id="marketGroups"></div>
   </div>
   <div class="controls enter d6">
     <button id="settingsToggle" class="play-btn recipe-btn" title="展开 / 收起设置菜单"><span>⚙️</span><b>设置</b></button>
