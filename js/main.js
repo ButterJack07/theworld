@@ -794,14 +794,6 @@
     expandToggle.classList.toggle('open', !expandPanel.classList.contains('hidden'));
   });
 
-  // 临时调试按钮：点一下立即触发一次随机事件
-  const debugEventBtn = document.getElementById('debugEventBtn');
-  if (debugEventBtn) {
-    debugEventBtn.addEventListener('click', () => {
-      triggerDebugRandomEvent();
-    });
-  }
-
   // 设置菜单：点击圆形按钮展开 / 收起（选项卡：操作说明 / 游戏）
   // 打开时默认暂停游戏，关闭时恢复打开前的速度设置；打开时盖上半透明遮罩
   const settingsToggle = document.getElementById('settingsToggle');
