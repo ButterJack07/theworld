@@ -53,6 +53,7 @@
     Game.craftingItems = Game.craftingItems.filter(p => !Game.FOOD_VALUES[p.item.id]);
     Game.state.food += food;
     Game.state.foodShortageActive = false;
+    if (Game.finishEventByType) Game.finishEventByType('foodShortage');
     renderCrafting();
     Game.updateStatus();
     Game.saveState();

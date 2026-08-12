@@ -45,7 +45,7 @@
     Game.mode = mode;
     Game.placed = Game.initInventory();
     Game.craftingItems = [];
-    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, coins: 0, marketRevenue: 0, food: 10, foodShortageActive: false, techs: [], techCivRewarded: [], military: {}, tradeOrders: [], tradeRefreshes: 0, tradeSettledMonth: -1, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '', createdAt: Date.now() };
+    Game.state = { villagers: 0, villagersCells: [], buildings: [], civ: 0, coins: 0, marketRevenue: 0, food: 10, foodShortageActive: false, events: [], eventFlags: {}, eventHistory: {}, randomEventMonth: -1, feastActive: false, feastMonth: -1, harvestMonth: -1, droughtMonths: 0, fireBuildings: [], caveBuildings: [], stormBuildings: [], missingExplorers: 0, dispatched: [], refugees: [], refugeeNextId: 1, tutorUsed: false, researchBonus: 1, tradePending: null, tradeOrders: [], tradeRefreshes: 0, tradeSettledMonth: -1, day: 1, mode: mode || 'civilization', won: false, playerName: '', saveName: '', createdAt: Date.now() };
     Game.base = { ...Game.BASE_DEFAULT };
     Game.spawnStarterTown();
     // 初始人口 2：为每位人口分配一个站格（空闲劳动力 = 探索者）
@@ -73,6 +73,24 @@
        marketRevenue: Game.state.marketRevenue || 0,
        food: Game.state.food,
        foodShortageActive: !!Game.state.foodShortageActive,
+        events: Array.isArray(Game.state.events) ? Game.state.events : [],
+       eventFlags: Game.state.eventFlags || {},
+       eventHistory: Game.state.eventHistory || {},
+        randomEventMonth: Number.isInteger(Game.state.randomEventMonth) ? Game.state.randomEventMonth : -1,
+        feastActive: !!Game.state.feastActive,
+        feastMonth: Number.isInteger(Game.state.feastMonth) ? Game.state.feastMonth : -1,
+        harvestMonth: Number.isInteger(Game.state.harvestMonth) ? Game.state.harvestMonth : -1,
+        droughtMonths: Game.state.droughtMonths || 0,
+        fireBuildings: Game.state.fireBuildings || [],
+        caveBuildings: Game.state.caveBuildings || [],
+        stormBuildings: Game.state.stormBuildings || [],
+        missingExplorers: Game.state.missingExplorers || 0,
+        dispatched: Game.state.dispatched || [],
+        refugees: Game.state.refugees || [],
+        refugeeNextId: Game.state.refugeeNextId || 1,
+        tutorUsed: !!Game.state.tutorUsed,
+        researchBonus: Game.state.researchBonus || 1,
+        tradePending: Game.state.tradePending || null,
        techs: Array.isArray(Game.state.techs) ? Game.state.techs : [],
        techCivRewarded: Array.isArray(Game.state.techCivRewarded) ? Game.state.techCivRewarded : [],
        military: Game.state.military || {},
@@ -112,6 +130,24 @@
         marketRevenue: Math.max(0, Number(saved.marketRevenue) || 0),
         food: Math.max(0, Number.isFinite(saved.food) ? saved.food : 10),
         foodShortageActive: !!saved.foodShortageActive,
+        events: Array.isArray(saved.events) ? saved.events : [],
+        eventFlags: saved.eventFlags && typeof saved.eventFlags === 'object' ? saved.eventFlags : {},
+        eventHistory: saved.eventHistory && typeof saved.eventHistory === 'object' ? saved.eventHistory : {},
+        randomEventMonth: Number.isInteger(saved.randomEventMonth) ? saved.randomEventMonth : -1,
+        feastActive: !!saved.feastActive,
+        feastMonth: Number.isInteger(saved.feastMonth) ? saved.feastMonth : -1,
+        harvestMonth: Number.isInteger(saved.harvestMonth) ? saved.harvestMonth : -1,
+        droughtMonths: Math.max(0, Number(saved.droughtMonths) || 0),
+        fireBuildings: Array.isArray(saved.fireBuildings) ? saved.fireBuildings : [],
+        caveBuildings: Array.isArray(saved.caveBuildings) ? saved.caveBuildings : [],
+        stormBuildings: Array.isArray(saved.stormBuildings) ? saved.stormBuildings : [],
+        missingExplorers: Math.max(0, Number(saved.missingExplorers) || 0),
+        dispatched: Array.isArray(saved.dispatched) ? saved.dispatched : [],
+        refugees: Array.isArray(saved.refugees) ? saved.refugees : [],
+        refugeeNextId: Math.max(1, Number(saved.refugeeNextId) || 1),
+        tutorUsed: !!saved.tutorUsed,
+        researchBonus: Math.max(1, Number(saved.researchBonus) || 1),
+        tradePending: saved.tradePending && typeof saved.tradePending === 'object' ? saved.tradePending : null,
         techs,
         techCivRewarded: rewarded,
         military: saved.military && typeof saved.military === 'object' ? saved.military : {},

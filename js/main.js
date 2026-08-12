@@ -26,25 +26,399 @@
   const eventTitle = document.getElementById('eventTitle');
   const eventText = document.getElementById('eventText');
   const eventKicker = document.getElementById('eventKicker');
-  function showEmergencyEvent(title, text) {
-    if (eventKicker) eventKicker.textContent = '紧急事件';
-    if (eventTitle) eventTitle.textContent = title;
-    if (eventText) eventText.textContent = text;
-    eventOverlay.classList.remove('hidden');
-    eventPanel.classList.remove('hidden');
-  }
-  function closeEmergencyEvent() {
-    eventOverlay.classList.add('hidden');
-    eventPanel.classList.add('hidden');
-  }
-  Game.showEmergencyEvent = showEmergencyEvent;
-  Game.showAchievementEvent = function (title, text) {
-    if (eventKicker) eventKicker.textContent = '成就达成';
-    if (eventTitle) eventTitle.textContent = title;
-    if (eventText) eventText.textContent = text;
-    eventOverlay.classList.remove('hidden');
-    eventPanel.classList.remove('hidden');
+  const eventActions = document.getElementById('eventActions');
+  const eventTabs = document.getElementById('eventTabs');
+  const eventDetail = document.getElementById('eventDetail');
+  let openEventId = null;
+  let eventStackEl = null;
+  const EVENT_META = {
+    foodShortage: { title: '食物紧缺', icon: '!', tone: 'danger', kicker: '紧急事件' },
+    feast: { title: '聚落庆典', icon: '★', tone: 'good', kicker: '随机事件' },
+    refugees: { title: '流民抵达', icon: '＋', tone: 'good', kicker: '随机事件' },
+    harvest: { title: '丰收季', icon: '✦', tone: 'good', kicker: '随机事件' },
+    drought: { title: '干旱', icon: '☼', tone: 'danger', kicker: '随机事件' },
+    forestFire: { title: '森林火灾', icon: '♨', tone: 'danger', kicker: '随机事件' },
+    caveCollapse: { title: '矿井坍塌', icon: '!', tone: 'danger', kicker: '随机事件' },
+    seaStorm: { title: '海上风暴', icon: '≈', tone: 'danger', kicker: '随机事件' },
+    surprise: { title: '意外之喜', icon: '★', tone: 'good', kicker: '探索发现' },
+    missingExplorer: { title: '探索者失踪', icon: '?', tone: 'warning', kicker: '紧急事件' },
+    tradeLost: { title: '商队迷路', icon: '?', tone: 'warning', kicker: '贸易事件' },
+    scholar: { title: '学者来访', icon: '✎', tone: 'good', kicker: '知识事件' },
+    ruins: { title: '古代遗迹', icon: '◆', tone: 'good', kicker: '探索发现' },
+    militaryAccident: { title: '军械试验事故', icon: '⚔', tone: 'danger', kicker: '军事事件' }
   };
+  function eventMonth() { return Math.floor((Game.state.day - 1) / Game.DAYS_PER_MONTH); }
+  function eventMeta(type) { return EVENT_META[type] || { title: '事件', icon: '!', tone: 'warning', kicker: '事件' }; }
+  function getEvent(type) { return (Game.state.events || []).find(e => e.type === type); }
+  function eventTextFor(event) {
+    const s = Game.state;
+    const meta = eventMeta(event.type);
+    if (event.type === 'foodShortage') {
+      const months = event.months || 0;
+      return `食物仓已经耗尽。当前已持续 ${months} 个月。${months >= 4 ? '生产效率与探索次数已降低 50%。' : months >= 2 ? '生产效率与探索次数已降低 25%。' : '若持续缺粮，聚落的生产与探索将受到影响。'}`;
+    }
+    if (event.type === 'feast') return '居民希望举办一场庆典。举办后本月食物消耗翻倍，生产效率与探索次数降低 25%，但文明程度会增加。';
+    if (event.type === 'refugees') return `有 ${event.count} 名流民请求加入聚落。接纳后，他们将有 3 个月不能工作，并在这段时间内消耗双倍食物。`;
+    if (event.type === 'harvest') return '今年的农田迎来丰收。农田与农庄的小麦产量在本月提高 100%，无需额外操作。';
+    if (event.type === 'drought') return `干旱仍在持续 ${event.months || 1} 个月。农田与农庄产量降低 50%，请用渔业、牧业或库存食物维持聚落。`;
+    if (event.type === 'forestFire') return '森林火灾阻断了部分伐木生产。可以派遣探索者救火，也可以等待火势自行平息。';
+    if (event.type === 'caveCollapse') return '矿井发生坍塌，相关建筑暂时无法正常生产。强行开采可能引发二次事故。';
+    if (event.type === 'seaStorm') return '海上风暴正在影响渔业。可以停船避险，也可以冒险出海，但可能造成严重人员损失。';
+    if (event.type === 'surprise') return '探索者在基地附近发现了额外资源，这是一份意外之喜。';
+    if (event.type === 'missingExplorer') return '一名探索者在远处探索时失去联系。可以派人寻找，也可以等待他自行归来。';
+    if (event.type === 'tradeLost') return `待结算商队在 ${Math.max(0, (event.deadlineMonth || eventMonth()) - eventMonth())} 个月内仍未找到。${event.searching ? '已派遣探索者寻找，但即使找到也无法挽回本次交易。' : '如果不处理，期限结束后本次交易将丢失。'}`;
+    if (event.type === 'scholar') return `一位学者来到聚落，愿意带来知识、研究进度和文明奖励。${Math.max(0, (event.deadlineMonth || eventMonth()) - eventMonth())} 个月内需要作出决定。`;
+    if (event.type === 'ruins') return '探索者发现了一处古代遗迹，发掘后将获得随机宝藏与文明奖励。';
+    if (event.type === 'militaryAccident') return '军械试验发生事故，相关军事建筑暂时无法正常训练。';
+    return meta.title;
+  }
+  function eventActionHint(event, action) {
+    const hints = {
+      feast: {
+        accept: '举办庆典：本月食物消耗翻倍，生产效率与探索次数降低 25%，文明程度增加 30 + 当前人口 × 5。',
+        decline: '不举办庆典：不消耗食物，不改变生产、探索和文明程度。'
+      },
+      refugees: {
+        accept: '接纳流民：人口增加，但流民连续 3 个月不能工作，并且每名流民每月额外消耗 2 点食物；同时获得每名流民 20 点文明奖励。',
+        decline: '暂不接纳：不改变人口、食物和文明程度，本次流民事件结束。'
+      },
+      forestFire: {
+        dispatch: '派遣探索者救火：占用 1 名探索者处理 1 个月，完成后火灾结束并恢复相关伐木建筑。',
+        wait: '等待火势熄灭：不占用人口、不消耗资源，但相关伐木建筑会继续停产约 2 个月。'
+      },
+      caveCollapse: {
+        reinforce: '立即加固：立即结束坍塌并恢复采矿，但需要后续补充加固资源。',
+        wait: '暂时封闭：不冒险、不额外消耗资源，等待约 2 个月后恢复生产。',
+        force: '强行开采：本月继续尝试生产；有 50% 概率触发二次事故，导致该建筑内所有劳动力死亡。'
+      },
+      seaStorm: {
+        避险: '停船避险：渔业建筑停产约 1 个月，不承担人员伤亡风险。',
+        冒险: '冒险出海：尝试保留出海收益；有 50% 概率触发事故，导致该建筑内所有劳动力死亡。'
+      },
+      missingExplorer: {
+        dispatch: '派人寻找：占用 1 名探索者处理 1 个月，完成后失踪的探索者归队。',
+        wait: '等待归来：不占用其他人口，但探索次数会暂时减少，等待约 2 个月后归队。'
+      },
+      tradeLost: {
+        dispatch: '派遣探索者寻找：占用 1 名探索者处理 1 个月；之后有 50% 概率让待结算贸易正常完成，否则继续延迟 1 个月。',
+        abandon: '放弃寻找：取消本次待结算交易，已扣除的交付资源不会返还。'
+      },
+      scholar: {
+        host: '接待学者：消耗 3 点食物和 50 金币，文明程度 +200，并随机完成一项尚未完成的研究。',
+        teach: '学者授课：消耗 2 点食物和 30 金币，文明程度 +100；之后所有研究时长减半。每个存档只能使用一次。',
+        decline: '礼貌拒绝：不消耗资源，本次学者来访结束。'
+      },
+      ruins: { excavate: '发掘遗迹：自动完成发掘，随机获得 100、200 或 300 点文明奖励。' },
+      militaryAccident: {
+        repair: '立即维修：消耗维修资源并立刻恢复相关军事建筑。',
+        wait: '暂停试验：不消耗资源，军事建筑暂时停用，等待事故自然结束。'
+      }
+    };
+    return (hints[event.type] && hints[event.type][action]) || '';
+  }
+  function finishEvent(event) {
+    if (!event) return;
+    Game.state.events = (Game.state.events || []).filter(e => e.id !== event.id);
+    if (openEventId === event.id) openEventId = null;
+    renderEventCenter();
+    Game.saveState();
+  }
+  Game.finishEvent = finishEvent;
+  Game.finishEventByType = function (type) {
+    const event = getEvent(type);
+    if (event) finishEvent(event);
+  };
+  function addEvent(type, data) {
+    if (!Game.state || getEvent(type)) return null;
+    const event = Object.assign({ id: `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}`, type, createdMonth: eventMonth(), months: 0, searching: false }, data || {});
+    Game.state.events = Game.state.events || [];
+    Game.state.events.push(event);
+    renderEventCenter();
+    openEventId = event.id;
+    showEventPopup(event);
+    return event;
+  }
+  function maybeCreateRandomEvents() {
+    if (!Game.state || Game.state.mode === 'creative') return;
+    const month = eventMonth();
+    if (month < 2 || Game.state.randomEventMonth === month) return;
+    Game.state.randomEventMonth = month;
+    if (Math.random() >= 0.2) return;
+    const candidates = [];
+    if (Game.state.villagers >= 5) candidates.push('feast', 'refugees');
+    if (Game.state.buildings.some(b => b.id === 'farm' || b.id === 'farmstead')) candidates.push('harvest', 'drought');
+    if (Game.state.buildings.some(b => b.id === 'lumber' || b.id === 'lumbermill')) candidates.push('forestFire');
+    if (Game.state.buildings.some(b => b.id === 'mine' || b.id === 'minefactory')) candidates.push('caveCollapse');
+    if (Game.state.buildings.some(b => b.id === 'dock' || b.id === 'dockyard')) candidates.push('seaStorm');
+    if (Game.state.villagers >= 2 && Math.max(0, Game.state.villagers - totalAssigned()) >= 2) candidates.push('missingExplorer');
+    if (Game.state.techs && Game.hasTech('fieldSurvey')) candidates.push('ruins');
+    if (Game.state.buildings.some(b => b.id === 'institute' && b.category && availableResearchTechs().length)) candidates.push('scholar');
+    if (Game.state.buildings.some(b => b.id === 'barracks' || b.id === 'stable' || b.id === 'range') && Game.hasTech('militaryReform')) candidates.push('militaryAccident');
+    if (Game.state.events.length >= 3 || !candidates.length) return;
+    const type = candidates[Math.floor(Math.random() * candidates.length)];
+    if (getEvent(type)) return;
+    const event = addEvent(type, { count: 1 + Math.floor(Math.random() * 5) });
+    if (type === 'scholar') event.deadlineMonth = month + 3;
+    if (type === 'harvest') Game.state.harvestMonth = month;
+    if (type === 'drought') Game.state.droughtMonths = 2;
+    if (type === 'forestFire') {
+      const buildings = Game.state.buildings.filter(b => b.id === 'lumber' || b.id === 'lumbermill');
+      Game.state.fireBuildings = buildings.slice(0, Math.max(1, Math.min(buildings.length, 1 + Math.floor(Math.random() * 2)))).map(b => b.x + ':' + b.y);
+    }
+    if (type === 'caveCollapse') {
+      const buildings = Game.state.buildings.filter(b => b.id === 'mine' || b.id === 'minefactory');
+      Game.state.caveBuildings = buildings.length ? [buildings[Math.floor(Math.random() * buildings.length)].x + ':' + buildings[Math.floor(Math.random() * buildings.length)].y] : [];
+    }
+    if (type === 'seaStorm') {
+      const buildings = Game.state.buildings.filter(b => b.id === 'dock' || b.id === 'dockyard');
+      Game.state.stormBuildings = buildings.length ? [buildings[Math.floor(Math.random() * buildings.length)].x + ':' + buildings[Math.floor(Math.random() * buildings.length)].y] : [];
+    }
+    if (type === 'surprise') { Game.state.civ += 50; }
+    Game.saveState(); renderEventCenter();
+  }
+  function triggerDebugRandomEvent() {
+    if (!Game.state) return;
+    const month = eventMonth();
+    const candidates = [];
+    if (Game.state.villagers >= 5) candidates.push('feast', 'refugees');
+    if (Game.state.buildings.some(b => b.id === 'farm' || b.id === 'farmstead')) candidates.push('harvest', 'drought');
+    if (Game.state.buildings.some(b => b.id === 'lumber' || b.id === 'lumbermill')) candidates.push('forestFire');
+    if (Game.state.buildings.some(b => b.id === 'mine' || b.id === 'minefactory')) candidates.push('caveCollapse');
+    if (Game.state.buildings.some(b => b.id === 'dock' || b.id === 'dockyard')) candidates.push('seaStorm');
+    if (Game.state.villagers >= 2 && Math.max(0, Game.state.villagers - totalAssigned()) >= 2) candidates.push('missingExplorer');
+    if (Game.hasTech('fieldSurvey')) candidates.push('ruins');
+    if (Game.state.buildings.some(b => b.id === 'institute' && b.category && availableResearchTechs().length)) candidates.push('scholar');
+    if (Game.state.buildings.some(b => ['barracks', 'stable', 'range'].includes(b.id)) && Game.hasTech('militaryReform')) candidates.push('militaryAccident');
+    const available = candidates.filter(type => !getEvent(type));
+    if (!available.length) return;
+    const type = available[Math.floor(Math.random() * available.length)];
+    const event = addEvent(type, { count: 1 + Math.floor(Math.random() * 5) });
+    if (!event) return;
+    if (type === 'harvest') Game.state.harvestMonth = month;
+    if (type === 'drought') { Game.state.droughtMonths = 2; event.months = 2; }
+    if (type === 'scholar') event.deadlineMonth = month + 3;
+    if (type === 'forestFire') {
+      const buildings = Game.state.buildings.filter(b => ['lumber', 'lumbermill'].includes(b.id));
+      Game.state.fireBuildings = buildings.slice(0, 1).map(b => b.x + ':' + b.y);
+    }
+    if (type === 'caveCollapse') {
+      const buildings = Game.state.buildings.filter(b => ['mine', 'minefactory'].includes(b.id));
+      const target = buildings[Math.floor(Math.random() * buildings.length)];
+      if (target) Game.state.caveBuildings = [target.x + ':' + target.y];
+    }
+    if (type === 'seaStorm') {
+      const buildings = Game.state.buildings.filter(b => ['dock', 'dockyard'].includes(b.id));
+      const target = buildings[Math.floor(Math.random() * buildings.length)];
+      if (target) Game.state.stormBuildings = [target.x + ':' + target.y];
+    }
+    Game.saveState();
+    renderEventCenter();
+  }
+  function chooseEventAction(event, action) {
+    const s = Game.state;
+    if (!event) return;
+    const month = eventMonth();
+    if (event.type === 'feast' && action === 'accept') {
+      s.feastActive = true; s.feastMonth = month; s.civ += 30 + s.villagers * 5; finishEvent(event);
+    } else if (event.type === 'feast' && action === 'decline') finishEvent(event);
+    else if (event.type === 'refugees') {
+      if (action === 'accept') {
+        const room = Math.max(0, Game.hutCapacity() - s.villagers); const count = Math.min(event.count, room);
+        if (!count) return;
+        s.villagers += count; s.civ += count * 20; s.refugees = s.refugees || []; s.refugees.push({ count, untilMonth: month + 3 });
+        for (let i = 0; i < count; i++) { const spot = Game.findVillagerSpot(s.villagersCells); if (spot) s.villagersCells.push(spot); }
+        finishEvent(event);
+      } else if (action === 'decline') finishEvent(event);
+    } else if (event.type === 'forestFire') {
+      if (action === 'dispatch') { dispatchExplorer(event, '救火', 1); }
+      else if (action === 'wait') { event.untilMonth = month + 2; event.waiting = true; renderEventCenter(); }
+    } else if (event.type === 'caveCollapse') {
+      if (action === 'reinforce') { event.untilMonth = month; finishEvent(event); }
+      else if (action === 'wait') { event.untilMonth = month + 2; event.waiting = true; renderEventCenter(); }
+      else if (action === 'force') { event.force = true; event.untilMonth = month + 1; event.accidentRoll = Math.random() < 0.5; renderEventCenter(); }
+    } else if (event.type === 'seaStorm') {
+      if (action === '避险') { event.untilMonth = month + 1; event.waiting = true; renderEventCenter(); }
+      else if (action === '冒险') { event.adventure = true; event.untilMonth = month + 1; event.accidentRoll = Math.random() < 0.5; renderEventCenter(); }
+    } else if (event.type === 'missingExplorer') {
+      if (action === 'dispatch') dispatchExplorer(event, '寻找失踪探索者', 1);
+      else if (action === 'wait') { event.untilMonth = month + 2; event.waiting = true; renderEventCenter(); }
+    } else if (event.type === 'tradeLost') {
+      if (action === 'dispatch') dispatchExplorer(event, '寻找商队', 1);
+      else if (action === 'abandon') losePendingTrade(event);
+    } else if (event.type === 'scholar') {
+      if (action === 'host') {
+        if (s.food < 3 || s.coins < 50) return;
+        s.food -= 3; s.coins -= 50; s.civ += 200; const choices = availableResearchTechs();
+        if (choices.length) { const tech = choices[Math.floor(Math.random() * choices.length)]; s.techs.push(tech.id); }
+        finishEvent(event);
+      } else if (action === 'teach' && !s.tutorUsed) {
+        if (s.food < 2 || s.coins < 30) return;
+        s.food -= 2; s.coins -= 30; s.civ += 100; s.researchBonus = 2; s.tutorUsed = true; finishEvent(event);
+      } else if (action === 'decline') finishEvent(event);
+    } else if (event.type === 'ruins') { s.civ += [100, 200, 300][Math.floor(Math.random() * 3)]; finishEvent(event); }
+    else if (event.type === 'militaryAccident') { event.untilMonth = action === 'repair' ? month : month + 1; if (action === 'repair') finishEvent(event); else { event.waiting = true; renderEventCenter(); } }
+    Game.updateStatus(); Game.renderInventory(); Game.saveState();
+  }
+  function availableResearchTechs() {
+    return Object.values(Game.TECHNOLOGIES).filter(tech => !Game.hasTech(tech.id) && (!tech.requires || tech.requires.every(Game.hasTech)));
+  }
+  function dispatchExplorer(event, label, months) {
+    const available = Math.max(0, Game.state.villagers - totalAssigned() - (Game.state.refugees || []).reduce((n, r) => n + r.count, 0) - (Game.state.missingExplorers || 0) - (Game.state.dispatched || []).length);
+    if (!available) return;
+    event.searching = true; event.untilMonth = eventMonth() + months;
+    if (event.type === 'missingExplorer') Game.state.missingExplorers = Math.max(0, (Game.state.missingExplorers || 0) + 1);
+    Game.state.dispatched = Game.state.dispatched || []; Game.state.dispatched.push({ eventId: event.id, label, untilMonth: event.untilMonth });
+    renderEventCenter(); Game.saveState();
+  }
+  function losePendingTrade(event) {
+    const s = Game.state;
+    s.tradePending = null;
+    const traderBuilding = s.buildings.find(building => building.id === 'tradepost' && (building.workers || 0) > 0);
+    if (traderBuilding) traderBuilding.workers = Math.max(0, (traderBuilding.workers || 0) - 1);
+    if (event) event.lost = true;
+    finishEvent(event);
+    Game.renderLabor();
+    Game.updateStatus();
+  }
+  function renderEventCenter() {
+    if (!eventTabs || !eventDetail || !Game.state) return;
+    eventTabs.innerHTML = '';
+    const events = Game.state.events || [];
+    const createEventTab = (event) => {
+      const meta = eventMeta(event.type); const button = document.createElement('button');
+      button.className = `event-tab event-${meta.tone}` + (openEventId === event.id ? ' active' : '');
+      button.innerHTML = `<span class="event-tab-icon">${meta.icon}</span><span>${meta.title}</span>`;
+      button.addEventListener('click', () => { openEventId = openEventId === event.id ? null : event.id; renderEventCenter(); });
+      return button;
+    };
+    const visibleEvents = events.slice(0, 3);
+    visibleEvents.forEach(event => eventTabs.appendChild(createEventTab(event)));
+    if (events.length > visibleEvents.length) {
+      const stack = document.createElement('div');
+      stack.className = 'event-stack';
+      const stackButton = document.createElement('button');
+      stackButton.className = 'event-stack-button';
+      stackButton.innerHTML = `<span class="event-stack-icon">…</span><b>+${events.length - visibleEvents.length}</b>`;
+      stackButton.title = '悬停展开全部事件';
+      const stackItems = document.createElement('div');
+      stackItems.className = 'event-stack-items';
+      events.slice(visibleEvents.length).forEach(event => stackItems.appendChild(createEventTab(event)));
+      stack.append(stackButton, stackItems);
+      // 悬停展开：停留 1 秒后视为“固定展开”，移开后不自动收起；点击按钮或页面其他位置才收起
+      stack.addEventListener('mouseenter', () => {
+        stack.classList.add('stack-open');
+        clearTimeout(stack.__leaveTimer);
+        if (!stack.__pinTimer) {
+          stack.__pinTimer = setTimeout(() => { stack.__pinned = true; stack.__pinTimer = null; }, 1000);
+        }
+      });
+      stack.addEventListener('mouseleave', () => {
+        if (stack.__pinned) return;
+        clearTimeout(stack.__leaveTimer);
+        stack.__leaveTimer = setTimeout(() => {
+          stack.classList.remove('stack-open');
+          stack.__pinned = false;
+          if (stack.__pinTimer) { clearTimeout(stack.__pinTimer); stack.__pinTimer = null; }
+        }, 300);
+      });
+      stackButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        stack.classList.remove('stack-open');
+        stack.__pinned = false;
+        if (stack.__pinTimer) { clearTimeout(stack.__pinTimer); stack.__pinTimer = null; }
+      });
+      eventStackEl = stack;
+      eventTabs.appendChild(stack);
+    } else {
+      eventStackEl = null;
+    }
+    const event = (Game.state.events || []).find(e => e.id === openEventId);
+    if (!event) { eventDetail.classList.add('hidden'); return; }
+    const meta = eventMeta(event.type); eventDetail.className = `event-detail event-${meta.tone}`;
+    eventDetail.innerHTML = `<b>${meta.title}</b><span>${eventTextFor(event)}</span><div class="event-detail-actions"></div>`;
+    const actions = eventDetail.querySelector('.event-detail-actions');
+    const addAction = (label, action, disabled) => {
+      const button = document.createElement('button'); button.textContent = label; button.disabled = !!disabled;
+      button.dataset.tooltip = eventActionHint(event, action);
+      button.title = eventActionHint(event, action);
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chooseEventAction(event, action);
+      });
+      actions.appendChild(button);
+    };
+    if (event.type === 'feast') { addAction('举办庆典', 'accept'); addAction('不举办', 'decline'); }
+    if (event.type === 'refugees') { addAction(`接纳 ${event.count} 名流民`, 'accept', Game.hutCapacity() <= Game.state.villagers); addAction('暂不接纳', 'decline'); }
+    if (event.type === 'forestFire') { addAction('派遣探索者救火', 'dispatch', event.searching || event.waiting); addAction('等待火势熄灭', 'wait', event.searching || event.waiting); }
+    if (event.type === 'caveCollapse') { addAction('立即加固', 'reinforce', event.waiting); addAction('暂时封闭', 'wait', event.waiting); addAction('强行开采', 'force', event.waiting); }
+    if (event.type === 'seaStorm') { addAction('停船避险', '避险', event.waiting); addAction('冒险出海', '冒险', event.waiting); }
+    if (event.type === 'missingExplorer') { addAction('派人寻找', 'dispatch', event.searching || event.waiting); addAction('等待归来', 'wait', event.searching || event.waiting); }
+    if (event.type === 'tradeLost') { addAction('派遣探索者寻找', 'dispatch', event.searching || event.searchResolved); addAction('放弃寻找', 'abandon', event.searching); }
+    if (event.type === 'scholar') { addAction('接待学者', 'host', Game.state.food < 3 || Game.state.coins < 50); addAction('学者授课', 'teach', Game.state.tutorUsed || Game.state.food < 2 || Game.state.coins < 30); addAction('礼貌拒绝', 'decline'); }
+    if (event.type === 'ruins') addAction('发掘遗迹', 'excavate');
+    if (event.type === 'militaryAccident') { addAction('立即维修', 'repair'); addAction('暂停试验', 'wait'); }
+  }
+  function showEventPopup(event) {
+    if (!event) return;
+    const meta = eventMeta(event.type);
+    if (eventKicker) eventKicker.textContent = meta.kicker;
+    if (eventTitle) eventTitle.textContent = meta.title;
+    if (eventText) eventText.textContent = eventTextFor(event);
+    if (eventActions) {
+      eventActions.innerHTML = '';
+      const addAction = (label, action, disabled) => {
+        const button = document.createElement('button');
+        button.className = 'event-action-btn';
+        button.textContent = label;
+        button.disabled = !!disabled;
+        button.dataset.tooltip = eventActionHint(event, action);
+        button.title = eventActionHint(event, action);
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          chooseEventAction(event, action);
+          if (!Game.state.events.some(item => item.id === event.id)) closeEmergencyEvent();
+          else showEventPopup(event);
+        });
+        eventActions.appendChild(button);
+      };
+      if (event.type === 'feast') { addAction('举办庆典', 'accept'); addAction('不举办', 'decline'); }
+      if (event.type === 'refugees') { addAction(`接纳 ${event.count} 名流民`, 'accept', Game.hutCapacity() <= Game.state.villagers); addAction('暂不接纳', 'decline'); }
+      if (event.type === 'forestFire') { addAction('派遣探索者救火', 'dispatch', event.searching || event.waiting); addAction('等待火势熄灭', 'wait', event.searching || event.waiting); }
+      if (event.type === 'caveCollapse') { addAction('立即加固', 'reinforce', event.waiting); addAction('暂时封闭', 'wait', event.waiting); addAction('强行开采', 'force', event.waiting); }
+      if (event.type === 'seaStorm') { addAction('停船避险', '避险', event.waiting); addAction('冒险出海', '冒险', event.waiting); }
+      if (event.type === 'missingExplorer') { addAction('派人寻找', 'dispatch', event.searching || event.waiting); addAction('等待归来', 'wait', event.searching || event.waiting); }
+      if (event.type === 'tradeLost') { addAction('派遣探索者寻找', 'dispatch', event.searching || event.searchResolved); addAction('放弃寻找', 'abandon', event.searching); }
+      if (event.type === 'scholar') { addAction('接待学者', 'host', Game.state.food < 3 || Game.state.coins < 50); addAction('学者授课', 'teach', Game.state.tutorUsed || Game.state.food < 2 || Game.state.coins < 30); addAction('礼貌拒绝', 'decline'); }
+      if (event.type === 'ruins') addAction('发掘遗迹', 'excavate');
+      if (event.type === 'militaryAccident') { addAction('立即维修', 'repair'); addAction('暂停试验', 'wait'); }
+    }
+    eventOverlay.classList.remove('hidden');
+    eventPanel.classList.remove('hidden');
+  }
+  Game.renderEventCenter = renderEventCenter;
+  document.addEventListener('click', (e) => {
+    if (eventStackEl && !eventStackEl.contains(e.target)) {
+      eventStackEl.classList.remove('stack-open');
+      eventStackEl.__pinned = false;
+      if (eventStackEl.__pinTimer) { clearTimeout(eventStackEl.__pinTimer); eventStackEl.__pinTimer = null; }
+    }
+  });
+  function showEmergencyEvent(title, text) {
+    const type = Object.keys(EVENT_META).find(id => EVENT_META[id].title === title);
+    if (type) { addEvent(type); openEventId = getEvent(type)?.id || null; renderEventCenter(); }
+    if (eventKicker) eventKicker.textContent = '事件详情';
+    if (eventTitle) eventTitle.textContent = title;
+    if (eventText) eventText.textContent = text;
+    if (!type) {
+      if (eventActions) eventActions.innerHTML = '';
+      eventOverlay.classList.remove('hidden'); eventPanel.classList.remove('hidden');
+    }
+  }
+  function closeEmergencyEvent() { eventOverlay.classList.add('hidden'); eventPanel.classList.add('hidden'); }
+  Game.showEmergencyEvent = showEmergencyEvent;
+  Game.showAchievementEvent = function (title, text) { showEmergencyEvent(title, text); };
   document.getElementById('eventClose').addEventListener('click', closeEmergencyEvent);
 
   Game.addCoins = function (amount) {
@@ -184,8 +558,7 @@
   function settleTradeOrder(order) {
     if (!canFulfillOrder(order) || !hasActiveTrader()) return;
     if (Game.state.mode !== 'creative') Game.takeInventoryItems(order.req);
-    Game.addCoins(order.coins);
-    order.bonus.forEach(item => Game.addItemToInventory(item.id, item.n));
+    Game.state.tradePending = { order, settleMonth: tradeMonthIndex() + 1 };
     Game.state.tradeOrders = [];
     Game.state.tradeRefreshes = 0;
     Game.state.tradeSettledMonth = tradeMonthIndex();
@@ -193,7 +566,7 @@
     Game.renderInventory();
     Game.updateStatus();
     renderTradePanel();
-    showEmergencyEvent('贸易完成', `“${order.title}”已结算，获得 ${order.coins} 金币。`);
+    showEmergencyEvent('贸易已交付', `“${order.title}”的货物已交付，金币和附赠物资将在下个月结算。`);
   }
   let tradeBuilding = null;
   const tradeOverlay = document.getElementById('tradeOverlay');
@@ -360,14 +733,14 @@
     if (!canResearch || !building.researchId || (!building.workers && Game.state.mode !== 'creative')) return;
     const tech = Game.TECHNOLOGIES[building.researchId];
     if (!tech) return;
-    building.researchDays = (building.researchDays || 0) + speed;
+    building.researchDays = (building.researchDays || 0) + speed * (Game.state.researchBonus || 1);
     if (building.researchDays < tech.days) return;
     if (!Game.state.techs.includes(tech.id)) Game.state.techs.push(tech.id);
     if (tech.id === 'literacy') {
       const priorTechs = Game.state.techs.filter(id => id !== 'literacy');
       Game.state.civ += 200 + priorTechs.length * 50;
       Game.state.techCivRewarded = Game.state.techs.slice();
-      Game.showAchievementEvent('文字与度量', `文字与度量体系建立，文明程度 +200；此前已完成科技按每项 +50 补发。`);
+      // 科技完成只更新状态，不再弹出提醒。
     } else if (Game.hasTech('literacy') && !Game.state.techCivRewarded.includes(tech.id)) {
       Game.state.techCivRewarded.push(tech.id);
       Game.state.civ += 100;
@@ -378,7 +751,7 @@
     Game.renderRecipeList();
     Game.renderCrafting();
     Game.saveState();
-    if (tech.id !== 'literacy') showEmergencyEvent('研究完成', `“${tech.name}”已完成。${tech.desc}`);
+    // 研究完成后只刷新研究面板、配方与状态，不再弹出事件提醒。
     if (researchInstitute === building) renderResearchPanel();
   }
 
@@ -420,6 +793,14 @@
     expandPanel.classList.toggle('hidden');
     expandToggle.classList.toggle('open', !expandPanel.classList.contains('hidden'));
   });
+
+  // 临时调试按钮：点一下立即触发一次随机事件
+  const debugEventBtn = document.getElementById('debugEventBtn');
+  if (debugEventBtn) {
+    debugEventBtn.addEventListener('click', () => {
+      triggerDebugRandomEvent();
+    });
+  }
 
   // 设置菜单：点击圆形按钮展开 / 收起（选项卡：操作说明 / 游戏）
   // 打开时默认暂停游戏，关闭时恢复打开前的速度设置；打开时盖上半透明遮罩
@@ -523,7 +904,8 @@
     const buildings = laborBuildings();
     const assigned = buildings.reduce((s, b) => s + (b.workers || 0), 0);
     const total = Game.state.villagers;
-    const explorers = Math.max(0, total - assigned);
+    const unavailable = (Game.state.refugees || []).reduce((n, r) => n + r.count, 0) + (Game.state.missingExplorers || 0) + (Game.state.dispatched || []).length;
+    const explorers = Math.max(0, total - assigned - unavailable);
     summaryEl.innerHTML = '';
     const line = document.createElement('div');
     line.className = 'labor-summary';
@@ -542,6 +924,9 @@
     // 劳动力类型一览：探索者（空闲劳动力）+ 各生产工种，进度条表示占总人口的比例
     const rows = [];
     if (explorers > 0) rows.push({ icon: Game.explorerIconSVG(), name: '探索者', count: explorers });
+    const refugees = (Game.state.refugees || []).reduce((n, r) => n + r.count, 0);
+    if (refugees > 0) rows.push({ icon: Game.explorerIconSVG(), name: '流民', count: refugees });
+    (Game.state.dispatched || []).forEach(d => rows.push({ icon: Game.explorerIconSVG(), name: `被派遣${d.label}中`, count: 1 }));
     Game.LABOR_JOBS.forEach(job => {
       const workers = buildings
         .filter(b => Game.BUILDINGS[b.id].job === job.name)
@@ -623,7 +1008,8 @@
     const def = Game.BUILDINGS[b.id];
     const laborCap = def.laborCap || 0;
     const workers = b.workers || 0;
-    const idle = Math.max(0, Game.state.villagers - totalAssigned());
+    const unavailable = (Game.state.refugees || []).reduce((n, r) => n + r.count, 0) + (Game.state.missingExplorers || 0) + (Game.state.dispatched || []).length;
+    const idle = Math.max(0, Game.state.villagers - totalAssigned() - unavailable);
 
     body.innerHTML = '';
 
@@ -2076,8 +2462,8 @@
         card.appendChild(line);
       } else {
         def.produces.forEach(p => {
-          const base = typeof p.amount === 'function' ? 1 : p.amount;
-          const amount = base * workers * Game.productionMultiplier(b.id);
+          const perWorker = buildingProduceAmount(b, p);
+          const amount = perWorker * workers;
           const itemId = typeof p.item === 'function' ? null : p.item;
           const line = document.createElement('div');
           line.className = 'bi-line';
@@ -2198,12 +2584,13 @@
     if (b.timer >= def.interval * Game.DAYS_PER_MONTH) {
       b.timer = 0;
       if (!b.workers) return;
+      if ((Game.state.fireBuildings || []).includes(b.x + ':' + b.y) || (Game.state.caveBuildings || []).includes(b.x + ':' + b.y) || (Game.state.stormBuildings || []).includes(b.x + ':' + b.y)) return;
       let produced = false;
       // 生产力建筑：n 个劳动力 → 每个劳动力按基准 x 独立产出一次（含矿物等随机产出）
       for (let i = 0; i < b.workers; i++) {
         def.produces.forEach(p => {
           const itemId = typeof p.item === 'function' ? p.item() : p.item;
-          const amount = (typeof p.amount === 'function' ? p.amount() : p.amount) * Game.productionMultiplier(b.id);
+          const amount = buildingProduceAmount(b, p);
           if (Game.addItemToInventory(itemId, amount)) {
             Game.state.civ += amount;
             produced = true;
@@ -2219,6 +2606,40 @@
   // 团的揭示进度：每格每月增速 = 抽取次数。
   // 揭示阈值 = 团格数 × 2
   let baseTimer = 0;
+  function getProductionPenalty() {
+    const event = getEvent('foodShortage');
+    if (!event) return 1;
+    if ((event.months || 0) >= 4) return 0.5;
+    if ((event.months || 0) >= 2) return 0.75;
+    return 1;
+  }
+  function getExplorationPenalty() {
+    const event = getEvent('foodShortage');
+    if (!event) return 1;
+    if ((event.months || 0) >= 4) return 0.5;
+    if ((event.months || 0) >= 2) return 0.75;
+    return 1;
+  }
+  // 基地内的生产建筑效率提升 50%；折算后一律四舍五入
+  function buildingInsideBase(building) {
+    const base = Game.base;
+    if (!base || !building) return false;
+    return building.x >= base.x && building.y >= base.y &&
+      building.x < base.x + base.w && building.y < base.y + base.h;
+  }
+  function buildingEfficiencyMultiplier(b) {
+    return buildingInsideBase(b) ? 1.5 : 1;
+  }
+  // 单名劳动力每月的真实产出（已折算科技、基地加成、庆典 / 丰收 / 干旱 / 缺粮影响，并四舍五入）
+  function buildingProduceAmount(b, p) {
+    const month = eventMonth();
+    let amount = (typeof p.amount === 'function' ? p.amount() : p.amount) * Game.productionMultiplier(b.id) * buildingEfficiencyMultiplier(b);
+    if (Game.state.harvestMonth === month && (b.id === 'farm' || b.id === 'farmstead')) amount *= 2;
+    if (Game.state.droughtMonths > 0 && (b.id === 'farm' || b.id === 'farmstead')) amount *= 0.5;
+    if (Game.state.feastActive && Game.state.feastMonth === month) amount *= 0.75;
+    amount = Math.max(1, Math.round(amount));
+    return Math.max(1, Math.round(amount * getProductionPenalty()));
+  }
   function baseProduce() {
     const b = Game.base;
     if (!b || !Game.world) return;
@@ -2234,8 +2655,11 @@
       }
     }
     if (!cells.length) return;
-    const explorers = Math.max(0, Game.state.villagers - totalAssigned());
-    const draws = Game.explorationDraws(cells.length, explorers);
+    const unavailable = (Game.state.refugees || []).reduce((n, r) => n + r.count, 0) + (Game.state.missingExplorers || 0) + (Game.state.dispatched || []).length;
+    const explorers = Math.max(0, Game.state.villagers - totalAssigned() - unavailable);
+    let draws = Game.explorationDraws(cells.length, explorers);
+    if (Game.state.feastActive && Game.state.feastMonth === eventMonth()) draws = Math.max(0, Math.round(draws * 0.75));
+    draws = Math.max(0, Math.round(draws * getExplorationPenalty()));
     const touched = new Set();
     for (const [x, y] of cells) {
       const raw = Game.world.terrain[y][x];
@@ -2263,6 +2687,7 @@
   function tick() {
     if (!Game.state) return;
     if (paused) { Game.drawWorld(); return; }
+    maybeCreateRandomEvents();
     Game.state.buildings.forEach(b => {
       tickBuilding(b, Game.BUILDINGS[b.id]);
       tickResearch(b);
@@ -2274,12 +2699,49 @@
       popTimer = 0;
       const requiredFood = Game.state.villagers;
       const previousFood = Game.state.food;
-      if (Game.state.mode !== 'creative') Game.state.food = Math.max(0, Game.state.food - requiredFood);
-      if (Game.state.mode !== 'creative' && previousFood > 0 && Game.state.food === 0 && !Game.state.foodShortageActive) {
+      const month = eventMonth();
+      const refugeeFood = (Game.state.refugees || []).reduce((n, r) => n + r.count, 0);
+      const feastCost = Game.state.feastActive && Game.state.feastMonth === month ? 2 : 1;
+      if (Game.state.mode !== 'creative') Game.state.food = Math.max(0, Game.state.food - (requiredFood + refugeeFood) * feastCost);
+      let shortage = getEvent('foodShortage');
+      if (Game.state.mode !== 'creative' && Game.state.food === 0) {
+        if (!shortage) shortage = addEvent('foodShortage', { months: 0 });
+        shortage.months = (shortage.months || 0) + 1;
         Game.state.foodShortageActive = true;
-        showEmergencyEvent('食物紧缺', '食物仓已经耗尽。尽快将可食用物品加入食物仓，为聚落补充储备。');
+      } else if (shortage) {
+        finishEvent(shortage); Game.state.foodShortageActive = false;
       }
+      if (Game.state.feastActive && Game.state.feastMonth < month) Game.state.feastActive = false;
+      if (Game.state.harvestMonth !== month) Game.state.harvestMonth = -1;
+      if (Game.state.droughtMonths > 0) Game.state.droughtMonths--;
+      (Game.state.refugees || []).forEach(r => { if (r.untilMonth <= month) r.done = true; });
+      Game.state.refugees = (Game.state.refugees || []).filter(r => !r.done);
       const cap = Game.hutCapacity();
+      (Game.state.dispatched || []).filter(d => d.untilMonth <= month).forEach(d => {
+        Game.state.dispatched = Game.state.dispatched.filter(x => x !== d);
+        const event = (Game.state.events || []).find(e => e.id === d.eventId);
+        if (event) {
+          if (event.type === 'tradeLost') {
+            if (Math.random() < 0.5) {
+              event.searching = false; event.resolved = true;
+              const pending = Game.state.tradePending;
+              if (pending) {
+                Game.addCoins(pending.order.coins);
+                pending.order.bonus.forEach(item => Game.addItemToInventory(item.id, item.n));
+                Game.state.tradePending = null;
+                finishEvent(event);
+              }
+            } else { event.searching = false; event.untilMonth = month + 1; }
+          } else {
+            if (event.type === 'missingExplorer') Game.state.missingExplorers = Math.max(0, (Game.state.missingExplorers || 0) - 1);
+            finishEvent(event);
+          }
+        }
+      });
+      (Game.state.events || []).slice().forEach(event => {
+        if (event.untilMonth != null && event.untilMonth <= month && event.waiting) finishEvent(event);
+        if (event.type === 'scholar' && event.deadlineMonth != null && event.deadlineMonth <= month) finishEvent(event);
+      });
         if (Game.state.villagers < cap) {
           // 增长速度随当前人口基数决定：每月增长 max(1, 当前人口×10%)，直到人口上限
           const grow = Math.min(cap - Game.state.villagers, Math.max(1, Math.floor(Game.state.villagers * 0.1)));
@@ -2292,6 +2754,16 @@
           Game.saveState();
       }
       Game.saveState();
+    }
+    if (Game.state.tradePending && tradeMonthIndex() >= Game.state.tradePending.settleMonth && !getEvent('tradeLost')) {
+      const pending = Game.state.tradePending;
+      if (Math.random() < 0.25) addEvent('tradeLost', { order: pending.order });
+      else {
+        Game.addCoins(pending.order.coins);
+        pending.order.bonus.forEach(item => Game.addItemToInventory(item.id, item.n));
+        Game.state.tradePending = null;
+        showEmergencyEvent('贸易完成', `“${pending.order.title}”已结算，获得 ${pending.order.coins} 金币。`);
+      }
     }
     const currentTradeMonth = tradeMonthIndex();
     if (hasActiveTrader() && Game.state.tradeSettledMonth !== currentTradeMonth) {
